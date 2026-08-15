@@ -1,0 +1,152 @@
+import type { InputUnit, PrintUnit, Quote } from "../core/types";
+import { Field, NumberField, Pill, TextField } from "../ui/controls";
+
+/**
+ * Everything printed above the first section: who the quote is for and the four
+ * settings that change how the whole quote calculates. The proforma number and
+ * the date are plain text on purpose — the numbering follows the sheet the office
+ * already keeps, and nothing here invents one (dev-plan §5).
+ */
+export function QuoteHeader({
+  quote,
+  onChange,
+  onInputUnit,
+  onPrintUnit,
+}: {
+  quote: Quote;
+  onChange: (patch: Partial<Quote>) => void;
+  onInputUnit: (unit: InputUnit) => void;
+  onPrintUnit: (unit: PrintUnit) => void;
+}) {
+  return (
+    <section className="card">
+      <div className="card__head">
+        <h2>Quotation details</h2>
+        <span className="muted small">Printed at the top of the proforma</span>
+      </div>
+
+      <div className="card__body">
+        <div className="form-grid">
+          <Field label="Proforma no">
+            <TextField
+              value={quote.proformaNo}
+              onChange={(v) => onChange({ proformaNo: v })}
+              placeholder="7178"
+            />
+          </Field>
+          <Field label="Date">
+            <TextField
+              value={quote.date}
+              onChange={(v) => onChange({ date: v })}
+              placeholder="dd/mm/yyyy"
+            />
+          </Field>
+          <Field label="Party no">
+            <TextField value={quote.partyNo} onChange={(v) => onChange({ partyNo: v })} />
+          </Field>
+          <Field label="Doc no">
+            <TextField value={quote.docNo} onChange={(v) => onChange({ docNo: v })} />
+          </Field>
+
+          <div className="span-2">
+            <Field label="Customer">
+              <TextField
+                value={quote.customerName}
+                onChange={(v) => onChange({ customerName: v })}
+                placeholder="M/S ..."
+              />
+            </Field>
+          </div>
+          <Field label="GSTIN">
+            <TextField
+              value={quote.customerGstin}
+              onChange={(v) => onChange({ customerGstin: v })}
+            />
+          </Field>
+          <Field label="Ref person">
+            <TextField value={quote.refPerson} onChange={(v) => onChange({ refPerson: v })} />
+          </Field>
+
+          <div className="span-2">
+            <Field label="Address">
+              <TextField
+                value={quote.customerAddress}
+                onChange={(v) => onChange({ customerAddress: v })}
+              />
+            </Field>
+          </div>
+          <div className="span-2">
+            <Field label="Project / remark">
+              <TextField
+                value={quote.projectRemark}
+                onChange={(v) => onChange({ projectRemark: v })}
+              />
+            </Field>
+          </div>
+
+          <Field label="Order no">
+            <TextField value={quote.orderNo} onChange={(v) => onChange({ orderNo: v })} />
+          </Field>
+          <div className="span-2">
+            <Field label="Dispatch to">
+              <TextField value={quote.dispatchTo} onChange={(v) => onChange({ dispatchTo: v })} />
+            </Field>
+          </div>
+        </div>
+
+        <hr className="divider" />
+
+        <div className="settings">
+          <div className="stack">
+            <span className="field__label">Sizes entered in</span>
+            <div className="row row--tight">
+              <Pill active={quote.inputUnit === "mm"} onClick={() => onInputUnit("mm")}>
+                mm
+              </Pill>
+              <Pill active={quote.inputUnit === "inch"} onClick={() => onInputUnit("inch")}>
+                inch
+              </Pill>
+            </div>
+          </div>
+
+          <div className="stack">
+            <span className="field__label">Area printed in</span>
+            <div className="row row--tight">
+              <Pill active={quote.printUnit === "SQFT"} onClick={() => onPrintUnit("SQFT")}>
+                SQFT
+              </Pill>
+              <Pill active={quote.printUnit === "SQMT"} onClick={() => onPrintUnit("SQMT")}>
+                SQMT
+              </Pill>
+            </div>
+          </div>
+
+          <div className="stack">
+            <span className="field__label">GST</span>
+            <div className="row row--tight">
+              <Pill
+                active={quote.gstApplicable}
+                onClick={() => onChange({ gstApplicable: !quote.gstApplicable })}
+              >
+                {quote.gstApplicable ? "Applied" : "Not applied"}
+              </Pill>
+              <NumberField
+                value={quote.gstPct}
+                onChange={(v) => onChange({ gstPct: v })}
+                width={56}
+                disabled={!quote.gstApplicable}
+                title="CGST and SGST each at this rate"
+              />
+              <span className="muted small">% CGST + same SGST</span>
+            </div>
+          </div>
+
+          <div className="stack">
+            <span className="field__label">Wastage</span>
+            <span className="muted small">Set per section, below</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}

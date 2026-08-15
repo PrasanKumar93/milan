@@ -1,0 +1,32 @@
+{
+  "name": "MILAN TOUGHENED GLASS LLP",
+  "address": "NO 24/3 RAMPURA VILLAGE BIDHARAHALLI HOBLI, BENGALURU 560049",
+  "gstin": "29ABXFM7834Q1ZU",
+  "phones": ["7349539937", "8197391286", "9900093638"],
+  "bank": {
+    "accountName": "MILAN TOUGHENED GLASS LLP",
+    "bankName": "HDFC BANK",
+    "accountNo": "99999880883309",
+    "ifsc": "HDFC0003678",
+    "branch": "HORAMAVU"
+  },
+  "terms": [
+    { "label": "VALIDITY", "value": "3 Days" },
+    { "label": "UNLOADING", "value": "Buyer" },
+    { "label": "PACKING TYPE", "value": "Will Be Extra If Applicable" },
+    { "label": "DELIVERY TYPE", "value": "2-3 Days For Toughened Glass" },
+    { "label": "FREIGHT", "value": "Above Price is Ex Factory & Freight Will Be Extra." }
+  ],
+  "notes": [
+    "ON CONFIRMATION OF THE ORDER 100% OF THE AMOUNT TO BE PAID",
+    "TOUGHENED GLASS ARE CUSTOM AND TAILOR MADE ONCE ORDERED CANNOT BE CHANGED",
+    "PLEASE CHECK PI AND PROVIDE YOUR APPROVAL. AFTER THE APPROVAL THE ORDER WILL BE PROCESSED"
+  ],
+  "signatureBlocks": ["Prepared By :", "Checked By :", "Sign & seal", "Authorised Signatory"],
+  "defaults": {
+    "hsn": "7007",
+    "gstPct": 9,
+    "wastageMm": 50,
+    "wastageInch": 2
+  }
+}

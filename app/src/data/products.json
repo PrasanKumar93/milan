@@ -1,0 +1,22 @@
+{
+  "_note": "dev-plan §3.2. Products are built as thickness x glassType. HSN is not here: every section in all 47 samples prints 7007, so it lives once in company.json as defaults.hsn. Names and wastage rules are provisional until the customer re-verifies them.",
+  "thicknesses": ["4MM", "5MM", "6MM", "8MM", "10MM", "12MM", "4+4MM", "5+5MM", "6+6MM", "8+8MM", "10+10MM"],
+  "glassTypes": [
+    { "name": "CLEAR TOUGHENED GLASS", "shortCode": "CTG", "wastageRule": "fixed" },
+    { "name": "EXTRA CLEAR TOUGHENED GLASS", "shortCode": "EXTRA CLEAR", "wastageRule": "foot_to_foot" },
+    { "name": "BLACK TOUGHENED GLASS", "shortCode": "BLACK", "wastageRule": "fixed" },
+    { "name": "CLEAR FLUTED TOUGHENED GLASS", "shortCode": "CLEAR FLUTED", "wastageRule": "foot_to_foot" },
+    { "name": "BLACK FLUTED TOUGHENED GLASS", "shortCode": "BLACK FLUTED", "wastageRule": "foot_to_foot" },
+    { "name": "BROWN FLUTED TOUGHENED GLASS", "shortCode": "BROWN FLUTED", "wastageRule": "foot_to_foot" },
+    { "name": "FROSTED GLASS", "shortCode": "FROSTED", "wastageRule": "fixed" },
+    { "name": "ACID WASH GLASS", "shortCode": "ACID WASH", "wastageRule": "fixed" },
+    { "name": "COLOUR ETCHED GLASS", "shortCode": "COLOUR ETCHED", "wastageRule": "fixed" },
+    { "name": "CLEAR MIRROR", "shortCode": "MIRROR", "wastageRule": "foot_to_foot" },
+    { "name": "MIRROR GLASS", "shortCode": "MIRROR", "wastageRule": "foot_to_foot" },
+    { "name": "LAMINATED GLASS", "shortCode": "LAMINATED", "wastageRule": "fixed" },
+    { "name": "DGU GLASS", "shortCode": "DGU", "wastageRule": "fixed" },
+    { "name": "KACCHA GLASS", "shortCode": "KACCHA", "wastageRule": "fixed" }
+  ],
+  "defaultProduct": "10MM CLEAR TOUGHENED GLASS",
+  "shapes": ["BLOCK", "DRW", "TEMPLATE", "MIRROR"]
+}

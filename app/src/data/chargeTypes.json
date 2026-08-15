@@ -1,0 +1,21 @@
+{
+  "_note": "dev-plan §3.1, in dropdown order. Rates are defaults and are edited per quote; where a charge appears at several rates in the samples the most recent is used here. POLISH has no flat rate: it is Rs 1 per mm of glass thickness per running foot, so the app fills in thickness x ratePerThicknessMm when it is added to a section, and the operator edits from there.",
+  "charges": [
+    { "label": "HOLES", "basis": "per_unit", "rate": 30, "taxable": true },
+    { "label": "50MM HOLE", "basis": "per_unit", "rate": 100, "taxable": true },
+    { "label": "CUTOUT", "basis": "per_unit", "rate": 100, "taxable": true },
+    { "label": "L CUTOUT", "basis": "per_unit", "rate": 150, "taxable": true },
+    { "label": "U CUTOUT", "basis": "per_unit", "rate": 250, "taxable": true },
+    { "label": "BIG CUTOUT", "basis": "flat", "rate": 400, "taxable": true },
+    { "label": "CORNER ROUND", "basis": "flat", "rate": 100, "taxable": true },
+    { "label": "SHAPE CHARGE", "basis": "flat", "rate": 100, "taxable": true },
+    { "label": "CROSS CHARGE", "basis": "flat", "rate": 100, "taxable": true },
+    { "label": "TEMPLATE CHARGE", "basis": "flat", "rate": 400, "taxable": true },
+    { "label": "DESIGN CHARGE", "basis": "flat", "rate": 1350, "taxable": true },
+    { "label": "FROSTING CHARGE", "basis": "flat", "rate": 610, "taxable": true },
+    { "label": "PAINT CHARGE", "basis": "flat", "rate": 800, "taxable": true },
+    { "label": "TRANSPORT CHARGE", "basis": "flat", "rate": 500, "taxable": true },
+    { "label": "DOCUMENT CHARGE", "basis": "flat", "rate": 100, "taxable": true },
+    { "label": "POLISH", "basis": "per_unit", "ratePerThicknessMm": 1, "unit": "rft", "taxable": true }
+  ]
+}
