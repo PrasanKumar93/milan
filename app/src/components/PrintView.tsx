@@ -49,7 +49,12 @@ export function PrintView({ computed }: { computed: ComputedQuote }) {
       </div>
 
       {computed.sections.map((section) => (
-        <PrintSection key={section.section.id} quote={quote} computed={section} />
+        <PrintSection
+          key={section.section.id}
+          quote={quote}
+          computed={section}
+          alone={computed.sections.length === 1}
+        />
       ))}
 
       <Sheet rows={summaryRows(computed)} className="print-table print-table--plain" />
@@ -88,7 +93,15 @@ export function PrintView({ computed }: { computed: ComputedQuote }) {
   );
 }
 
-function PrintSection({ quote, computed }: { quote: Quote; computed: ComputedSection }) {
+function PrintSection({
+  quote,
+  computed,
+  alone,
+}: {
+  quote: Quote;
+  computed: ComputedSection;
+  alone: boolean;
+}) {
   return (
     <div style={{ marginBottom: 14 }}>
       <div className="row row--between">
@@ -96,7 +109,7 @@ function PrintSection({ quote, computed }: { quote: Quote; computed: ComputedSec
         <span>{hsnLabel}</span>
       </div>
       <Sheet head={headRows(quote)} rows={lineRows(computed, quote)} />
-      <Sheet rows={tailRows(computed, quote)} className="print-table print-table--plain" />
+      <Sheet rows={tailRows(computed, quote, alone)} className="print-table print-table--plain" />
     </div>
   );
 }

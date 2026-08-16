@@ -115,7 +115,10 @@ export function buildDoc(computed: ComputedQuote): TDocumentDefinitions {
     });
 
     content.push({
-      table: { widths: widths(), body: toBody(tailRows(section, quote)) },
+      table: {
+        widths: widths(),
+        body: toBody(tailRows(section, quote, computed.sections.length === 1)),
+      },
       layout: noBorders,
       margin: [0, 2, 0, 10],
     });

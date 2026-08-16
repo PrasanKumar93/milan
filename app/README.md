@@ -13,9 +13,12 @@ npm test         # engine regression against the 47 sample quotations, plus the 
 npm run build
 
 npm run sample:pdf 7178 /tmp   # render a sample quotation through the exporters
+npm run retype -- 6363         # type a sample into the running app and check the screen
 ```
 
-That last one is for looking at the page: it rebuilds one of the parsed samples and writes both the PDF and the workbook, so they can be put beside the original the office sent. The numbers on them are checked by `src/export/layout.test.ts`, which asserts the document reproduces PROFORMA 7178 line for line.
+`sample:pdf` is for looking at the page: it rebuilds one of the parsed samples and writes both the PDF and the workbook, so they can be put beside the original the office sent. The numbers on them are checked by `src/export/layout.test.ts`, which asserts the document reproduces PROFORMA 7178 line for line.
+
+`retype` needs `npm run dev` in another terminal. It opens the app in Chrome, types a sample's sizes, rates and charges as an operator would, and compares every cell the app worked out for itself against the figures on the original PDF — chargeable sizes, areas, amounts, charges, totals, GST and the grand total — then screenshots both tabs and downloads the PDF and the workbook into `/tmp/retype`. The tests prove the arithmetic; this proves the screen is wired to it. Across the 17 samples whose sizes follow a wastage rule, 535 of 540 printed figures come out identical, the five being ±₹1 rounded subtotals a person typed by hand.
 
 ## Layout
 

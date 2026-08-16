@@ -121,22 +121,31 @@ export function lineRows(computed: ComputedSection, quote: Quote): SheetRow[] {
  * a label in the area column and a figure in the amount column, exactly as the
  * current sheet does it — no "Total" or "Rounded" captions, because the sheet has
  * never printed any.
+ *
+ * `alone` says this is the only section in the quote, which changes what the
+ * sheet prints: see the section total at the bottom.
  */
-export function tailRows(computed: ComputedSection, quote: Quote): SheetRow[] {
+export function tailRows(computed: ComputedSection, quote: Quote, alone = false): SheetRow[] {
   const label = (text: string, withQty: boolean): Cell => ({
     text,
     align: "left",
     colSpan: withQty ? 1 : 2,
   });
 
-  const rows: SheetRow[] = [
-    row({
-      6: num(formatSheet(computed.totalQty)),
-      7: num(formatArea(computed.totalArea)),
-      9: num(formatSheet(computed.subtotal)),
-    }),
-    row({ 9: num(formatSheet(computed.rounded.value)) }),
-  ];
+  const rows: SheetRow[] = [];
+
+  // Adding up one line would only repeat it, and the sheet never does.
+  if (computed.lines.length > 1) {
+    rows.push(
+      row({
+        6: num(formatSheet(computed.totalQty)),
+        7: num(formatArea(computed.totalArea)),
+        9: num(formatSheet(computed.subtotal)),
+      }),
+    );
+  }
+
+  rows.push(row({ 9: num(formatSheet(computed.rounded.value)) }));
 
   for (const a of computed.adjustments) {
     const perUnit = a.adjustment.basis === "per_unit";
@@ -149,9 +158,9 @@ export function tailRows(computed: ComputedSection, quote: Quote): SheetRow[] {
     );
   }
 
-  // The taxable base only earns a line of its own once charges have moved it
-  // away from the rounded figure directly above.
-  if (computed.adjustments.length > 0) {
+  // The taxable base only earns a line of its own where there is tax to work out
+  // on it; without GST the charges simply run into the total.
+  if (quote.gstApplicable && computed.adjustments.length > 0) {
     rows.push(row({ 9: num(formatSheet(computed.taxableBase)) }));
   }
 
@@ -170,24 +179,31 @@ export function tailRows(computed: ComputedSection, quote: Quote): SheetRow[] {
     }
   }
 
-  rows.push(
-    row({
-      7: { ...label(computed.section.shortCode, false), bold: true },
-      9: num(formatSheet(computed.total), true),
-    }),
-  );
+  // A quote of one section says its total once, as TOTAL AMOUNT. The glass is
+  // named beside the figure only where there is another section to tell it from.
+  if (!alone) {
+    rows.push(
+      row({
+        7: { ...label(computed.section.shortCode, false), bold: true },
+        9: num(formatSheet(computed.total), true),
+      }),
+    );
+  }
 
   return rows;
 }
 
 /** Each section total again, then the figure the customer is agreeing to. */
 export function summaryRows(computed: ComputedQuote): SheetRow[] {
-  const rows = computed.sections.map((s) =>
-    row({
-      7: { text: s.section.shortCode, align: "left", colSpan: 2 },
-      9: num(formatSheet(s.total)),
-    }),
-  );
+  const rows =
+    computed.sections.length > 1
+      ? computed.sections.map((s) =>
+          row({
+            7: { text: s.section.shortCode, align: "left", colSpan: 2 },
+            9: num(formatSheet(s.total)),
+          }),
+        )
+      : [];
 
   rows.push(
     row({

@@ -34,13 +34,14 @@ const flatten = (rows: SheetRow[]): string[] =>
 
 function documentOf(quote: Quote): string[] {
   const computed = computeQuote(quote);
+  const alone = computed.sections.length === 1;
   const out: string[] = [];
 
   for (const section of computed.sections) {
     out.push(`SIZE: ${section.section.product}`);
     out.push(...flatten(headRows(quote)));
     out.push(...flatten(lineRows(section, quote)));
-    out.push(...flatten(tailRows(section, quote)));
+    out.push(...flatten(tailRows(section, quote, alone)));
   }
 
   out.push(...flatten(summaryRows(computed)));
@@ -92,6 +93,29 @@ describe("the printed document, against PROFORMA 7178", () => {
     for (const word of ["Wastage", "Rounded", "Total —", "Taxable", "override"]) {
       expect(text).not.toContain(word);
     }
+  });
+});
+
+/**
+ * A quote of one section is the common case and it is printed differently: the
+ * sheet leaves out anything that would only be said twice. All 47 samples agree
+ * on this, and ALU SYSTEM 6359 is one of them, read off the PDF as above.
+ */
+describe("the printed document, against PROFORMA 6359", () => {
+  it("says each figure once and no more", () => {
+    expect(documentOf(toQuote(sample("6359")))).toEqual([
+      "SIZE: 12MM CLEAR TOUGHENED GLASS",
+      "SI NO SHAPE ACTUAL SIZE CHARGEABLE QTY SQFT RATE AMOUNT",
+      "HEIGHT WIDTH HEIGHT WIDTH",
+      "1 DRW 3555 810 3605 860 1 33.37163 155 5172.603",
+      // No qty/area/subtotal row: adding up one line would only repeat it.
+      "5173",
+      "CROSS CHARGE 100",
+      "CUTOUT 1 100",
+      // No taxable base, because no GST is worked out on it, and no section
+      // total, because TOTAL AMOUNT below is the same figure.
+      "TOTAL AMOUNT 5373",
+    ]);
   });
 });
 

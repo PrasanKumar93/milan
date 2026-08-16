@@ -5,5 +5,7 @@ dist/
 .DS_Store
 
 
-data/
-scripts/
+# The customers' own quotations and the throwaway parsing of them. Anchored to
+# the root so the app's own scripts, which are code, are kept.
+/data/
+/scripts/
