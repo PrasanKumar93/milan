@@ -91,6 +91,7 @@ function LooseNumberInput({
   disabled,
   className,
   title,
+  placeholder,
 }: {
   value: number;
   onChange: (v: number) => void;
@@ -100,6 +101,7 @@ function LooseNumberInput({
   disabled?: boolean;
   className?: string;
   title?: string;
+  placeholder?: string;
 }) {
   const [draft, setDraft] = useState<string | null>(null);
   const shown = draft ?? format(value);
@@ -116,6 +118,7 @@ function LooseNumberInput({
       value={shown}
       disabled={disabled}
       title={title}
+      placeholder={placeholder}
       style={width ? { width } : undefined}
       onChange={(e) => {
         setDraft(e.target.value);
@@ -136,6 +139,8 @@ export function NumberField({
   className,
   title,
   decimals = 2,
+  placeholder,
+  blankAtZero,
 }: {
   value: number;
   onChange: (v: number) => void;
@@ -144,6 +149,9 @@ export function NumberField({
   className?: string;
   title?: string;
   decimals?: number;
+  placeholder?: string;
+  /** Show nothing at zero, for a field where zero means "not given". */
+  blankAtZero?: boolean;
 }) {
   return (
     <LooseNumberInput
@@ -153,12 +161,14 @@ export function NumberField({
       disabled={disabled}
       className={className}
       title={title}
+      placeholder={placeholder}
       parse={(text) => {
         if (text.trim() === "") return 0;
         const n = Number(text);
         return Number.isFinite(n) ? n : null;
       }}
       format={(v) => {
+        if (v === 0 && blankAtZero) return "";
         const rounded = Math.round(v * 10 ** decimals) / 10 ** decimals;
         return String(rounded);
       }}

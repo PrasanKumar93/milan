@@ -147,11 +147,10 @@ export function computeLine(line: Line, quote: Quote, section: Section): Compute
   };
 }
 
+/** Rate times count, and where there is no count, the rate is the charge (§2.9). */
 export function computeAdjustment(adjustment: Adjustment): ComputedAdjustment {
   const base =
-    adjustment.basis === "per_unit"
-      ? d(adjustment.rate).times(adjustment.qty)
-      : d(adjustment.rate);
+    adjustment.qty > 0 ? d(adjustment.rate).times(adjustment.qty) : d(adjustment.rate);
 
   return { adjustment, amount: withOverride(base, adjustment.amount) };
 }

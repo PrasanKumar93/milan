@@ -184,7 +184,7 @@ export function useQuote() {
             ...s,
             adjustments: replace(s.adjustments, adjustmentId, {
               label,
-              basis: type?.basis ?? "flat",
+              qty: type?.basis === "per_unit" ? 1 : 0,
               rate: rate ?? 0,
               amount: null,
               taxable: type?.taxable ?? true,

@@ -261,19 +261,20 @@ Extras, discounts and round-off collapse into a single ordered list of adjustmen
 ```
 Adjustment {
   label      picked from the charge catalogue, or free text via "Others"
-  basis      'per_unit' | 'flat'
-  qty        for per_unit
-  rate       rupees per unit
-  amount     computed from the above, still overridable
+  qty        how many. 0 means the charge is not counted
+  rate       rupees for one, or the whole charge where there is no count
+  amount     qty x rate, or the rate alone, still overridable
   taxable    default true — goes in before GST
 }
 ```
 
-**Basis is per-unit or flat only.** v2 also carried a percent basis for discounts; it is dropped. No sample charge is percentage-based, and discounts are not printed as lines anyway (below), so the percent path would have existed solely to feed a number into a field the operator can already type into directly.
+**There is no basis field.** v2 had one — per-unit, flat, and a percent that was dropped early — and the team then asked for the flat option to go too: every charge is a count and a rate, and a one-off charge is simply a rate with nothing to count. Removing the column removed a decision that was already implied by what was typed in the two boxes beside it.
+
+**The count decides how the line prints**, which is what keeps the document identical (§2.10). The sheet prints `HOLES 6 180` where something was counted and `DOCUMENT CHARGE 100` where it was not — 49 charge lines with a count and 34 without, across the samples. Five of the counted ones are counts of exactly 1 (`L CUT OUT 1 150`), so neither always printing the count nor suppressing a count of one would reproduce the sheet. An empty count does, and it also reads correctly: nothing to count, so nothing is printed.
 
 **Every adjustment prints.** v2 gave adjustments a print flag; confirmed with the team that a charge added to a quote is a charge shown on the quote, so the flag is gone and the column with it. Print flags still exist elsewhere (§2.10) — just not here.
 
-**Every adjustment is optional and nothing is pre-added.** A section starts with an empty list; the operator clicks **Add charge**, and the row arrives with the first catalogue entry selected and its basis and rate pre-filled — all still editable. **12 of 47 quotes carry no adjustments at all**, so anything auto-added would be wrong more often than right.
+**Every adjustment is optional and nothing is pre-added.** A section starts with an empty list; the operator clicks **Add charge**, and the row arrives with the first catalogue entry selected and its rate pre-filled, and its count set to one where the catalogue says the charge is normally counted — all still editable. **12 of 47 quotes carry no adjustments at all**, so anything auto-added would be wrong more often than right.
 
 **The charge name is a dropdown over the catalogue in §3.1, with an `Others…` entry that reveals a free-text box.** v2 proposed one-click chips for the three most common charges; that was replaced because it splits the interaction in two — a chip for some charges and a dropdown for the rest — where a single Add-charge button matched to the Add-line button beside it is one thing to learn. The dropdown is also what kills the spelling drift in §8, and `Others…` means an unforeseen charge never needs a code change.
 
@@ -370,7 +371,7 @@ Glass type   Clear Toughened · Extra Clear Toughened · Black Toughened
              Laminated · DGU · Kaccha
 ```
 
-Only clear, kaccha, mirror, black and fluted appear on any quote. Frosted, acid wash, colour etched, laminated and DGU are brochure-only. Confirmed with the team that these need no special handling: a finish or a treatment is priced by **adding a charge with its own unit price, or a flat amount** (§2.9), which the charge row already supports. So frosting billed at ₹20 per sqft is a per-unit charge with qty in sqft, and frosting billed as ₹610 for the job is a flat one — the same row either way, and no per-sqft basis or product-specific rule is needed.
+Only clear, kaccha, mirror, black and fluted appear on any quote. Frosted, acid wash, colour etched, laminated and DGU are brochure-only. Confirmed with the team that these need no special handling: a finish or a treatment is priced by **adding a charge with its own unit price, or a flat amount** (§2.9), which the charge row already supports. So frosting billed at ₹20 per sqft is a count of sqft at ₹20, and frosting billed as ₹610 for the job is ₹610 with nothing counted — the same row either way, and no per-sqft basis or product-specific rule is needed.
 
 Two things stay attached to the product: the **wastage rule** it defaults to (§2.2) and the **short code that prints in the summary block** (`10MM CTG` for 10 MM clear toughened). The summary codes in the samples are abbreviations of the section title, not the title itself, so the master carries both.
 
@@ -406,7 +407,8 @@ Product            thickness, type (Clear Toughened | Kaccha | Mirror |
                    wastage_rule (fixed | foot_to_foot)
 RateCard           effective_from
 RateCardItem       product_id, sqmt_rate, sqft_rate
-ChargeType         name, basis (per_unit | flat), default_rate,
+ChargeType         name, basis (per_unit | flat — only sets the starting
+                   count on a new row, §2.9), default_rate,
                    rate_per_thickness_mm,   (polish only, §3.3)
                    default_taxable
 Shape              BLOCK, DRW, TEMPLATE, MIRROR
@@ -421,15 +423,15 @@ QuotationLine      section_id, sl_no, shape, actual_h, actual_w,
                    wastage,                 (one value, both sides, not printed)
                    chargeable_h, chargeable_w,   (derived, individually overridable)
                    qty, area, rate, amount
-Adjustment         section_id, sort_order, label, basis, qty, rate, amount,
-                   taxable
+Adjustment         section_id, sort_order, label, qty, rate, amount, taxable
+                   (qty 0 means not counted — the rate is the charge, §2.9)
 ```
 
 Every derived field is stored as `{ value, source: 'auto' | 'manual' }` so the UI can show override badges and offer a reset (§2.8). Fields that carry this: `chargeable_h`, `chargeable_w`, `area`, `rate`, `amount`, `rounded`, and each adjustment's `amount`.
 
 **HSN is not in the model.** Every section of all 47 samples prints `7007`, so it is one value in the company master rather than a column on the product and a copy on every section. If a product ever needs a different code, it goes back on the product — but duplicating a constant in three places to prepare for that is how the codes drift apart.
 
-Changes from v2: wastage is one value rather than `wastage_h` / `wastage_w` (§2.2); **both** `wastage_rule` and `wastage` sit on the section, defaulted from the product and the input unit; adjustments lose `sign`, `base` and `print` (§2.9); both `internal_note` fields are gone (§2.10); `hsn_code` is gone from the product and the section; products gain `short_code` for the summary block and `wastage_rule` as the source of the section default.
+Changes from v2: wastage is one value rather than `wastage_h` / `wastage_w` (§2.2); **both** `wastage_rule` and `wastage` sit on the section, defaulted from the product and the input unit; adjustments lose `sign`, `base`, `print` and now `basis` too (§2.9); both `internal_note` fields are gone (§2.10); `hsn_code` is gone from the product and the section; products gain `short_code` for the summary block and `wastage_rule` as the source of the section default.
 
 Store dimensions in the unit they were entered, with the unit recorded. Persist computed `area` and `amount` on the row so reprinting an old quote never changes if a rate card is edited later.
 
@@ -544,7 +546,8 @@ None of the three errors is possible once areas and taxes are computed rather th
 - **Generic over rule-based**: computed defaults, everything overridable, override badges, formula tooltips (§2.8).
 - **Chargeable size is shown, not typed** — the one locked field, because it is the actual size plus the allowance and nothing else. A row cut differently changes its wastage (§2.8).
 - **A rounding under ₹1 is not called a discount** on screen or in the warnings (§2.9).
-- Charges are **one adjustments list**, flat or per-unit only, and **every charge prints** (§2.9).
+- Charges are **one adjustments list** — a count and a rate, with no basis to choose — and **every charge prints** (§2.9).
+- **An empty count means the charge is not counted**: the rate is the whole charge, and the printed line carries no count, as the sheet has always written a document charge (§2.9).
 - **Two wastage rules: fixed and foot to foot**, set **per section** and defaulted from the glass type (§2.2). Revises the v2 position that mirror and fluted were unexplainable one-offs.
 - **Foot to foot rounds by the overhang** — 8.2 ft becomes 9 ft, 8 ft stays 8 ft (§2.2).
 - **Wastage is entirely section-level**, rule and allowance together, with nothing left in quote settings (§2.2).
@@ -587,7 +590,7 @@ Nothing here blocks the build. **Every name, rate and default lives in JSON unde
 - **Wastage is per section**, rule and allowance both, defaulted from the glass type (§2.2). Implemented.
 - **Which glasses are foot to foot:** all fluted, extra clear and mirror; plain black toughened is fixed (§3.2). Implemented.
 - **HSN is a single constant**, 7007, held once in the company master (§4). Implemented.
-- **Treatments and finishes are charges, not products.** Any chargeable item takes a unit price or a flat amount, and the row switches between the two (§2.9). This covers frosting, acid wash, colour etched and polish, so no per-sqft basis is needed.
+- **Treatments and finishes are charges, not products.** Any chargeable item takes a rate, counted or not, on the same row (§2.9). This covers frosting, acid wash, colour etched and polish, so no per-sqft basis is needed.
 - **Polish is ₹1 per mm of thickness** per running foot, filled in as an editable default (§3.3).
 - **Proforma numbers are typed by the operator.** No auto-numbering.
 - **All catalogue values are provisional and will be confirmed with the customer later**, which is what makes JSON masters the right call rather than a compromise.

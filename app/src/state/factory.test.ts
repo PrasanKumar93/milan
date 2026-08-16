@@ -46,9 +46,14 @@ describe("new line", () => {
 describe("new charge", () => {
   it("fills in the catalogue default", () => {
     const charge = newAdjustment(newSection("mm"), "HOLES");
-    expect(charge.basis).toBe("per_unit");
     expect(charge.rate).toBe(30);
     expect(charge.taxable).toBe(true);
+  });
+
+  it("starts a counted charge at one, and one charged once at none", () => {
+    // Holes are counted; a document charge is a figure, so it has nothing to count.
+    expect(newAdjustment(newSection("mm"), "HOLES").qty).toBe(1);
+    expect(newAdjustment(newSection("mm"), "DOCUMENT CHARGE").qty).toBe(0);
   });
 
   it("prices polish off the glass at 1 rupee per mm", () => {

@@ -1,6 +1,6 @@
 import type Decimal from "decimal.js";
 import type { ComputedSection } from "../core/engine";
-import type { Adjustment, ChargeBasis } from "../core/types";
+import type { Adjustment } from "../core/types";
 import { CUSTOM_CHARGE, chargeTypeFor, chargeTypes } from "../data/masters";
 import { Button, NumberField, OverrideDot, Pill, Select, TextField } from "../ui/controls";
 
@@ -31,7 +31,6 @@ export function ChargeTable({
         <thead>
           <tr>
             <th>Charge</th>
-            <th>Basis</th>
             <th className="num">Qty</th>
             <th className="num">Rate</th>
             <th className="num">Amount</th>
@@ -44,7 +43,7 @@ export function ChargeTable({
             const adj = a.adjustment;
             const type = chargeTypeFor(adj.label);
             const custom = type === undefined;
-            const perUnit = adj.basis === "per_unit";
+            const counted = adj.qty > 0;
 
             return (
               <tr key={adj.id}>
@@ -70,53 +69,44 @@ export function ChargeTable({
                   </div>
                 </td>
 
-                <td>
-                  <Select
-                    value={adj.basis}
-                    width={104}
-                    onChange={(basis) => onPatch(adj.id, { basis: basis as ChargeBasis })}
-                    options={[
-                      { value: "flat", label: "Flat" },
-                      { value: "per_unit", label: "Per unit" },
-                    ]}
-                  />
+                {/*
+                 * No count means the charge is not counted: the rate is the
+                 * whole charge and the printed line carries no figure here, the
+                 * way a document charge has always been written.
+                 */}
+                <td className="num">
+                  <div className="pair">
+                    <NumberField
+                      value={adj.qty}
+                      width={72}
+                      blankAtZero
+                      placeholder="—"
+                      decimals={2}
+                      title="How many. Leave it empty for a charge that is not counted."
+                      onChange={(qty) => onPatch(adj.id, { qty })}
+                    />
+                    {type?.unit === "rft" && (
+                      <Button
+                        variant="icon"
+                        title={`Perimeter of every piece in this section: ${perimeter.toFixed(2)} rft`}
+                        onClick={() => onPatch(adj.id, { qty: Number(perimeter.toFixed(2)) })}
+                      >
+                        rft
+                      </Button>
+                    )}
+                  </div>
                 </td>
 
-                <td>
-                  {perUnit ? (
-                    <div className="pair">
-                      <NumberField
-                        value={adj.qty}
-                        width={72}
-                        onChange={(qty) => onPatch(adj.id, { qty })}
-                      />
-                      {type?.unit === "rft" && (
-                        <Button
-                          variant="icon"
-                          title={`Perimeter of every piece in this section: ${perimeter.toFixed(2)} rft`}
-                          onClick={() =>
-                            onPatch(adj.id, { qty: Number(perimeter.toFixed(2)) })
-                          }
-                        >
-                          rft
-                        </Button>
-                      )}
-                    </div>
-                  ) : (
-                    <span className="muted-2">—</span>
-                  )}
-                </td>
-
-                <td>
+                <td className="num">
                   <NumberField
                     value={adj.rate}
                     width={84}
-                    disabled={!perUnit && adj.amount !== null}
+                    title={counted ? "Rate for one" : "The whole charge"}
                     onChange={(rate) => onPatch(adj.id, { rate })}
                   />
                 </td>
 
-                <td>
+                <td className="num">
                   <div className="pair">
                     <NumberField
                       value={a.amount.value.toNumber()}
@@ -125,9 +115,9 @@ export function ChargeTable({
                       title={
                         a.amount.overridden
                           ? `Formula gives ${a.amount.computed.toFixed(2)}`
-                          : perUnit
+                          : counted
                             ? "Qty x rate"
-                            : "Flat rate"
+                            : "The rate, charged once"
                       }
                       onChange={(v) =>
                         onPatch(adj.id, {

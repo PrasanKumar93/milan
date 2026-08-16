@@ -14,6 +14,7 @@ export type PrintUnit = "SQFT" | "SQMT";
 /** dev-plan §2.2. `fixed` adds an allowance; `foot_to_foot` rounds each side up to a whole foot. */
 export type WastageRule = "fixed" | "foot_to_foot";
 
+/** How the charge catalogue describes a charge: counted, or charged once (§2.9). */
 export type ChargeBasis = "per_unit" | "flat";
 
 export interface Line {
@@ -35,7 +36,11 @@ export interface Line {
 export interface Adjustment {
   id: string;
   label: string;
-  basis: ChargeBasis;
+  /**
+   * How many of them. Zero means the charge is not counted — the rate is the
+   * whole charge, and the printed line carries no count, which is how the sheet
+   * writes a document or transport charge (dev-plan §2.9).
+   */
   qty: number;
   rate: number;
   amount: number | null;

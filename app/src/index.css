@@ -524,6 +524,12 @@ table.grid th.num {
   font-variant-numeric: tabular-nums;
 }
 
+/* A heading on the right wants its field under it, including the fields that
+   carry a badge or a button beside them. */
+table.grid td.num .pair {
+  justify-content: flex-end;
+}
+
 /* A row is wide and its cells are far apart, so every other one is tinted to
    keep the eye on the line it is reading. */
 table.grid--zebra tbody tr:nth-child(odd) {

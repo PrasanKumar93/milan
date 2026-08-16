@@ -111,13 +111,12 @@ export function toQuote(parsed: ParsedQuote): Quote {
         new Decimal(0),
       );
 
-      // A charge printed with a count was billed per unit; one printed with only
-      // an amount was a flat figure.
+      // A charge printed with a count was billed by the count; one printed with
+      // only an amount was charged once, and carries no count.
       const adjustments: Adjustment[] = s.extras.map((e, ei) => ({
         id: `${si}-adj-${ei}`,
         label: e.name,
-        basis: e.qty === null ? "flat" : "per_unit",
-        qty: e.qty ?? 1,
+        qty: e.qty ?? 0,
         rate: e.qty ? e.amount / e.qty : e.amount,
         amount: null,
         taxable: true,

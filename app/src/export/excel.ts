@@ -338,9 +338,9 @@ function writeSection(
     const adj = adjustment.adjustment;
     write(sheet, r, 9, adj.label);
 
-    if (adj.basis === "per_unit") {
-      // The quantity prints where the rate column is, as the current sheet does
-      // it; the unit rate lives in the hidden working column beside it.
+    if (adj.qty > 0) {
+      // The count prints where the rate column is, as the current sheet does it;
+      // the rate for one lives in the hidden working column beside it.
       write(sheet, r, 10, adj.qty).alignment = { horizontal: "right" };
       write(sheet, r, 12, adj.rate);
       overridable(
@@ -350,6 +350,7 @@ function writeSection(
         adjustment.amount.computed,
       );
     } else {
+      // Nothing to multiply, so the amount is the charge itself.
       write(sheet, r, 11, adj.amount ?? adj.rate).alignment = { horizontal: "right" };
     }
 

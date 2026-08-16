@@ -167,7 +167,7 @@ export function LineGrid({
                   />
                 </td>
 
-                <td>
+                <td className="num">
                   <NumberField
                     value={line.qty}
                     width={56}
@@ -176,7 +176,7 @@ export function LineGrid({
                   />
                 </td>
 
-                <td>
+                <td className="num">
                   <div className="pair">
                     <NumberField
                       value={l.area.value.toNumber()}
@@ -196,7 +196,7 @@ export function LineGrid({
                   </div>
                 </td>
 
-                <td>
+                <td className="num">
                   <NumberField
                     value={line.rate}
                     width={78}
@@ -204,7 +204,7 @@ export function LineGrid({
                   />
                 </td>
 
-                <td>
+                <td className="num">
                   <div className="pair">
                     <NumberField
                       value={l.amount.value.toNumber()}

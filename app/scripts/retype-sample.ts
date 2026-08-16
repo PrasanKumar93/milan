@@ -129,19 +129,13 @@ for (const [si, section] of sections.entries()) {
       notes.push(`${extra.name} is not in the charge list, typed as an "other"`);
     }
 
-    const perUnit = extra.qty !== null;
-    await row.locator("select").nth(1).selectOption(perUnit ? "per_unit" : "flat");
-
-    // charge, basis, qty, rate, amount.
+    // charge, qty, rate, amount. A charge the sheet printed without a count is
+    // typed without one, and the rate is then the whole charge.
     const col = (n: number) => row.locator("td").nth(n).locator("input.input--num").first();
-    if (perUnit) {
-      await type(col(2), extra.qty as number);
-      await type(col(3), extra.amount / (extra.qty as number));
-    } else {
-      await type(col(3), extra.amount);
-    }
+    await type(col(1), extra.qty ?? 0);
+    await type(col(2), extra.qty ? extra.amount / extra.qty : extra.amount);
 
-    check(`S${si + 1} ${extra.name}`, await col(4).inputValue(), extra.amount);
+    check(`S${si + 1} ${extra.name}`, await col(3).inputValue(), extra.amount);
   }
 
   const totals = card.locator(".totals");

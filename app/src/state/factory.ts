@@ -65,6 +65,9 @@ export function newSection(inputUnit: InputUnit, product = defaultProduct): Sect
 /**
  * Charges arrive with their catalogue defaults filled in. Polish is the one
  * whose rate depends on the glass, so it is computed from the section (§3.3).
+ *
+ * The catalogue also says whether a charge is normally counted, which sets the
+ * count to one hole or to none at all; either way the operator can change it.
  */
 export function newAdjustment(section: Section, label = chargeTypes[0].label): Adjustment {
   const type = chargeTypeFor(label);
@@ -74,8 +77,7 @@ export function newAdjustment(section: Section, label = chargeTypes[0].label): A
   return {
     id: id("a"),
     label,
-    basis: type?.basis ?? "flat",
-    qty: 1,
+    qty: type?.basis === "per_unit" ? 1 : 0,
     rate,
     amount: null,
     taxable: type?.taxable ?? true,

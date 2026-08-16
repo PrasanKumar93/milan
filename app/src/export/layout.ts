@@ -147,12 +147,14 @@ export function tailRows(computed: ComputedSection, quote: Quote, alone = false)
 
   rows.push(row({ 9: num(formatSheet(computed.rounded.value)) }));
 
+  // A counted charge prints its count — `HOLES 6 180`. One that was not counted
+  // prints the amount alone, the way a document charge always has.
   for (const a of computed.adjustments) {
-    const perUnit = a.adjustment.basis === "per_unit";
+    const counted = a.adjustment.qty > 0;
     rows.push(
       row({
-        7: label(a.adjustment.label, perUnit),
-        ...(perUnit ? { 8: num(formatSheet(a.adjustment.qty)) } : {}),
+        7: label(a.adjustment.label, counted),
+        ...(counted ? { 8: num(formatSheet(a.adjustment.qty)) } : {}),
         9: num(formatSheet(a.amount.value)),
       }),
     );
