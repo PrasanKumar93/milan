@@ -140,45 +140,31 @@ export function LineGrid({
                   )}
                 </td>
 
+                {/*
+                 * The chargeable size is the cut size and nothing else: actual
+                 * plus the allowance, or the next foot up. It is shown rather
+                 * than typed, and a row that needs a different one changes its
+                 * wastage, which is the number that was actually decided.
+                 */}
                 <td>
-                  <div className="pair">
-                    <DimensionField
-                      value={l.chargeableH.value.toNumber()}
-                      unit={unit}
-                      className={l.chargeableH.overridden ? "input--overridden" : "input--derived"}
-                      title={
-                        l.chargeableH.overridden
-                          ? `Formula gives ${showSize(l.chargeableH.computed)}`
-                          : `Actual + ${showSize(l.addedH)}`
-                      }
-                      onChange={(v) =>
-                        onPatchLine(line.id, { chargeableH: overrideOf(l.chargeableH.computed, v) })
-                      }
-                    />
-                    {l.chargeableH.overridden && (
-                      <OverrideDot title={`Formula gives ${showSize(l.chargeableH.computed)}`} />
-                    )}
-                  </div>
+                  <DimensionField
+                    value={l.chargeableH.value.toNumber()}
+                    unit={unit}
+                    disabled
+                    className="input--derived"
+                    title={`Actual + ${showSize(l.addedH)}`}
+                    onChange={() => {}}
+                  />
                 </td>
                 <td>
-                  <div className="pair">
-                    <DimensionField
-                      value={l.chargeableW.value.toNumber()}
-                      unit={unit}
-                      className={l.chargeableW.overridden ? "input--overridden" : "input--derived"}
-                      title={
-                        l.chargeableW.overridden
-                          ? `Formula gives ${showSize(l.chargeableW.computed)}`
-                          : `Actual + ${showSize(l.addedW)}`
-                      }
-                      onChange={(v) =>
-                        onPatchLine(line.id, { chargeableW: overrideOf(l.chargeableW.computed, v) })
-                      }
-                    />
-                    {l.chargeableW.overridden && (
-                      <OverrideDot title={`Formula gives ${showSize(l.chargeableW.computed)}`} />
-                    )}
-                  </div>
+                  <DimensionField
+                    value={l.chargeableW.value.toNumber()}
+                    unit={unit}
+                    disabled
+                    className="input--derived"
+                    title={`Actual + ${showSize(l.addedW)}`}
+                    onChange={() => {}}
+                  />
                 </td>
 
                 <td>

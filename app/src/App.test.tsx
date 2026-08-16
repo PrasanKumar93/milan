@@ -65,14 +65,35 @@ describe("the entry screen", () => {
     expect(firstRow()[2].value).toBe("2135");
   });
 
+  it("shows the cut size but will not be typed over", () => {
+    fillOneLine();
+    const cells = firstRow();
+    expect(cells[3].disabled).toBe(true);
+    expect(cells[4].disabled).toBe(true);
+
+    // The way to cut a row differently is the allowance it was cut by.
+    type(cells[2], "30");
+    expect(firstRow()[3].value).toBe("2030");
+  });
+
   it("flags a typed-over cell and puts it back when asked", () => {
     fillOneLine();
-    type(firstRow()[3], "2500");
+    type(firstRow()[8], "1000");
 
     expect(screen.getByText(/1 value has been typed over the formula/)).toBeTruthy();
     fireEvent.click(screen.getByText("Put everything back on the formula"));
     expect(screen.queryByText(/typed over the formula/)).toBeNull();
-    expect(firstRow()[3].value).toBe("2050");
+    expect(firstRow()[8].value).toBe("1076.25");
+  });
+
+  it("says nothing about a rounding, and names a discount", () => {
+    fillOneLine();
+    // 1076.25 written as 1076 is the rounding doing its job.
+    expect(screen.queryByText("Discount given")).toBeNull();
+
+    type(screen.getByTitle("Total, to the nearest rupee"), "1000");
+    expect(screen.getByText("Discount given")).toBeTruthy();
+    expect(screen.getByText("76.25")).toBeTruthy();
   });
 
   it("takes a glass name the catalogue has never heard of", () => {

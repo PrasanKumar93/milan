@@ -64,7 +64,7 @@ export function warningsFor(computed: ComputedQuote): Warning[] {
 
     // The rounded figure is where a negotiated reduction lands (§2.9), so this
     // names the amount rather than objecting to it.
-    if (s.discount.abs().gt(1)) {
+    if (s.discounted) {
       const pct = s.subtotal.isZero() ? 0 : s.discount.div(s.subtotal).times(100).toNumber();
       const big = Math.abs(pct) > DISCOUNT_WARN_PCT;
       out.push({

@@ -241,7 +241,9 @@ Every editable-derived field behaves the same way:
 | Bulk reset | "Reset to defaults" on the line, the section and the whole quote      |
 | Tooltip    | an `i` icon shows the formula **with this row's numbers substituted** |
 
-The fields that work this way: chargeable height and width, area, rate, line amount, rounded subtotal, and every charge amount. Chargeable size is the one the operators will touch most — mirror, fluted and any odd piece — so its reset needs to be immediately reachable, and the bulk reset must restore a whole line or section of chargeable sizes in one action after a size list is re-keyed.
+The fields that work this way: area, rate, line amount, rounded subtotal, and every charge amount.
+
+**Chargeable size is the exception, and is shown rather than typed.** The team asked for it to be locked: the cut size is not a decision, it is the actual size plus the allowance, or the next foot up. Leaving it editable offered two ways to say the same thing and made the wastage column look advisory. A row that has to be cut differently now changes its **wastage**, which is the number that was actually decided, and the cut size follows — one place to look when a piece is queried. The engine still carries the override (the sample quotations contain typed-over cut sizes, and the Excel workbook can still be edited), so a restored draft or an imported quote keeps its figures and its badge; the screen simply no longer creates one.
 
 **The override badge is what makes this safe, and it is not optional.** Full editability is exactly how SHYAM LAL 7154 ended up with eleven typed-over area cells that overcharged by 6–15% (§9). The difference between that spreadsheet and this app is that here a manually-set area is visibly flagged, listed in a "N values overridden on this quote" summary before download, and resettable in one click. Without the badge we would faithfully rebuild the bug we just found.
 
@@ -249,6 +251,8 @@ The `i` tooltip should show real numbers, not algebra:
 
 > Area = 2972 × 882 ÷ 1,000,000 × 1 qty = **2.621304 SQMT**
 > Chargeable = actual 2922 + 50 mm wastage
+
+The chargeable cell keeps its tooltip even though it is locked — it is the sentence that explains where the number came from.
 
 ### 2.9 Charges, discounts and adjustments — one generic list
 
@@ -290,6 +294,8 @@ Confirmed with the team that **specific customers get discounts**, which explain
 
 **A discount does not print as its own line, and is not an adjustment.** Today it is absorbed into the rounded subtotal, and the PDF must keep looking exactly as it does now (§2.10). Since adjustments now always print, a discount is instead recorded by **overriding the rounded subtotal**, which is already an editable field (§2.3) with an override badge and a reset. The screen shows the computed subtotal beside the typed one so the gap is explicit; the PDF shows only the typed figure. This reproduces BHOOTH SINGH exactly — the sheet shows `44705` with no explanation — while the operator now sees _why_ it is 44705.
 
+**A rounding is not a discount, and is not reported as one.** Rounding to the rupee always moves the figure by less than a rupee, so the "Discount given" line only appears once the gap is more than that — `95.40` written as `95` says nothing, `95.40` written as `90` says ₹5.40. A line that appeared on every quote was a line nobody read. `ROUNDING_GAP` in `core/engine.ts` is the one place that threshold lives, and the §7 warning uses the same one.
+
 ### 2.10 Transparent on screen, unchanged on paper
 
 The governing rule for the whole product:
@@ -303,6 +309,16 @@ What stays on screen only: the wastage column, override badges and the override 
 **The print preview is a full replica of the PDF**, not a table of numbers: company header and GSTIN, all the meta fields, section blocks, summary lines, bank details, terms, notes and signature blocks. Anything less means the operator is checking one document and sending another. This is now enforced rather than promised: `export/layout.ts` describes the document once, and the preview and the PDF are two renderings of the same rows.
 
 One typo is corrected on the way: the column head reads ACTUAL SIZE, not `ACTAUL SIZE`. It is on the list in §8, and a heading is the safest place in the document to fix one.
+
+**The sheet never says a figure twice**, and three habits follow from that. Each was read off all 47 samples, and each is now a rule in `export/layout.ts`:
+
+| The sheet prints | When | Samples |
+|---|---|---|
+| the qty / area / subtotal row above the rounding | only where the section has more than one line | 21 one-line sections, none with the row |
+| the taxable base as a bare figure under the charges | only where GST is worked out on it | 11 of 11 with GST, 27 of 29 without |
+| a section total labelled with the glass, and the summary block repeating them | only where the quote has more than one section | 38 one-section quotes, none labelled |
+
+A one-section quote therefore ends: rounded subtotal, charges, GST if any, `TOTAL AMOUNT`. Nothing between them. This was found by typing RAJU 6363 into the app and putting the result beside the original — the preview was three rows longer than the sheet.
 
 A useful consequence: because the PDF is fixed, the four sample quotations double as regression tests — any change that alters their output is a bug.
 
@@ -478,6 +494,8 @@ Because the deliverable is a downloaded file, there is nothing in the browser wo
 
 **Phase 5 — Download Excel. Done.** `app/src/export/excel.ts` writes the quote as a working sheet: the same page as the PDF, with live formulas behind every derived figure, the wastage allowance and charge rates in hidden columns, and A4 print setup so it prints as the proforma. `excel.test.ts` recalculates the workbook the way Excel would and checks it lands on the same totals as the engine — including after a size is changed, which is the whole point of the export.
 
+**Phase 5a — Retyping the samples through the screen. Done.** The tests prove the arithmetic; they do not prove the screen is wired to it. `npm run retype -- 6363` drives the running app in Chrome, types a sample's sizes, rates and charges the way an operator would, and compares every cell the app filled in for itself — chargeable sizes, areas, amounts, charge amounts, totals, GST and the grand total — against the figures on the original PDF, then screenshots both tabs and downloads the PDF and the workbook. Across the 17 samples that can be retyped from their inputs, **535 of 540 printed figures come out identical**; the five are the ±₹1 rounded subtotals an operator typed by hand (§2.3). It is also how the three printing habits in §2.10 were found.
+
 **Phase 6 — Save and reopen a quote file.** Only if revisions turn out to matter: a JSON download beside the PDF and an Open button to load it back (§5). Not planned for v1.
 
 **Out of scope for v1** (confirmed): stored quotations and any quote list, tax invoices, payments, production tracking, GSTR-1, cutting-list optimisation.
@@ -524,6 +542,8 @@ None of the three errors is possible once areas and taxes are computed rather th
 - Platform: **React + Vite static site on GitHub Pages**, no backend, masters in JSON.
 - **Nothing is filed away.** Fill the form, download the PDF; the PDF is the record. The only storage is a crash-recovery copy of the quote being typed (§5).
 - **Generic over rule-based**: computed defaults, everything overridable, override badges, formula tooltips (§2.8).
+- **Chargeable size is shown, not typed** — the one locked field, because it is the actual size plus the allowance and nothing else. A row cut differently changes its wastage (§2.8).
+- **A rounding under ₹1 is not called a discount** on screen or in the warnings (§2.9).
 - Charges are **one adjustments list**, flat or per-unit only, and **every charge prints** (§2.9).
 - **Two wastage rules: fixed and foot to foot**, set **per section** and defaulted from the glass type (§2.2). Revises the v2 position that mirror and fluted were unexplainable one-offs.
 - **Foot to foot rounds by the overhang** — 8.2 ft becomes 9 ft, 8 ft stays 8 ft (§2.2).
@@ -533,6 +553,8 @@ None of the three errors is possible once areas and taxes are computed rather th
 - **Finishes and treatments are charges, not products** — a unit price or a flat amount, switchable on the row (§2.9). Polish included, at ₹1 per mm of thickness per running foot (§3.3).
 - **The proforma number is typed**, not generated.
 - **The PDF does not change.** Same format, same content as today; all transparency is on screen (§2.10).
+- **A quote of one section says each figure once** — no subtotal row over a single line, no taxable base without GST, no section total and no summary block (§2.10).
+- **Rounding a subtotal is the operator's, not the app's.** The office rounds up on some sheets and down on others (4 up, 5 down, 39 that cannot tell them apart), so the app rounds to the nearest rupee, shows the exact figure beside it, and lets the field be typed over (§2.3, §2.9).
 - **Standard fixed wastage is 50 mm / 2 in; 30 mm is a per-customer concession.** Editable at quote and line level.
 - **Wastage is one number for both sides** — never deliberately different per dimension (§2.2).
 - **Kaccha (raw) glass carries wastage too**, same as toughened.

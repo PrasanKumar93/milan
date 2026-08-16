@@ -15,6 +15,13 @@ import { areaOf, toNextFoot } from "./units";
  * summary are built on.
  */
 
+/**
+ * Rounding a subtotal to the rupee moves it by less than a rupee, so a gap up to
+ * this is the rounding and nothing else. Anything beyond it was typed, and that
+ * is what the business calls a discount (dev-plan §2.9).
+ */
+export const ROUNDING_GAP = 1;
+
 export interface Computed<T = Decimal> {
   value: T;
   overridden: boolean;
@@ -62,6 +69,8 @@ export interface ComputedSection {
   rounded: Computed;
   /** subtotal − rounded. Positive means the operator gave a discount (dev-plan §2.9). */
   discount: Decimal;
+  /** The gap is more than the rounding itself could explain, so it was meant. */
+  discounted: boolean;
   taxableCharges: Decimal;
   untaxedCharges: Decimal;
   taxableBase: Decimal;
@@ -181,6 +190,7 @@ export function computeSection(section: Section, quote: Quote): ComputedSection 
     subtotal,
     rounded,
     discount,
+    discounted: discount.abs().gt(ROUNDING_GAP),
     taxableCharges,
     untaxedCharges,
     taxableBase,

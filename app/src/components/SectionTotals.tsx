@@ -50,7 +50,12 @@ export function SectionTotals({
         </div>
       </div>
 
-      {!c.discount.isZero() && (
+      {/*
+       * Only a gap the rounding cannot explain is worth a line. Rounding 95.40
+       * to 95 is not a discount and saying so every time taught the operator to
+       * ignore the row; typing 90 over it is, and that is what this reports.
+       */}
+      {c.discounted && (
         <Row
           label={c.discount.isPositive() ? "Discount given" : "Added on rounding"}
           value={formatMoney(c.discount.abs())}

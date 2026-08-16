@@ -272,6 +272,15 @@ h3 {
   color: var(--text-secondary);
 }
 
+/*
+ * A cut size is disabled because it is worked out, not because it is
+ * unavailable, and it is read off the screen all day. It keeps the weight of the
+ * size it came from rather than fading like a field that is switched off.
+ */
+.input--derived:disabled {
+  color: var(--text-secondary);
+}
+
 .input--overridden {
   border-color: var(--warn);
   background: var(--warn-soft);

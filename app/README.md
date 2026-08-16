@@ -59,9 +59,11 @@ Because nothing is filed away, **Download Excel** is the reopen button. The shee
 
 Two details worth knowing. A figure that was typed over in the app is written as that number rather than a formula, with a note recording what the formula gives — a revision must not quietly undo a deliberate override. And every formula is written with its answer cached beside it, so the file reads correctly in Google Sheets or on a phone, which never recalculate. `excel.test.ts` recalculates the workbook the way Excel would and checks it agrees with the engine.
 
-## Nothing on screen is read-only
+## Almost nothing on screen is read-only
 
-Every derived cell — chargeable size, area, amount, the rounded subtotal — is an input pre-filled by the formula. Typing over one is an override: it is stored as an explicit number, marked in the cell, listed before the quote is printed, and reset with one click. The formula that filled it in is in the cell's tooltip. This is deliberate; the operators have always been able to fudge a figure in Excel and the app is not the place to start refusing (dev-plan §2.8).
+Every derived cell — area, amount, charge amounts, the rounded subtotal — is an input pre-filled by the formula. Typing over one is an override: it is stored as an explicit number, marked in the cell, listed before the quote is printed, and reset with one click. The formula that filled it in is in the cell's tooltip. This is deliberate; the operators have always been able to fudge a figure in Excel and the app is not the place to start refusing (dev-plan §2.8).
+
+The chargeable size is the exception. It is the actual size plus the allowance, or the next foot up, so it is shown and not typed; a row that must be cut differently changes its **wastage** and the cut size follows. The engine still understands a typed-over cut size — the samples contain them and the workbook can be edited — but the screen no longer creates one.
 
 ## Two things to know before changing the engine
 
