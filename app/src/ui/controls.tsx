@@ -80,12 +80,18 @@ export function Select<T extends string>({
 /**
  * A numeric input that keeps what the operator typed until they leave the field,
  * so half-finished numbers survive. `parse` decides what counts as a value, which
- * is how inch fractions get in.
+ * is how inch fractions get in, and `accepts` decides what may be typed at all:
+ * a letter never becomes a size or a rate, so it is refused at the keystroke
+ * rather than left on screen next to a figure that no longer matches it.
+ *
+ * A plain `type="number"` would do none of this — it takes "1e4", refuses
+ * "33 1/4", and hangs a spinner off every cell of the grid.
  */
 function LooseNumberInput({
   value,
   onChange,
   parse,
+  accepts,
   format,
   width,
   disabled,
@@ -96,6 +102,8 @@ function LooseNumberInput({
   value: number;
   onChange: (v: number) => void;
   parse: (text: string) => number | null;
+  /** What the field will hold mid-typing, half-finished numbers included. */
+  accepts: RegExp;
   format: (v: number) => string;
   width?: number;
   disabled?: boolean;
@@ -119,10 +127,13 @@ function LooseNumberInput({
       disabled={disabled}
       title={title}
       placeholder={placeholder}
+      inputMode="decimal"
       style={width ? { width } : undefined}
       onChange={(e) => {
-        setDraft(e.target.value);
-        const parsed = parse(e.target.value);
+        const text = e.target.value;
+        if (!accepts.test(text)) return;
+        setDraft(text);
+        const parsed = parse(text);
         if (parsed !== null) onChange(parsed);
       }}
       onBlur={() => setDraft(null)}
@@ -162,6 +173,7 @@ export function NumberField({
       className={className}
       title={title}
       placeholder={placeholder}
+      accepts={/^\d*\.?\d*$/}
       parse={(text) => {
         if (text.trim() === "") return 0;
         const n = Number(text);
@@ -178,8 +190,14 @@ export function NumberField({
 
 /**
  * Dimension entry. In inch mode it accepts and prints eighths — "33 1/4" —
- * because 96 of the 137 inch lines in the samples are written that way.
+ * because 96 of the 137 inch lines in the samples are written that way, so a
+ * space and a slash are part of a number here and nowhere else.
  */
+const DIMENSION_CHARS: Record<InputUnit, RegExp> = {
+  mm: /^\d*\.?\d*$/,
+  inch: /^[\d./ ]*$/,
+};
+
 export function DimensionField({
   value,
   unit,
@@ -205,6 +223,7 @@ export function DimensionField({
       disabled={disabled}
       className={className}
       title={title}
+      accepts={DIMENSION_CHARS[unit]}
       parse={(text) => (text.trim() === "" ? 0 : parseDimension(text, unit))}
       format={(v) => (unit === "inch" ? formatInches(v) : String(v))}
     />
@@ -263,14 +282,16 @@ export function Tabs<T extends string>({
 export function Pill({
   active,
   onClick,
+  title,
   children,
 }: {
   active: boolean;
   onClick: () => void;
+  title?: string;
   children: ReactNode;
 }) {
   return (
-    <button type="button" className="pill" aria-pressed={active} onClick={onClick}>
+    <button type="button" className="pill" aria-pressed={active} title={title} onClick={onClick}>
       {children}
     </button>
   );

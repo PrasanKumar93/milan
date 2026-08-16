@@ -2,12 +2,18 @@ import type Decimal from "decimal.js";
 import type { ComputedSection } from "../core/engine";
 import type { Adjustment } from "../core/types";
 import { CUSTOM_CHARGE, chargeTypeFor, chargeTypes } from "../data/masters";
-import { Button, NumberField, OverrideDot, Pill, Select, TextField } from "../ui/controls";
+import { Button, NumberField, Select, TextField } from "../ui/controls";
+import { ChargeColumns } from "./columns";
 
 /**
  * Extra charges for a section: holes, cutouts, polish, transport and the rest.
  * Every charge added here prints — there is no on-screen-only charge, because a
- * customer who is billed for a cutout is shown the cutout (dev-plan §2.7).
+ * customer who is billed for a cutout is shown the cutout (dev-plan §2.7) — and
+ * every one of them is taxed with the glass, so there is nothing to decide per
+ * row beyond how many and at what rate (§2.9).
+ *
+ * The heading stays on screen with no charges under it, so that the Add charge
+ * button below has something to be adding to.
  */
 export function ChargeTable({
   computed,
@@ -23,18 +29,17 @@ export function ChargeTable({
   onSetLabel: (adjustmentId: string, label: string) => void;
   onRemove: (adjustmentId: string) => void;
 }) {
-  if (computed.adjustments.length === 0) return null;
-
   return (
     <div className="grid-wrap">
       <table className="grid grid--zebra">
+        <ChargeColumns />
         <thead>
           <tr>
             <th>Charge</th>
             <th className="num">Qty</th>
+            <th />
             <th className="num">Rate</th>
             <th className="num">Amount</th>
-            <th>GST</th>
             <th />
           </tr>
         </thead>
@@ -75,69 +80,49 @@ export function ChargeTable({
                  * way a document charge has always been written.
                  */}
                 <td className="num">
-                  <div className="pair">
-                    <NumberField
-                      value={adj.qty}
-                      width={72}
-                      blankAtZero
-                      placeholder="—"
-                      decimals={2}
-                      title="How many. Leave it empty for a charge that is not counted."
-                      onChange={(qty) => onPatch(adj.id, { qty })}
-                    />
-                    {type?.unit === "rft" && (
-                      <Button
-                        variant="icon"
-                        title={`Perimeter of every piece in this section: ${perimeter.toFixed(2)} rft`}
-                        onClick={() => onPatch(adj.id, { qty: Number(perimeter.toFixed(2)) })}
-                      >
-                        rft
-                      </Button>
-                    )}
-                  </div>
+                  <NumberField
+                    value={adj.qty}
+                    width={56}
+                    blankAtZero
+                    placeholder="—"
+                    decimals={2}
+                    title="How many. Leave it empty for a charge that is not counted."
+                    onChange={(qty) => onPatch(adj.id, { qty })}
+                  />
+                </td>
+
+                {/* A charge has no area, so the fill-in-the-perimeter button for
+                    polish stands in that column, next to the count it fills. */}
+                <td>
+                  {type?.unit === "rft" && (
+                    <Button
+                      variant="icon"
+                      title={`Perimeter of every piece in this section: ${perimeter.toFixed(2)} rft`}
+                      onClick={() => onPatch(adj.id, { qty: Number(perimeter.toFixed(2)) })}
+                    >
+                      Use {perimeter.toFixed(2)} rft
+                    </Button>
+                  )}
                 </td>
 
                 <td className="num">
                   <NumberField
                     value={adj.rate}
-                    width={84}
+                    width={78}
                     title={counted ? "Rate for one" : "The whole charge"}
                     onChange={(rate) => onPatch(adj.id, { rate })}
                   />
                 </td>
 
                 <td className="num">
-                  <div className="pair">
-                    <NumberField
-                      value={a.amount.value.toNumber()}
-                      width={96}
-                      className={a.amount.overridden ? "input--overridden" : "input--derived"}
-                      title={
-                        a.amount.overridden
-                          ? `Formula gives ${a.amount.computed.toFixed(2)}`
-                          : counted
-                            ? "Qty x rate"
-                            : "The rate, charged once"
-                      }
-                      onChange={(v) =>
-                        onPatch(adj.id, {
-                          amount: a.amount.computed.eq(v) ? null : v,
-                        })
-                      }
-                    />
-                    {a.amount.overridden && (
-                      <OverrideDot title={`Formula gives ${a.amount.computed.toFixed(2)}`} />
-                    )}
-                  </div>
-                </td>
-
-                <td>
-                  <Pill
-                    active={adj.taxable}
-                    onClick={() => onPatch(adj.id, { taxable: !adj.taxable })}
-                  >
-                    {adj.taxable ? "Taxed" : "No GST"}
-                  </Pill>
+                  <NumberField
+                    value={a.amount.value.toNumber()}
+                    width={96}
+                    disabled
+                    className="input--derived"
+                    title={counted ? "Qty x rate" : "The rate, charged once"}
+                    onChange={() => {}}
+                  />
                 </td>
 
                 <td>

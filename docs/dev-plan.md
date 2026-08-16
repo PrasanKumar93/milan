@@ -83,7 +83,7 @@ Fixed          chargeable = actual + wastage        (same wastage on both sides)
 Foot to foot   chargeable = each side rounded up to a whole foot
 ```
 
-Stated by the customer: *"For clear toughened glass 50 mm or 2 inch wastage. Black, brown fluted, extra clear and mirror are all feet to feet."*
+First stated by the customer as *"For clear toughened glass 50 mm or 2 inch wastage. Black, brown fluted, extra clear and mirror are all feet to feet"*, and then narrowed by them: **mirror is the foot-to-foot glass, and everything else takes the fixed allowance.** The masters follow the narrower answer — only the two mirror entries in `products.json` start a section on foot to foot — because it is the later word and because the wider list rested on one fluted line and one extra-clear line, neither of which the rule fits well (§2.7). The rule is a section setting either way, so a fluted job that does turn out to be measured foot to foot is one click, not a code change.
 
 **Only the overhang moves the size up: 8.2 ft becomes 9 ft, and 8 ft stays 8 ft.** Confirmed with the customer, and it applies to both sides independently. This is `ceil`, not "always add a foot" — a piece that already lands on an exact foot is charged as it is.
 
@@ -99,7 +99,9 @@ Testing the rule against every mirror, fluted and extra-clear line in the sample
 | AD GLASS 7176 · 10 MM fluted | 84 × 30 in | 96 × 30 in | 84 × 36 in | neither side (§2.7) |
 | SVM GLASS 7120 · 5 MM mirror | 18 × 24 in | 18 × 24 in | 24 × 24 in | width exact, height charged as-is |
 
-One line lands exactly, three need a hand correction on one side, and one matches neither. That is enough to ship the rule as the computed default with every chargeable size still freely typed over (§2.8) — the operator is correcting one dimension on an occasional large piece, not re-entering the quote. The mismatches are all on jobs where a size was clearly negotiated rather than calculated, which is exactly what the override mechanism is for.
+One line lands exactly, three were charged larger than the rule gives, and one matches neither. That is enough to ship the rule as the computed default: the office is negotiating one dimension on an occasional large piece, not re-entering the quote.
+
+**Decided: the app charges to the next foot, and a sheet that charged something else is left as it is.** G FOCUSS 7178 bills a 2920 mm mirror at 3660 — twelve feet on a piece that is 9.6, and a full mirror sheet, so it may be full-sheet billing or it may be a mistake. Since the cut size is now shown rather than typed (§2.8), and a foot-to-foot row has no wastage box either — the rule ignores the allowance, so the column reads "to next foot" — the app cannot produce that figure at all. Confirmed with the team that this is the right outcome: some old bills carry mistakes, and the app is not required to reproduce them. Two lines in roughly 600. If full-sheet billing turns out to be a real rule, it comes back as a rule rather than as a typed-over cell.
 
 **Wastage is entirely a section-level setting — both the rule and the allowance.** Confirmed with the customer: mirrors are foot to foot, other glass is fixed, and a quote can carry both. PROFORMA 7178 is exactly that — a 10 MM section on a flat 50 mm alongside a 6 MM mirror section on foot to foot.
 
@@ -134,9 +136,9 @@ Confirmed that **the biller decides the wastage on each job** rather than it bei
 
 The apparent asymmetric allowances in the samples are not asymmetric wastage at all — they are foot-to-foot rounding landing differently on each side, which is why that rule (above) removes the need for a two-part wastage column. Under foot to foot the column becomes a read-only display of what the rounding added, shown as `H +150` over `W +270`.
 
-**Chargeable size stays directly editable, as a per-dimension override.** Typing a chargeable height records an override on that dimension and leaves the wastage number alone. This matters for exactly the rows the rule cannot predict: for a large mirror the operator thinks "charge it as 3660 × 915", not "add 743 to the height", and forcing them to compute a delta would be worst precisely where manual entry is most needed. Displaying chargeable greyed-out keeps the wastage column the obvious place to work without closing the other door.
+**The cut size is shown, not typed** (§2.8). v2 kept it editable so that a large mirror could be entered as "charge it as 3660 × 915" rather than as an allowance; the team asked for it to be locked, on the grounds that a cut size which disagrees with the sizes beside it is unexplainable when the piece is queried. A row that has to be cut differently sets its own wastage, and both sides move together.
 
-A line carrying a chargeable override, or a wastage differing from the quote default, is flagged with a dot, so a stray allowance is visible without opening anything.
+A line carrying a wastage different from its section's is flagged with a dot, so a stray allowance is visible without opening anything.
 
 **Entry grid header follows the sheet's two-level layout** — a group heading `ACTUAL SIZE (mm)` spanning `HEIGHT` and `WIDTH` sub-labels, each sitting directly over its own box, and the same for `CHARGEABLE`. This is the layout the operators already read every day. The header is sticky so it stays visible on long quotes.
 
@@ -154,7 +156,7 @@ section_total    = taxable + CGST + SGST
 grand_total      = Σ section_total
 ```
 
-Extras are **taxed** — they go in before GST. Verified on all 20 GST sections.
+Extras are **taxed** — they go in before GST, all of them, with no per-charge choice (§2.9). Verified on all 20 GST sections.
 
 The rounding step is genuinely manual. Across 50 sections: 38 round to nearest, 3 truncate down, several round up (`3943.212 → 3944`, `6795.371 → 6796`, `1773.389 → 1774`), 2 leave the exact paise, and one is a customer discount booked as a round-off (BHOOTH SINGH: `45942.623 → 44705`, ₹1,238). So this is an **editable field pre-filled with round-to-nearest** (§2.8), and real discounts get their own adjustment line (§2.9). The two quotes the engine does not reproduce exactly are precisely these two operator overrides.
 
@@ -203,7 +205,7 @@ So the SQFT rate is the GST-inclusive equivalent of the SQMT rate, rounded to a 
 
 ### 2.6 Mirror — foot to foot (revised in v3)
 
-v2 recorded this as "a rare large-mirror job with hand-typed sizes, no rule to find". The customer has since named the rule: **mirror is foot to foot** (§2.2). That reading is better than the v2 one because it explains where the numbers came from rather than declaring them arbitrary — 2440 × 610 is exactly 8 ft × 2 ft, and 3660 × 915 is exactly 12 ft × 3 ft. Two of the three lines still needed a hand adjustment on the long side, which is why chargeable size stays editable.
+v2 recorded this as "a rare large-mirror job with hand-typed sizes, no rule to find". The customer has since named the rule: **mirror is foot to foot** (§2.2). That reading is better than the v2 one because it explains where the numbers came from rather than declaring them arbitrary — 2440 × 610 is exactly 8 ft × 2 ft, and 3660 × 915 is exactly 12 ft × 3 ft. Two of the three G FOCUSS lines were still charged a further two feet over what the rule gives, and the app no longer reproduces those (§9).
 
 For the record, the four mirror lines in the sample:
 
@@ -214,7 +216,7 @@ For the record, the four mirror lines in the sample:
 | G FOCUSS 7178                | mm     | 2917 × 628 | 3660 × 915 | +743, +287 |
 | G FOCUSS 7178                | mm     | 2920 × 630 | 3660 × 915 | +740, +285 |
 
-The SVM line is the one that does not fit: 18 × 24 inches is 1.5 ft × 2 ft and was charged as-is, where the rule makes it 24 × 24. It is a small mirror, and both of the lines that contradict foot to foot are small pieces already sized in whole or half feet — consistent with the rule being about not being able to sell the offcut of a large sheet. Not worth encoding on one sample; the operator types 18 over the suggested 24 and the line is flagged.
+The SVM line is the one that does not fit: 18 × 24 inches is 1.5 ft × 2 ft and was charged as-is, where the rule makes it 24 × 24. It is a small mirror, and both of the lines that contradict foot to foot are small pieces already sized in whole or half feet — consistent with the rule being about not being able to sell the offcut of a large sheet. Not worth encoding on one sample: a small mirror charged as measured is a section switched to the fixed allowance at zero, which is two clicks.
 
 The 8 MM black line is now explained rather than exceptional: FAREED BHAI's 24 × 24 stays 24 × 24 because both sides are already on a whole foot, which is what the confirmed rule does.
 
@@ -222,37 +224,27 @@ The 8 MM black line is now explained rather than exceptional: FAREED BHAI's 24 �
 
 The customer names black, brown fluted and extra clear as foot-to-foot glasses along with mirror. The single fluted line in the samples is the one that fits the rule least well: AD GLASS 7176, `84 × 30 → 96 × 30` in at ₹350/sqft. The height went from exactly 7 ft to 8 ft, which the confirmed rule does not do, and the width stayed at 30 in (2.5 ft) rather than going to 36.
 
-Both deviations point the same way: fluted stock comes in fixed-width planks cut only to length, so the width is whatever the plank is and the length is charged generously. That is a plausible product-specific rule but it rests on one line, and inventing it would mean a second rounding rule to maintain. Fluted therefore uses the ordinary foot-to-foot default and the operator corrects the size, which is two edits on a product that has appeared once in 47 quotes. If fluted becomes common, this is the first thing to revisit.
+Both deviations point the same way: fluted stock comes in fixed-width planks cut only to length, so the width is whatever the plank is and the length is charged generously. That is a plausible product-specific rule but it rests on one line, and inventing it would mean a second rounding rule to maintain.
 
-### 2.8 Design principle — computed default, always overridable
+**Fluted therefore starts on the fixed allowance**, with mirror the only glass that starts foot to foot (§2.2). The customer's later answer and the evidence agree here: the one fluted line in 47 quotes does not follow foot to foot on either side, so defaulting it to that rule would have put a warning on the section every time it was quoted correctly. If fluted becomes common, this is the first thing to revisit.
 
-**Decided: the engine suggests, the operator decides.** Every derived value in a quote is a normal editable field pre-filled with a computed default. Nothing is locked.
+### 2.8 Design principle — decisions are typed, consequences are worked out
 
-This is the right model because it matches what the samples actually show. Wastage varies by customer, the rounded subtotal gets adjusted by hand, some customers get discounts, mirror and fluted sizes are typed in, and rates are negotiated per job. Encoding rules for each of those would produce a system that is wrong in a different way every month. One generic mechanism covers all of it, including the cases we have never seen.
+**Decided: what was measured or agreed is typed; what follows from it is shown.** The v2 rule was the opposite — every derived cell was editable and an override was merely flagged — and the team asked, cell by cell, for the derived ones to be locked. The line where they drew it is a good one, so it is now the rule:
 
-Every editable-derived field behaves the same way:
+| Typed                                                              | Worked out and greyed                        |
+| ------------------------------------------------------------------ | -------------------------------------------- |
+| actual height and width, wastage, count, rate                      | chargeable height and width, area, amount    |
+| charge name, count and rate                                        | charge amount                                |
+| the rounded subtotal — the one figure the office genuinely decides | the subtotal, the taxable base, GST, totals  |
 
-|            |                                                                       |
-| ---------- | --------------------------------------------------------------------- |
-| Default    | computed from the formula                                             |
-| State      | `auto` until the operator types, then `manual`                        |
-| Indicator  | a small dot/badge marks any manually overridden field                 |
-| Reset      | one click restores the computed value                                 |
-| Bulk reset | "Reset to defaults" on the line, the section and the whole quote      |
-| Tooltip    | an `i` icon shows the formula **with this row's numbers substituted** |
+Each of the locked cells keeps the tooltip that says where its number came from — "Actual + 50", "Chargeable H x W x qty", "Qty x rate" — so nothing becomes unexplained by being locked.
 
-The fields that work this way: area, rate, line amount, rounded subtotal, and every charge amount.
+**Why this way round.** A derived cell that disagrees with the numbers beside it is how a wrong bill gets printed: SHYAM LAL 7154 has eleven typed-over area cells that overcharge by 6–15% (§9), and every one of them still shows the sizes it does not match. Locking them removes that failure entirely rather than reporting it after the fact. The generality is not lost either, because every one of those cells has a typed input behind it: a piece that must be cut differently changes its **wastage**, a price that must come out differently changes its **rate**, and a bill that must come out differently changes its **rounded subtotal**. Each of those is the number that was actually decided, which is also the number to look at when the customer queries the piece.
 
-**Chargeable size is the exception, and is shown rather than typed.** The team asked for it to be locked: the cut size is not a decision, it is the actual size plus the allowance, or the next foot up. Leaving it editable offered two ways to say the same thing and made the wastage column look advisory. A row that has to be cut differently now changes its **wastage**, which is the number that was actually decided, and the cut size follows — one place to look when a piece is queried. The engine still carries the override (the sample quotations contain typed-over cut sizes, and the Excel workbook can still be edited), so a restored draft or an imported quote keeps its figures and its badge; the screen simply no longer creates one.
+**The engine still carries overrides, and the badge still exists.** The sample quotations contain typed-over cut sizes and areas, the exported workbook can be edited and reprinted (§6.3), and a draft saved by an earlier build may hold one. Such a value keeps its dot and is listed in the override summary with the formula's figure beside it, and one click puts it back. What has gone is the screen's ability to create one.
 
-**The override badge is what makes this safe, and it is not optional.** Full editability is exactly how SHYAM LAL 7154 ended up with eleven typed-over area cells that overcharged by 6–15% (§9). The difference between that spreadsheet and this app is that here a manually-set area is visibly flagged, listed in a "N values overridden on this quote" summary before download, and resettable in one click. Without the badge we would faithfully rebuild the bug we just found.
-
-The `i` tooltip should show real numbers, not algebra:
-
-> Area = 2972 × 882 ÷ 1,000,000 × 1 qty = **2.621304 SQMT**
-> Chargeable = actual 2922 + 50 mm wastage
-
-The chargeable cell keeps its tooltip even though it is locked — it is the sentence that explains where the number came from.
+**What can still be typed over, and is still flagged:** a row cut at an allowance other than the section's, and the rounded subtotal (§2.9). Both are listed in the pre-download summary with a reset for the whole quote. Per-section reset has gone with the rest — with three typed cells per row there was nothing for it to do that its neighbours did not, and "Reset section" left the operator guessing what it would take back.
 
 ### 2.9 Charges, discounts and adjustments — one generic list
 
@@ -263,10 +255,11 @@ Adjustment {
   label      picked from the charge catalogue, or free text via "Others"
   qty        how many. 0 means the charge is not counted
   rate       rupees for one, or the whole charge where there is no count
-  amount     qty x rate, or the rate alone, still overridable
-  taxable    default true — goes in before GST
+  amount     qty x rate, or the rate alone — worked out, not typed (§2.8)
 }
 ```
+
+**There is no taxable flag either.** v2 gave each charge one, defaulting to true. Every charge in all 47 samples is taxed, and the team confirmed the rule as they think of it: GST is decided once for the quote, and a quote with GST charges it on the glass and on the holes alike. A per-row switch offered a combination that has never been quoted and that nobody could explain on the printed document, so the column is gone and the charges go into the taxable base with the glass.
 
 **There is no basis field.** v2 had one — per-unit, flat, and a percent that was dropped early — and the team then asked for the flat option to go too: every charge is a count and a rate, and a one-off charge is simply a rate with nothing to count. Removing the column removed a decision that was already implied by what was typed in the two boxes beside it.
 
@@ -275,6 +268,8 @@ Adjustment {
 **Every adjustment prints.** v2 gave adjustments a print flag; confirmed with the team that a charge added to a quote is a charge shown on the quote, so the flag is gone and the column with it. Print flags still exist elsewhere (§2.10) — just not here.
 
 **Every adjustment is optional and nothing is pre-added.** A section starts with an empty list; the operator clicks **Add charge**, and the row arrives with the first catalogue entry selected and its rate pre-filled, and its count set to one where the catalogue says the charge is normally counted — all still editable. **12 of 47 quotes carry no adjustments at all**, so anything auto-added would be wrong more often than right.
+
+**The charges table keeps its heading with nothing under it, and Add charge sits below it** — the same shape as the grid and its Add line button above. An empty section then says what a charge would be made of before one exists, and the two buttons read down the card in the order the work happens: sizes, then extras.
 
 **The charge name is a dropdown over the catalogue in §3.1, with an `Others…` entry that reveals a free-text box.** v2 proposed one-click chips for the three most common charges; that was replaced because it splits the interaction in two — a chip for some charges and a dropdown for the rest — where a single Add-charge button matched to the Add-line button beside it is one thing to learn. The dropdown is also what kills the spelling drift in §8, and `Others…` means an unforeseen charge never needs a code change.
 
@@ -409,8 +404,7 @@ RateCard           effective_from
 RateCardItem       product_id, sqmt_rate, sqft_rate
 ChargeType         name, basis (per_unit | flat — only sets the starting
                    count on a new row, §2.9), default_rate,
-                   rate_per_thickness_mm,   (polish only, §3.3)
-                   default_taxable
+                   rate_per_thickness_mm    (polish only, §3.3)
 Shape              BLOCK, DRW, TEMPLATE, MIRROR
 Quotation          number, date, customer_id, input_unit, print_unit,
                    gst_applicable, project_remark,
@@ -421,17 +415,17 @@ QuotationSection   quotation_id, product_id, rate, rounded, sort_order,
                    wastage                  (allowance under the fixed rule)
 QuotationLine      section_id, sl_no, shape, actual_h, actual_w,
                    wastage,                 (one value, both sides, not printed)
-                   chargeable_h, chargeable_w,   (derived, individually overridable)
+                   chargeable_h, chargeable_w,   (derived, shown not typed)
                    qty, area, rate, amount
-Adjustment         section_id, sort_order, label, qty, rate, amount, taxable
+Adjustment         section_id, sort_order, label, qty, rate, amount
                    (qty 0 means not counted — the rate is the charge, §2.9)
 ```
 
-Every derived field is stored as `{ value, source: 'auto' | 'manual' }` so the UI can show override badges and offer a reset (§2.8). Fields that carry this: `chargeable_h`, `chargeable_w`, `area`, `rate`, `amount`, `rounded`, and each adjustment's `amount`.
+Every derived field is stored as `{ value, source: 'auto' | 'manual' }` so a figure that came from somewhere else keeps its badge and its reset (§2.8). Fields that carry this: `chargeable_h`, `chargeable_w`, `area`, `amount`, `rounded`, and each adjustment's `amount`. Only `rounded` — and a line's `wastage`, against the section's — is set that way from the screen.
 
 **HSN is not in the model.** Every section of all 47 samples prints `7007`, so it is one value in the company master rather than a column on the product and a copy on every section. If a product ever needs a different code, it goes back on the product — but duplicating a constant in three places to prepare for that is how the codes drift apart.
 
-Changes from v2: wastage is one value rather than `wastage_h` / `wastage_w` (§2.2); **both** `wastage_rule` and `wastage` sit on the section, defaulted from the product and the input unit; adjustments lose `sign`, `base`, `print` and now `basis` too (§2.9); both `internal_note` fields are gone (§2.10); `hsn_code` is gone from the product and the section; products gain `short_code` for the summary block and `wastage_rule` as the source of the section default.
+Changes from v2: wastage is one value rather than `wastage_h` / `wastage_w` (§2.2); **both** `wastage_rule` and `wastage` sit on the section, defaulted from the product and the input unit; adjustments lose `sign`, `base`, `print`, and now `basis` and `taxable` too (§2.9); both `internal_note` fields are gone (§2.10); `hsn_code` is gone from the product and the section; products gain `short_code` for the summary block and `wastage_rule` as the source of the section default.
 
 Store dimensions in the unit they were entered, with the unit recorded. Persist computed `area` and `amount` on the row so reprinting an old quote never changes if a rate card is edited later.
 
@@ -490,13 +484,15 @@ Because the deliverable is a downloaded file, there is nothing in the browser wo
 
 **Phase 2 — Masters as JSON. Done.** `app/src/data/` holds company, products (§3.2), charge types (§3.1) and the rate card, behind a typed loader. `app/src/state/factory.ts` builds a new quote, section, line or charge with every default already filled in — which is also the only place those defaults are decided. `app/src/storage/draft.ts` is crash protection for the quote in progress, and is the whole of storage (§5).
 
-**Phase 3 — Quotation entry. Done.** `app/src/components/` and `app/src/ui/`: the mockup as a working screen. Multi-section editor, the grid with its two-level header, independent input-unit / print-unit / GST settings, the per-section wastage rule and allowance, inch fractions typed as `33 1/4`, the charge table with its catalogue and free-text escape hatch, and the override mechanism from §2.8 — every derived cell is an editable field carrying its formula in its tooltip, marked when typed over, resettable per row, per section or across the quote. `PrintView` is the document itself, so "what prints" is the same component the PDF will be built from. The §7 warnings are in `core/validate.ts` and are gathered beside the override list. `App.test.tsx` types a quote the way an operator would and checks the numbers on screen.
+**Phase 3 — Quotation entry. Done.** `app/src/components/` and `app/src/ui/`: the mockup as a working screen. Multi-section editor, the grid with its two-level header, independent input-unit / print-unit / GST settings, the per-section wastage rule and allowance, inch fractions typed as `33 1/4`, the charge table with its catalogue and free-text escape hatch, and the split from §2.8 — decisions typed into fields that take numbers only, consequences worked out and greyed with their formula in the tooltip, and a badge and a reset behind any figure that arrives disagreeing with its formula. `PrintView` is the document itself, so "what prints" is the same component the PDF will be built from. The §7 warnings are in `core/validate.ts` and are gathered beside the override list. `App.test.tsx` types a quote the way an operator would and checks the numbers on screen.
 
 **Phase 4 — Download PDF. Done.** `app/src/export/`: `layout.ts` describes the document once — rows, columns, spans and number formats — and both the preview and the PDF are built from it, so they cannot drift apart. `pdf.ts` renders it through pdfmake at A4 (the sheet exports at US Letter, which is scaled at the printer anyway) and hands it to a download. A share-to-WhatsApp button was built and then dropped: the office already sends the downloaded file the way it always has, and a second button that behaves differently on desktop and on a phone was clutter on the one screen that has to stay fast. `layout.test.ts` asserts the document reproduces PROFORMA 7178 line for line against the text of the original PDF; `npm run sample:pdf 7178` renders any sample so the two pages can be put side by side. Downloading clears the draft (§5). **The app is usable day to day from here.**
 
 **Phase 5 — Download Excel. Done.** `app/src/export/excel.ts` writes the quote as a working sheet: the same page as the PDF, with live formulas behind every derived figure, the wastage allowance and charge rates in hidden columns, and A4 print setup so it prints as the proforma. `excel.test.ts` recalculates the workbook the way Excel would and checks it lands on the same totals as the engine — including after a size is changed, which is the whole point of the export.
 
 **Phase 5a — Retyping the samples through the screen. Done.** The tests prove the arithmetic; they do not prove the screen is wired to it. `npm run retype -- 6363` drives the running app in Chrome, types a sample's sizes, rates and charges the way an operator would, and compares every cell the app filled in for itself — chargeable sizes, areas, amounts, charge amounts, totals, GST and the grand total — against the figures on the original PDF, then screenshots both tabs and downloads the PDF and the workbook. Across the 17 samples that can be retyped from their inputs, **535 of 540 printed figures come out identical**; the five are the ±₹1 rounded subtotals an operator typed by hand (§2.3). It is also how the three printing habits in §2.10 were found.
+
+`npm run retype -- all` sweeps every sample in one browser and prints only the cells that differ, and `npm run verify` is build, tests and that sweep together. **It is a command to run, not a habit.** It takes minutes and needs the dev server up, so it belongs before a release and after anything touching `core/`, `export/` or `data/`; a change to spacing or wording is covered by `npm test` in three seconds. Nothing is gained by re-proving the arithmetic after moving a button, and the waiting is paid for by the person watching.
 
 **Phase 6 — Save and reopen a quote file.** Only if revisions turn out to matter: a JSON download beside the PDF and an Open button to load it back (§5). Not planned for v1.
 
@@ -506,12 +502,12 @@ Because the deliverable is a downloaded file, there is nothing in the browser wo
 
 ## 7. Validation — warnings only, never blocks
 
-Since every field is overridable (§2.8), validation advises and never prevents. Warnings appear inline and are collected into a pre-download summary the operator can dismiss. Built in `core/validate.ts`, except (1) and (4), which the engine already tracks and `OverrideSummary` lists:
+Validation advises and never prevents — the operator is holding the phone, and the app is not. Warnings appear inline and are collected into a pre-download summary the operator can dismiss. Built in `core/validate.ts`, except (1) and (4), which the engine already tracks and `OverrideSummary` lists:
 
-1. Any manually overridden value, listed with its computed alternative — the main guard against §9.
+1. Any value that differs from its formula — from a restored draft or an edited workbook (§2.8) — listed with the figure the formula gives.
 2. A rate that looks like a SQFT rate in a SQMT section, or vice versa. Judged against the rate card rather than a fixed threshold: five times off in either direction is a unit mistake, not a deal.
 3. A rounded subtotal more than ₹1 from the computed subtotal, shown with the difference — this is where discounts live (§2.9), so the warning names the amount rather than objecting to it.
-4. Wastage on a line differing from the section default, or a chargeable size overridden.
+4. Wastage on a line differing from the section allowance — the one per-row decision the screen still takes.
 5. A row with no rate, or no quantity. A row with no sizes typed yet is the next row, not a mistake, and is left alone.
 6. A section whose wastage rule differs from the one its glass type implies (§2.2).
 7. A discount above `DISCOUNT_WARN_PCT` of the subtotal, which reads as "larger than a rounding" on the warning.
@@ -534,7 +530,9 @@ Worth raising with the team — these are real money.
 
 **SAI GLASS 6374 — GST missing from one section.** The quote has three sections. The 10 MM and 6 MM sections both carry CGST 9% + SGST 9%, but the 8 MM section jumps straight from `1564 + 120 holes = 1684` to the section total with no tax rows, and the grand total of `15943.12` accepts it. Since GST applies to the whole invoice or not at all, this is an operator omission, not a business rule — roughly **₹303 of GST was not charged** and would still be owed. Making the GST flag a quote-level setting (§2.1) makes this error structurally impossible.
 
-None of the three errors is possible once areas and taxes are computed rather than typed.
+**G FOCUSS 7178 — two mirror lines charged past the next foot.** A 2920 mm piece is billed at 3660, two feet over what foot to foot gives (§2.2). It may be deliberate — 3660 × 915 is a full mirror sheet — and it may be a slip. Either way the app charges to the next foot and does not reproduce it.
+
+None of the first three errors is possible once areas and taxes are computed rather than typed, and the fourth is now visible as a difference rather than hidden in a cell.
 
 ---
 
@@ -543,17 +541,19 @@ None of the three errors is possible once areas and taxes are computed rather th
 - Scope v1: **quotations / proforma only**, matching the current Excel output.
 - Platform: **React + Vite static site on GitHub Pages**, no backend, masters in JSON.
 - **Nothing is filed away.** Fill the form, download the PDF; the PDF is the record. The only storage is a crash-recovery copy of the quote being typed (§5).
-- **Generic over rule-based**: computed defaults, everything overridable, override badges, formula tooltips (§2.8).
-- **Chargeable size is shown, not typed** — the one locked field, because it is the actual size plus the allowance and nothing else. A row cut differently changes its wastage (§2.8).
+- **Generic over rule-based**: masters in JSON, computed defaults, formula tooltips, a badge and a reset behind any figure that differs from its formula (§2.8).
+- **Decisions are typed, consequences are shown.** Sizes, wastage, counts, rates and the rounded subtotal are typed; cut size, area and every amount are worked out and greyed. A row cut differently changes its wastage; a price that must come out differently changes its rate or the rounded total (§2.8).
+- **A number field takes numbers only** — a letter is refused as it is typed, rather than sitting on screen beside a figure it no longer matches (§2.8).
 - **A rounding under ₹1 is not called a discount** on screen or in the warnings (§2.9).
-- Charges are **one adjustments list** — a count and a rate, with no basis to choose — and **every charge prints** (§2.9).
+- Charges are **one adjustments list** — a count and a rate, with no basis and no taxable flag to choose — and **every charge prints, and every charge is taxed** with the glass wherever GST applies (§2.9).
 - **An empty count means the charge is not counted**: the rate is the whole charge, and the printed line carries no count, as the sheet has always written a document charge (§2.9).
 - **Two wastage rules: fixed and foot to foot**, set **per section** and defaulted from the glass type (§2.2). Revises the v2 position that mirror and fluted were unexplainable one-offs.
 - **Foot to foot rounds by the overhang** — 8.2 ft becomes 9 ft, 8 ft stays 8 ft (§2.2).
+- **A sample the rule cannot reproduce is not a rule to add.** Two mirror lines were billed two feet over the next foot; the app charges to the next foot and leaves those alone, because some of the old bills are simply wrong (§2.2).
 - **Wastage is entirely section-level**, rule and allowance together, with nothing left in quote settings (§2.2).
-- **Fluted, extra clear and mirror default to foot to foot; plain black toughened defaults to fixed** (§3.2).
+- **Mirror is the only glass that starts foot to foot; everything else starts on the fixed allowance** (§2.2). Narrows the customer's first answer, on their own later word.
 - **HSN 7007 is one constant** in the company master, not a field on products, sections or lines (§4).
-- **Finishes and treatments are charges, not products** — a unit price or a flat amount, switchable on the row (§2.9). Polish included, at ₹1 per mm of thickness per running foot (§3.3).
+- **Finishes and treatments are charges, not products** — a rate, counted or not, on the same row (§2.9). Polish included, at ₹1 per mm of thickness per running foot (§3.3).
 - **The proforma number is typed**, not generated.
 - **The PDF does not change.** Same format, same content as today; all transparency is on screen (§2.10).
 - **A quote of one section says each figure once** — no subtotal row over a single line, no taxable base without GST, no section total and no summary block (§2.10).
@@ -563,7 +563,7 @@ None of the three errors is possible once areas and taxes are computed rather th
 - **Kaccha (raw) glass carries wastage too**, same as toughened.
 - **Discounts do not print** — recorded by overriding the rounded subtotal, visible on screen with the computed figure beside it (§2.9).
 - **L / U cutouts are shape cuts**, priced per unit from the master and editable.
-- **Reset to defaults** at field, line, section and quote level.
+- **Reset is per row and per quote**, not per section: with three typed cells to a row, "Reset section" said less than it seemed to (§2.8).
 - **Products come from two dropdowns** (thickness × glass type) over the brochure catalogue, with free text for anything else (§3.2).
 - **All masters are JSON** and provisional until the customer re-verifies names and rates.
 - **Date and proforma number are editable** free-text fields; no auto-numbering in v1 (§11).
@@ -576,7 +576,7 @@ None of the three errors is possible once areas and taxes are computed rather th
 - **No IGST** — CGST + SGST only. Keep the field but hide it until a non-Karnataka customer appears.
 - **No customer master to seed** — the biller types the customer name, with autocomplete from names used before.
 - **Discount**: per-quote by default, with an optional saved percentage per customer, editable either way.
-- **Wastage is a single visible column** in the entry grid; chargeable size is derived from it and stays editable as a per-dimension override (§2.2).
+- **Wastage is a single visible column** in the entry grid, and the cut size follows from it (§2.2).
 - **Adjustments are all optional**, never pre-added, pre-filled from the charge master when added (§2.9).
 - **Rate sits on the line**, defaulted from the section header (§2.5).
 
@@ -588,7 +588,7 @@ Nothing here blocks the build. **Every name, rate and default lives in JSON unde
 
 - **Foot to foot rounds by the overhang.** 8.2 ft becomes 9 ft, 8 ft stays 8 ft, both sides independently (§2.2). Implemented.
 - **Wastage is per section**, rule and allowance both, defaulted from the glass type (§2.2). Implemented.
-- **Which glasses are foot to foot:** all fluted, extra clear and mirror; plain black toughened is fixed (§3.2). Implemented.
+- **Which glasses are foot to foot:** mirror, and only mirror. Fluted, extra clear and black all start on the fixed allowance (§2.2). Implemented.
 - **HSN is a single constant**, 7007, held once in the company master (§4). Implemented.
 - **Treatments and finishes are charges, not products.** Any chargeable item takes a rate, counted or not, on the same row (§2.9). This covers frosting, acid wash, colour etched and polish, so no per-sqft basis is needed.
 - **Polish is ₹1 per mm of thickness** per running foot, filled in as an editable default (§3.3).

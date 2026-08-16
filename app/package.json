@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "sample:pdf": "vite-node scripts/render-sample.ts",
-    "retype": "vite-node scripts/retype-sample.ts"
+    "retype": "vite-node scripts/retype-sample.ts",
+    "verify": "npm run build && npm test && npm run retype -- all"
   },
   "dependencies": {
     "decimal.js": "^10.6.0",

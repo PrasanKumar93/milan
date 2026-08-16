@@ -161,7 +161,6 @@ export default function App() {
                   onPatchCharge={(id, patch) => q.patchCharge(section.section.id, id, patch)}
                   onSetChargeLabel={(id, label) => q.setChargeLabel(section.section.id, id, label)}
                   onRemoveCharge={(id) => q.removeCharge(section.section.id, id)}
-                  onResetSection={() => q.resetSection(section.section.id)}
                   onRemoveSection={() => q.removeSection(section.section.id)}
                 />
               ))}

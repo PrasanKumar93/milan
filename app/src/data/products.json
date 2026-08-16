@@ -1,13 +1,13 @@
 {
-  "_note": "dev-plan §3.2. Products are built as thickness x glassType. HSN is not here: every section in all 47 samples prints 7007, so it lives once in company.json as defaults.hsn. Names and wastage rules are provisional until the customer re-verifies them.",
+  "_note": "dev-plan §3.2. Products are built as thickness x glassType. HSN is not here: every section in all 47 samples prints 7007, so it lives once in company.json as defaults.hsn. Confirmed with the customer: mirror is measured foot to foot and everything else takes the fixed allowance, whatever the samples happen to show on a one-off line. Names and rates are provisional until the customer re-verifies them.",
   "thicknesses": ["4MM", "5MM", "6MM", "8MM", "10MM", "12MM", "4+4MM", "5+5MM", "6+6MM", "8+8MM", "10+10MM"],
   "glassTypes": [
     { "name": "CLEAR TOUGHENED GLASS", "shortCode": "CTG", "wastageRule": "fixed" },
-    { "name": "EXTRA CLEAR TOUGHENED GLASS", "shortCode": "EXTRA CLEAR", "wastageRule": "foot_to_foot" },
+    { "name": "EXTRA CLEAR TOUGHENED GLASS", "shortCode": "EXTRA CLEAR", "wastageRule": "fixed" },
     { "name": "BLACK TOUGHENED GLASS", "shortCode": "BLACK", "wastageRule": "fixed" },
-    { "name": "CLEAR FLUTED TOUGHENED GLASS", "shortCode": "CLEAR FLUTED", "wastageRule": "foot_to_foot" },
-    { "name": "BLACK FLUTED TOUGHENED GLASS", "shortCode": "BLACK FLUTED", "wastageRule": "foot_to_foot" },
-    { "name": "BROWN FLUTED TOUGHENED GLASS", "shortCode": "BROWN FLUTED", "wastageRule": "foot_to_foot" },
+    { "name": "CLEAR FLUTED TOUGHENED GLASS", "shortCode": "CLEAR FLUTED", "wastageRule": "fixed" },
+    { "name": "BLACK FLUTED TOUGHENED GLASS", "shortCode": "BLACK FLUTED", "wastageRule": "fixed" },
+    { "name": "BROWN FLUTED TOUGHENED GLASS", "shortCode": "BROWN FLUTED", "wastageRule": "fixed" },
     { "name": "FROSTED GLASS", "shortCode": "FROSTED", "wastageRule": "fixed" },
     { "name": "ACID WASH GLASS", "shortCode": "ACID WASH", "wastageRule": "fixed" },
     { "name": "COLOUR ETCHED GLASS", "shortCode": "COLOUR ETCHED", "wastageRule": "fixed" },

@@ -24,7 +24,6 @@ export interface ChargeType {
   /** Polish only: the rate is thickness x this, so it depends on the glass (§3.3). */
   ratePerThicknessMm?: number;
   unit?: string;
-  taxable: boolean;
 }
 
 export const company = companyJson;

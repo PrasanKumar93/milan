@@ -19,7 +19,7 @@ export function SectionTotals({
   onPatchSection: (patch: Partial<Section>) => void;
 }) {
   const c = computed;
-  const charges = c.taxableCharges.plus(c.untaxedCharges);
+  const charges = c.charges;
 
   return (
     // Striped for the same reason the charges are: label at one end, figure at

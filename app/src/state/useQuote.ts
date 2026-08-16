@@ -187,19 +187,9 @@ export function useQuote() {
               qty: type?.basis === "per_unit" ? 1 : 0,
               rate: rate ?? 0,
               amount: null,
-              taxable: type?.taxable ?? true,
             }),
           };
         });
-      },
-
-      resetSection(sectionId: string) {
-        mapSection(sectionId, (s) => ({
-          ...s,
-          rounded: null,
-          lines: s.lines.map((l) => ({ ...l, ...LINE_DEFAULTS })),
-          adjustments: s.adjustments.map((a) => ({ ...a, amount: null })),
-        }));
       },
 
       resetAll() {

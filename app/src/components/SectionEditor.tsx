@@ -31,7 +31,6 @@ export function SectionEditor({
   onPatchCharge,
   onSetChargeLabel,
   onRemoveCharge,
-  onResetSection,
   onRemoveSection,
 }: {
   index: number;
@@ -48,7 +47,6 @@ export function SectionEditor({
   onPatchCharge: (adjustmentId: string, patch: Partial<Adjustment>) => void;
   onSetChargeLabel: (adjustmentId: string, label: string) => void;
   onRemoveCharge: (adjustmentId: string) => void;
-  onResetSection: () => void;
   onRemoveSection: () => void;
 }) {
   const section = computed.section;
@@ -73,9 +71,6 @@ export function SectionEditor({
           {section.shortCode} · HSN {HSN}
         </span>
         <span className="spacer" />
-        <Button variant="ghost" onClick={onResetSection} title="Put every cell back on the formula">
-          Reset section
-        </Button>
         {canRemove && (
           <Button variant="danger" onClick={onRemoveSection} title="Remove this section">
             Remove
@@ -86,7 +81,11 @@ export function SectionEditor({
       <div className="card__body">
         <div className="row">
           <span className="field__label">Wastage</span>
-          <Pill active={!footToFoot} onClick={() => setRule("fixed")}>
+          <Pill
+            active={!footToFoot}
+            title="The same allowance on height and width, editable on any row"
+            onClick={() => setRule("fixed")}
+          >
             Fixed
           </Pill>
           <DimensionField
@@ -99,14 +98,13 @@ export function SectionEditor({
           />
           <span className={`small ${footToFoot ? "muted-2" : "muted"}`}>{quote.inputUnit}</span>
           <span className="divider--v" />
-          <Pill active={footToFoot} onClick={() => setRule("foot_to_foot")}>
+          <Pill
+            active={footToFoot}
+            title="Each side goes up to the next whole foot; a side already on a foot is left alone"
+            onClick={() => setRule("foot_to_foot")}
+          >
             Foot to foot
           </Pill>
-          <span className="muted small">
-            {footToFoot
-              ? "Each side goes up to the next whole foot; a side already on a foot is left alone"
-              : "The same allowance on height and width, editable on any row"}
-          </span>
         </div>
 
         <LineGrid
@@ -119,7 +117,6 @@ export function SectionEditor({
 
         <div className="row">
           <Button onClick={onAddLine}>Add line</Button>
-          <Button onClick={onAddCharge}>Add charge</Button>
         </div>
 
         <ChargeTable
@@ -129,6 +126,10 @@ export function SectionEditor({
           onSetLabel={onSetChargeLabel}
           onRemove={onRemoveCharge}
         />
+
+        <div className="row">
+          <Button onClick={onAddCharge}>Add charge</Button>
+        </div>
 
         <hr className="divider" />
 

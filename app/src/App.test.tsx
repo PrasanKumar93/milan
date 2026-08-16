@@ -14,7 +14,9 @@ beforeEach(() => localStorage.clear());
 
 /** The entry grid in column order: H, W, wastage, chargeable H, chargeable W, qty, area, rate, amount. */
 function firstRow() {
-  const rows = screen.getAllByRole("row");
+  // The first grid on screen is the lines; the one after it holds the charges.
+  const grid = document.querySelectorAll<HTMLElement>("table.grid")[0];
+  const rows = within(grid).getAllByRole("row");
   const row = rows[rows.length - 1];
   return within(row).getAllByRole("textbox") as HTMLInputElement[];
 }
@@ -65,25 +67,30 @@ describe("the entry screen", () => {
     expect(firstRow()[2].value).toBe("2135");
   });
 
-  it("shows the cut size but will not be typed over", () => {
+  it("works out the cut size, the area and the amount, and lets none of them be typed", () => {
     fillOneLine();
     const cells = firstRow();
-    expect(cells[3].disabled).toBe(true);
-    expect(cells[4].disabled).toBe(true);
+    for (const i of [3, 4, 6, 8]) expect(cells[i].disabled).toBe(true);
 
     // The way to cut a row differently is the allowance it was cut by.
     type(cells[2], "30");
     expect(firstRow()[3].value).toBe("2030");
   });
 
-  it("flags a typed-over cell and puts it back when asked", () => {
+  it("refuses letters where a number belongs", () => {
     fillOneLine();
-    type(firstRow()[8], "1000");
+    type(firstRow()[0], "20x0");
+    expect(firstRow()[0].value).toBe("2000");
+  });
+
+  it("flags a row that was cut differently, and puts it back when asked", () => {
+    fillOneLine();
+    type(firstRow()[2], "30");
 
     expect(screen.getByText(/1 value has been typed over the formula/)).toBeTruthy();
     fireEvent.click(screen.getByText("Put everything back on the formula"));
     expect(screen.queryByText(/typed over the formula/)).toBeNull();
-    expect(firstRow()[8].value).toBe("1076.25");
+    expect(firstRow()[2].value).toBe("50");
   });
 
   it("says nothing about a rounding, and names a discount", () => {
@@ -94,6 +101,22 @@ describe("the entry screen", () => {
     type(screen.getByTitle("Total, to the nearest rupee"), "1000");
     expect(screen.getByText("Discount given")).toBeTruthy();
     expect(screen.getByText("76.25")).toBeTruthy();
+  });
+
+  it("keeps the charges heading standing over the button that fills it", () => {
+    render(<App />);
+    const charges = document.querySelectorAll<HTMLElement>("table.grid")[1];
+    expect(within(charges).getAllByRole("row")).toHaveLength(1);
+
+    fireEvent.click(screen.getByText("Add charge"));
+    const row = within(charges).getAllByRole("row")[1];
+    const cells = within(row).getAllByRole("textbox") as HTMLInputElement[];
+
+    // One hole at ₹30, and the ₹30 it comes to is worked out rather than typed.
+    expect(cells[0].value).toBe("1");
+    expect(cells[1].value).toBe("30");
+    expect(cells[2].value).toBe("30");
+    expect(cells[2].disabled).toBe(true);
   });
 
   it("takes a glass name the catalogue has never heard of", () => {

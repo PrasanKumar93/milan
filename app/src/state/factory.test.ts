@@ -47,7 +47,6 @@ describe("new charge", () => {
   it("fills in the catalogue default", () => {
     const charge = newAdjustment(newSection("mm"), "HOLES");
     expect(charge.rate).toBe(30);
-    expect(charge.taxable).toBe(true);
   });
 
   it("starts a counted charge at one, and one charged once at none", () => {

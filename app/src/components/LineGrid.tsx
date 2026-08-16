@@ -4,18 +4,17 @@ import type { Line, Quote } from "../core/types";
 import { formatInches } from "../core/units";
 import { shapes } from "../data/masters";
 import { Button, DimensionField, NumberField, OverrideDot, Select } from "../ui/controls";
+import { LineColumns } from "./columns";
 
 /**
- * The entry grid. It is the screen the operator lives in, so every derived cell
- * is shown as an editable field rather than as text: the formula fills it in, and
- * typing over it turns it into an override that is flagged but never argued with
- * (dev-plan §2.8).
+ * The entry grid. What was measured and what was agreed — size, wastage, count
+ * and rate — is typed; what follows from them — the cut size, the area and the
+ * amount — is worked out and shown greyed, because a figure that disagrees with
+ * the numbers beside it is how a wrong bill gets printed (dev-plan §2.8).
+ *
+ * A price that has to come out differently is still a rate, or the rounded
+ * total under the grid, which is where a discount belongs.
  */
-
-/** Typing the number the formula already produced is not an override. */
-function overrideOf(computed: Decimal, typed: number): number | null {
-  return computed.eq(typed) ? null : typed;
-}
 
 function isOverridden(l: ComputedLine): boolean {
   return (
@@ -48,11 +47,10 @@ export function LineGrid({
   return (
     <div className="grid-wrap">
       <table className="grid grid--zebra">
+        <LineColumns />
         <thead>
           <tr>
-            <th rowSpan={2} style={{ width: 28 }}>
-              #
-            </th>
+            <th rowSpan={2}>#</th>
             <th rowSpan={2}>Shape</th>
             <th className="grid__group" colSpan={2}>
               Actual size ({unit})
@@ -182,13 +180,10 @@ export function LineGrid({
                       value={l.area.value.toNumber()}
                       width={92}
                       decimals={6}
+                      disabled
                       className={l.area.overridden ? "input--overridden" : "input--derived"}
-                      title={
-                        l.area.overridden
-                          ? `Formula gives ${l.area.computed.toFixed(4)}`
-                          : "Chargeable H x W x qty"
-                      }
-                      onChange={(v) => onPatchLine(line.id, { area: overrideOf(l.area.computed, v) })}
+                      title="Chargeable H x W x qty"
+                      onChange={() => {}}
                     />
                     {l.area.overridden && (
                       <OverrideDot title={`Formula gives ${l.area.computed.toFixed(4)}`} />
@@ -209,15 +204,10 @@ export function LineGrid({
                     <NumberField
                       value={l.amount.value.toNumber()}
                       width={96}
+                      disabled
                       className={l.amount.overridden ? "input--overridden" : "input--derived"}
-                      title={
-                        l.amount.overridden
-                          ? `Formula gives ${l.amount.computed.toFixed(2)}`
-                          : "Area x rate"
-                      }
-                      onChange={(v) =>
-                        onPatchLine(line.id, { amount: overrideOf(l.amount.computed, v) })
-                      }
+                      title="Area x rate"
+                      onChange={() => {}}
                     />
                     {l.amount.overridden && (
                       <OverrideDot title={`Formula gives ${l.amount.computed.toFixed(2)}`} />

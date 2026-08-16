@@ -482,8 +482,14 @@ h3 {
   overflow-x: auto;
 }
 
+/* Fixed layout so the widths in components/columns.tsx are obeyed rather than
+   negotiated from the contents — that is what keeps the charges lined up under
+   the lines. min-width keeps the columns honest on a narrow window, where
+   .grid-wrap scrolls instead. */
 table.grid {
   width: 100%;
+  min-width: 1160px;
+  table-layout: fixed;
   border-collapse: collapse;
   font-size: 13px;
 }

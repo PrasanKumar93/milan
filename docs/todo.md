@@ -1,5 +1,8 @@
 ## print
 
+- print tab must be A4 size width
+- add logo , yellow color total , same existing print structure
+
 - check with original pdf : logo and other things missing
 
 ## excel

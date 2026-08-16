@@ -71,8 +71,8 @@ export interface ComputedSection {
   discount: Decimal;
   /** The gap is more than the rounding itself could explain, so it was meant. */
   discounted: boolean;
-  taxableCharges: Decimal;
-  untaxedCharges: Decimal;
+  charges: Decimal;
+  /** Rounded subtotal plus the charges — what CGST and SGST are worked out on. */
   taxableBase: Decimal;
   cgst: Decimal;
   sgst: Decimal;
@@ -167,14 +167,10 @@ export function computeSection(section: Section, quote: Quote): ComputedSection 
   const rounded = withOverride(toRupees(subtotal), section.rounded);
   const discount = subtotal.minus(rounded.value);
 
-  const taxableCharges = adjustments
-    .filter((a) => a.adjustment.taxable)
-    .reduce((sum, a) => sum.plus(a.amount.value), zero);
-  const untaxedCharges = adjustments
-    .filter((a) => !a.adjustment.taxable)
-    .reduce((sum, a) => sum.plus(a.amount.value), zero);
-
-  const taxableBase = rounded.value.plus(taxableCharges);
+  // Every charge is taxed with the glass it belongs to: GST is a decision for
+  // the whole quote, and all 47 samples charge it on the extras too (§2.1).
+  const charges = adjustments.reduce((sum, a) => sum.plus(a.amount.value), zero);
+  const taxableBase = rounded.value.plus(charges);
   const gst = quote.gstApplicable
     ? toPaise(taxableBase.times(quote.gstPct).div(100))
     : zero;
@@ -190,12 +186,11 @@ export function computeSection(section: Section, quote: Quote): ComputedSection 
     rounded,
     discount,
     discounted: discount.abs().gt(ROUNDING_GAP),
-    taxableCharges,
-    untaxedCharges,
+    charges,
     taxableBase,
     cgst: gst,
     sgst: gst,
-    total: taxableBase.plus(gst).plus(gst).plus(untaxedCharges),
+    total: taxableBase.plus(gst).plus(gst),
   };
 }
 
@@ -234,7 +229,7 @@ function collectOverrides(sections: ComputedSection[]): OverrideRef[] {
           sectionId,
           lineId: l.line.id,
           field: "Wastage",
-          computed: "quote default",
+          computed: "section allowance",
           value: l.wastage.toString(),
         });
       }

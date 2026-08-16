@@ -44,8 +44,6 @@ export interface Adjustment {
   qty: number;
   rate: number;
   amount: number | null;
-  /** Taxable charges go into the base before GST, which is every charge in the samples. */
-  taxable: boolean;
 }
 
 /**

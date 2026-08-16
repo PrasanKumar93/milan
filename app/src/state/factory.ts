@@ -80,7 +80,6 @@ export function newAdjustment(section: Section, label = chargeTypes[0].label): A
     qty: type?.basis === "per_unit" ? 1 : 0,
     rate,
     amount: null,
-    taxable: type?.taxable ?? true,
   };
 }
 

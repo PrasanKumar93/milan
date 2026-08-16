@@ -13,12 +13,15 @@ npm test         # engine regression against the 47 sample quotations, plus the 
 npm run build
 
 npm run sample:pdf 7178 /tmp   # render a sample quotation through the exporters
-npm run retype -- 6363         # type a sample into the running app and check the screen
+npm run retype -- 6363         # type one sample into the running app and check the screen
+npm run verify                 # build, tests, and every sample retyped through the browser
 ```
+
+**`npm run verify` is the full check, and it is meant to be run when it is wanted, not after every change.** It takes minutes and needs `npm run dev` in another terminal, so it belongs before a release, after anything touching `src/core/`, `src/export/` or `src/data/`, and after a change to the entry grid's structure. A change to spacing or wording does not need it; `npm test` takes three seconds and covers that.
 
 `sample:pdf` is for looking at the page: it rebuilds one of the parsed samples and writes both the PDF and the workbook, so they can be put beside the original the office sent. The numbers on them are checked by `src/export/layout.test.ts`, which asserts the document reproduces PROFORMA 7178 line for line.
 
-`retype` needs `npm run dev` in another terminal. It opens the app in Chrome, types a sample's sizes, rates and charges as an operator would, and compares every cell the app worked out for itself against the figures on the original PDF — chargeable sizes, areas, amounts, charges, totals, GST and the grand total — then screenshots both tabs and downloads the PDF and the workbook into `/tmp/retype`. The tests prove the arithmetic; this proves the screen is wired to it. Across the 17 samples whose sizes follow a wastage rule, 535 of 540 printed figures come out identical, the five being ±₹1 rounded subtotals a person typed by hand.
+`retype` needs `npm run dev` in another terminal. It opens the app in Chrome, types a sample's sizes, rates and charges as an operator would, and compares every cell the app worked out for itself against the figures on the original PDF — chargeable sizes, areas, amounts, charges, totals, GST and the grand total — then screenshots both tabs and downloads the PDF and the workbook into `/tmp/retype`. The tests prove the arithmetic; this proves the screen is wired to it. `npm run retype -- all` sweeps every sample in one browser and prints only what differs; the quotes that do not come out identical are the documented ones in dev-plan §9 — hand-typed areas, ±₹1 roundings, a missing GST section and two mirror lines charged over the rule.
 
 ## Layout
 
@@ -59,11 +62,15 @@ Because nothing is filed away, **Download Excel** is the reopen button. The shee
 
 Two details worth knowing. A figure that was typed over in the app is written as that number rather than a formula, with a note recording what the formula gives — a revision must not quietly undo a deliberate override. And every formula is written with its answer cached beside it, so the file reads correctly in Google Sheets or on a phone, which never recalculate. `excel.test.ts` recalculates the workbook the way Excel would and checks it agrees with the engine.
 
-## Almost nothing on screen is read-only
+## What is typed, and what is worked out
 
-Every derived cell — area, amount, charge amounts, the rounded subtotal — is an input pre-filled by the formula. Typing over one is an override: it is stored as an explicit number, marked in the cell, listed before the quote is printed, and reset with one click. The formula that filled it in is in the cell's tooltip. This is deliberate; the operators have always been able to fudge a figure in Excel and the app is not the place to start refusing (dev-plan §2.8).
+Typed: the actual sizes, the wastage, the count, the rate, the charges, and the rounded subtotal. Worked out and shown greyed: the chargeable size, the area, the line amount, every charge amount, and everything under them. Each greyed cell carries the sentence that made it in its tooltip — "Actual + 50", "Chargeable H x W x qty", "Qty x rate".
 
-The chargeable size is the exception. It is the actual size plus the allowance, or the next foot up, so it is shown and not typed; a row that must be cut differently changes its **wastage** and the cut size follows. The engine still understands a typed-over cut size — the samples contain them and the workbook can be edited — but the screen no longer creates one.
+The split is deliberate, and it is the one v2 got backwards. A derived cell that disagrees with the numbers beside it is unexplainable when the customer queries the piece, and it is how SHYAM LAL 7154 came to overcharge by 6–15% on eleven rows. Nothing is lost by locking them, because each has a typed input behind it: cut a piece differently by changing its **wastage**, price it differently by changing its **rate**, bill differently by changing the **rounded subtotal** — which is where a discount goes (dev-plan §2.8).
+
+The engine still understands a figure that differs from its formula — the samples contain them, a workbook can be edited and reprinted, and an old draft may hold one. Such a value keeps its dot, is listed before the quote is printed, and resets in one click. The screen simply no longer creates one.
+
+Number fields take numbers only, in the loose way an entry grid needs: "2." and "33 1/" survive on the way to a value, and a letter is refused as it is typed.
 
 ## Two things to know before changing the engine
 

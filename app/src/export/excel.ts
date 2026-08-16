@@ -331,8 +331,7 @@ function writeSection(
   );
   r += 1;
 
-  const taxed: string[] = [];
-  const untaxed: string[] = [];
+  const chargeRows: string[] = [];
 
   for (const adjustment of section.adjustments) {
     const adj = adjustment.adjustment;
@@ -354,14 +353,14 @@ function writeSection(
       write(sheet, r, 11, adj.amount ?? adj.rate).alignment = { horizontal: "right" };
     }
 
-    (adj.taxable ? taxed : untaxed).push(`K${r}`);
+    chargeRows.push(`K${r}`);
     r += 1;
   }
 
   const taxable = r;
   if (section.adjustments.length > 0) {
     write(sheet, r, 11, {
-      formula: [`K${rounded}`, ...taxed].join("+"),
+      formula: [`K${rounded}`, ...chargeRows].join("+"),
       result: section.taxableBase,
     });
     r += 1;
@@ -390,7 +389,7 @@ function writeSection(
     sheet,
     r,
     11,
-    { formula: [base, ...gstRows, ...untaxed].join("+"), result: section.total },
+    { formula: [base, ...gstRows].join("+"), result: section.total },
     true,
   );
   sectionTotalRows.push(r);

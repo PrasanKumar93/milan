@@ -119,7 +119,6 @@ export function toQuote(parsed: ParsedQuote): Quote {
         qty: e.qty ?? 0,
         rate: e.qty ? e.amount / e.qty : e.amount,
         amount: null,
-        taxable: true,
       }));
 
       return {
