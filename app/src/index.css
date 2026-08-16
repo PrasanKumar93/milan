@@ -135,13 +135,13 @@ h3 {
   padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
 }
 
 .panel {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 24px;
 }
 
 .card {
@@ -398,7 +398,7 @@ h3 {
 .settings {
   display: flex;
   align-items: flex-end;
-  gap: 18px;
+  gap: 14px 36px;
   flex-wrap: wrap;
 }
 

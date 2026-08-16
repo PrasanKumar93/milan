@@ -2,8 +2,9 @@ import type { InputUnit, PrintUnit, Quote } from "../core/types";
 import { Field, NumberField, Pill, TextField } from "../ui/controls";
 
 /**
- * Everything printed above the first section: who the quote is for and the four
- * settings that change how the whole quote calculates. The proforma number and
+ * Everything printed above the first section: who the quote is for and the three
+ * settings that change how the whole quote calculates. Wastage is not among them;
+ * it belongs to a section, and is set there (dev-plan §2.2). The proforma number and
  * the date are plain text on purpose — the numbering follows the sheet the office
  * already keeps, and nothing here invents one (dev-plan §5).
  */
@@ -127,11 +128,12 @@ export function QuoteHeader({
           <div className="stack">
             <span className="field__label">GST</span>
             <div className="row row--tight">
-              <Pill
-                active={quote.gstApplicable}
-                onClick={() => onChange({ gstApplicable: !quote.gstApplicable })}
-              >
-                {quote.gstApplicable ? "Applied" : "Not applied"}
+              {/* Not applied first, so that "Applied" sits beside the rate it governs. */}
+              <Pill active={!quote.gstApplicable} onClick={() => onChange({ gstApplicable: false })}>
+                Not applied
+              </Pill>
+              <Pill active={quote.gstApplicable} onClick={() => onChange({ gstApplicable: true })}>
+                Applied
               </Pill>
               <NumberField
                 value={quote.gstPct}
@@ -142,11 +144,6 @@ export function QuoteHeader({
               />
               <span className="muted small">% CGST + same SGST</span>
             </div>
-          </div>
-
-          <div className="stack">
-            <span className="field__label">Wastage</span>
-            <span className="muted small">Set per section, below</span>
           </div>
         </div>
       </div>

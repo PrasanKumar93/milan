@@ -1,9 +1,3 @@
-- Entry and what prints should look like tabs
-- form fields must be properly aligned in width
-
-- sizes, area, and other settings field not clear organized
-- remove label `Wastage Set per section, below`
-
 ## Section
 
 - in dropdown, have other item kind

@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import App from "./App";
+import { CUSTOM_PRODUCT } from "./data/masters";
 
 /**
  * A quote typed the way an operator types one, checked end to end: the engine
@@ -72,6 +73,19 @@ describe("the entry screen", () => {
     fireEvent.click(screen.getByText("Put everything back on the formula"));
     expect(screen.queryByText(/typed over the formula/)).toBeNull();
     expect(firstRow()[3].value).toBe("2050");
+  });
+
+  it("takes a glass name the catalogue has never heard of", () => {
+    render(<App />);
+    const glass = screen.getAllByRole("combobox")[1];
+    fireEvent.change(glass, { target: { value: CUSTOM_PRODUCT } });
+
+    type(screen.getByPlaceholderText("Glass name as it should print"), "12mm low iron");
+    expect(screen.getByDisplayValue("12MM LOW IRON")).toBeTruthy();
+
+    // And back again, from the same dropdown.
+    fireEvent.change(screen.getAllByRole("combobox")[0], { target: { value: "CLEAR MIRROR" } });
+    expect(screen.queryByPlaceholderText("Glass name as it should print")).toBeNull();
   });
 
   it("keeps the working off the printed document", () => {
