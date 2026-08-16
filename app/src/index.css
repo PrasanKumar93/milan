@@ -379,6 +379,34 @@ h3 {
   flex: 0 0 auto;
 }
 
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(20, 23, 28, 0.38);
+}
+
+.modal__card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 380px;
+  padding: 18px;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: 0 12px 32px rgba(20, 23, 28, 0.24);
+}
+
+.row--end {
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
 .callout {
   display: flex;
   flex-direction: column;
@@ -487,6 +515,8 @@ table.grid th.num {
   font-variant-numeric: tabular-nums;
 }
 
+/* A row is wide and its cells are far apart, so every other one is tinted to
+   keep the eye on the line it is reading. */
 table.grid--zebra tbody tr:nth-child(odd) {
   background: var(--zebra);
 }

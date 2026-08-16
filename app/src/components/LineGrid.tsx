@@ -47,7 +47,7 @@ export function LineGrid({
 
   return (
     <div className="grid-wrap">
-      <table className="grid">
+      <table className="grid grid--zebra">
         <thead>
           <tr>
             <th rowSpan={2} style={{ width: 28 }}>

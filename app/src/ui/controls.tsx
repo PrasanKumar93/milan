@@ -294,6 +294,56 @@ export function Button({
   );
 }
 
+/**
+ * A question in front of an action that cannot be taken back. Escape, the
+ * backdrop and Cancel all mean no; only the one button means yes, and it is the
+ * one that starts focused so the keyboard can answer either way.
+ */
+export function Confirm({
+  title,
+  body,
+  confirmLabel,
+  onConfirm,
+  onCancel,
+}: {
+  title: string;
+  body?: string;
+  confirmLabel: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  useEffect(() => {
+    const escape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onCancel();
+    };
+    window.addEventListener("keydown", escape);
+    return () => window.removeEventListener("keydown", escape);
+  }, [onCancel]);
+
+  return (
+    <div className="modal no-print" onMouseDown={onCancel}>
+      <div
+        className="modal__card"
+        role="alertdialog"
+        aria-modal="true"
+        aria-label={title}
+        onMouseDown={(e) => e.stopPropagation()}
+      >
+        <div className="strong">{title}</div>
+        {body && <span className="muted small">{body}</span>}
+        <div className="row row--end">
+          <Button variant="ghost" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button variant="danger" onClick={onConfirm}>
+            {confirmLabel}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /** Marks a value that no longer matches its computed default (dev-plan §2.8). */
 export function OverrideDot({ title }: { title: string }) {
   return <span className="dot" title={title} />;

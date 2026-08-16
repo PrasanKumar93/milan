@@ -10,12 +10,13 @@ import { company } from "./data/masters";
 import { downloadExcel } from "./export/excel";
 import { downloadPdf } from "./export/pdf";
 import { useQuote } from "./state/useQuote";
-import { Button, Callout, Tabs } from "./ui/controls";
+import { Button, Callout, Confirm, Tabs } from "./ui/controls";
 
 export default function App() {
   const q = useQuote();
   const [view, setView] = useState<"entry" | "print">("entry");
   const [busy, setBusy] = useState<"" | "pdf" | "excel">("");
+  const [discarding, setDiscarding] = useState(false);
 
   const computed = useMemo(() => computeQuote(q.quote), [q.quote]);
 
@@ -58,6 +59,14 @@ export default function App() {
           {q.quote.date}
         </span>
         <span className="strong num">₹ {formatMoney(computed.grandTotal)}</span>
+
+        {/* Starting again throws the whole quote away, so it asks first — and it
+            sits up here with the other whole-document actions rather than at the
+            end of the page next to Add section. */}
+        <Button variant="ghost" onClick={() => setDiscarding(true)}>
+          New quote
+        </Button>
+
         <Button
           onClick={() => run("excel")}
           title="The quote with its formulas, to reopen and revise later"
@@ -68,6 +77,19 @@ export default function App() {
           {busy === "pdf" ? "Preparing…" : "Download PDF"}
         </Button>
       </header>
+
+      {discarding && (
+        <Confirm
+          title="Start a new quote?"
+          body="Everything typed into this one is cleared, and it is not kept anywhere."
+          confirmLabel="Yes, start fresh"
+          onConfirm={() => {
+            q.startBlank();
+            setDiscarding(false);
+          }}
+          onCancel={() => setDiscarding(false)}
+        />
+      )}
 
       <main className="page">
         {q.draft && (
@@ -146,10 +168,6 @@ export default function App() {
 
               <div className="row">
                 <Button onClick={q.addSection}>Add section</Button>
-                <span className="spacer" />
-                <Button variant="ghost" onClick={q.startBlank}>
-                  New quote
-                </Button>
               </div>
 
               <OverrideSummary computed={computed} onResetAll={q.resetAll} />

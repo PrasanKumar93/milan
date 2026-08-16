@@ -88,6 +88,23 @@ describe("the entry screen", () => {
     expect(screen.queryByPlaceholderText("Glass name as it should print")).toBeNull();
   });
 
+  it("asks before throwing the quote away", () => {
+    fillOneLine();
+    fireEvent.click(screen.getByText("New quote"));
+
+    fireEvent.click(screen.getByText("Cancel"));
+    expect(firstRow()[0].value).toBe("2000");
+
+    fireEvent.click(screen.getByText("New quote"));
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(screen.queryByText("Start a new quote?")).toBeNull();
+    expect(firstRow()[0].value).toBe("2000");
+
+    fireEvent.click(screen.getByText("New quote"));
+    fireEvent.click(screen.getByText("Yes, start fresh"));
+    expect(firstRow()[0].value).toBe("0");
+  });
+
   it("keeps the working off the printed document", () => {
     fillOneLine();
     fireEvent.click(screen.getByText("What prints"));
