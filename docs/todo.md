@@ -1,8 +1,5 @@
 ## Section
 
-- in dropdown, have other item kind
-- reset and delete button at section level, with button look n feel
-- all buttons look n feel must be good
 - all additional charges must have alternate row background , else difficult to map label with value
 
 ## print

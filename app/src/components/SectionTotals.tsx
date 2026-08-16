@@ -22,7 +22,9 @@ export function SectionTotals({
   const charges = c.taxableCharges.plus(c.untaxedCharges);
 
   return (
-    <div className="totals">
+    // Striped for the same reason the charges are: label at one end, figure at
+    // the other, and nothing in between to follow.
+    <div className="totals totals--zebra">
       <Row label={`Area (${quote.printUnit})`} value={formatArea(c.totalArea)} />
       <Row label="Total" value={formatMoney(c.subtotal)} />
 

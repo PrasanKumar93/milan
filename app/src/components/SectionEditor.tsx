@@ -77,7 +77,7 @@ export function SectionEditor({
           Reset section
         </Button>
         {canRemove && (
-          <Button variant="ghost" onClick={onRemoveSection} title="Remove this section">
+          <Button variant="danger" onClick={onRemoveSection} title="Remove this section">
             Remove
           </Button>
         )}

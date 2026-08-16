@@ -27,7 +27,9 @@ export function ChargeTable({
 
   return (
     <div className="grid-wrap">
-      <table className="grid">
+      {/* Striped: a charge is a label at one end of a wide row and a number at the
+          other, and the eye needs a rail to travel along. */}
+      <table className="grid grid--zebra">
         <thead>
           <tr>
             <th>Charge</th>

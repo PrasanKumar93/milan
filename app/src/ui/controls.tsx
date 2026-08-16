@@ -266,6 +266,11 @@ export function Pill({
   );
 }
 
+/**
+ * `primary` is the one thing to do next, `ghost` is a quieter secondary and
+ * `danger` throws work away. All of them are bordered: see `.btn` in the
+ * stylesheet for why.
+ */
 export function Button({
   children,
   onClick,
@@ -274,13 +279,16 @@ export function Button({
 }: {
   children: ReactNode;
   onClick: () => void;
-  variant?: "default" | "primary" | "ghost" | "icon";
+  variant?: "default" | "primary" | "ghost" | "danger" | "icon";
   title?: string;
 }) {
-  const cls =
-    variant === "default" ? "btn" : variant === "icon" ? "btn btn--ghost btn--icon" : `btn btn--${variant}`;
   return (
-    <button type="button" className={cls} onClick={onClick} title={title}>
+    <button
+      type="button"
+      className={variant === "default" ? "btn" : `btn btn--${variant}`}
+      onClick={onClick}
+      title={title}
+    >
       {children}
     </button>
   );

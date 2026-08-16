@@ -10,6 +10,7 @@
   --surface-sunken: #fbfbfc;
   --border: #e3e6ea;
   --border-strong: #c8ccd3;
+  --zebra: #f2f4f7;
 
   --text: #14171c;
   --text-secondary: #4a5159;
@@ -277,19 +278,38 @@ h3 {
   color: var(--text);
 }
 
+/*
+ * Every button carries a border and a surface, whatever it does — an action that
+ * looks like a label is an action nobody presses. The variants change the weight,
+ * never whether it reads as a button.
+ */
 .btn {
   font: inherit;
   font-size: 13px;
+  line-height: 1.4;
   padding: 5px 11px;
   border-radius: var(--radius);
   border: 1px solid var(--border-strong);
   background: var(--surface);
   color: var(--text);
+  white-space: nowrap;
   cursor: pointer;
+  box-shadow: 0 1px 0 rgba(20, 23, 28, 0.03);
 }
 
 .btn:hover {
   background: var(--surface-sunken);
+  border-color: var(--text-quaternary);
+}
+
+.btn:active {
+  background: #eff1f4;
+  box-shadow: none;
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
 .btn--primary {
@@ -299,19 +319,36 @@ h3 {
 }
 
 .btn--primary:hover {
-  filter: brightness(1.06);
-  background: var(--accent);
+  background: #1a63d2;
+  border-color: #1a63d2;
 }
 
+.btn--primary:active {
+  background: #1857b8;
+}
+
+/* The quieter secondary: still a button, just not competing with the one beside it. */
 .btn--ghost {
-  border-color: transparent;
-  background: transparent;
+  background: var(--surface-sunken);
   color: var(--text-secondary);
 }
 
+.btn--ghost:hover {
+  background: #eff1f4;
+}
+
+.btn--danger {
+  color: var(--danger);
+}
+
+.btn--danger:hover {
+  background: #fdf0ee;
+  border-color: var(--danger);
+}
+
 .btn--icon {
-  padding: 3px 7px;
-  line-height: 1.2;
+  padding: 2px 7px;
+  font-size: 12px;
   color: var(--text-tertiary);
 }
 
@@ -450,8 +487,12 @@ table.grid th.num {
   font-variant-numeric: tabular-nums;
 }
 
+table.grid--zebra tbody tr:nth-child(odd) {
+  background: var(--zebra);
+}
+
 table.grid tbody tr:hover {
-  background: var(--surface-sunken);
+  background: var(--accent-soft);
 }
 
 .pair {
@@ -495,6 +536,20 @@ table.grid tbody tr:hover {
 .totals__row--grand .totals__value {
   font-size: 16px;
   font-weight: 650;
+}
+
+.totals--zebra {
+  gap: 0;
+}
+
+.totals--zebra .totals__row {
+  min-width: 360px;
+  min-height: 30px;
+  padding: 2px 10px;
+}
+
+.totals--zebra .totals__row:nth-child(odd) {
+  background: var(--zebra);
 }
 
 /* ---------- print view ---------- */
@@ -585,6 +640,16 @@ table.print-table--plain tbody tr:last-child td {
   border-bottom: 0;
 }
 
+/*
+ * The totals and charges under a section put their label at one end of the page
+ * and their figure at the other, so on screen every other line is tinted to lead
+ * the eye across. It is a reading aid for the operator only: the printed page and
+ * the PDF are white, as the customer's copy has always been.
+ */
+table.print-table--plain tbody tr:nth-child(odd) {
+  background: var(--zebra);
+}
+
 @media print {
   .topbar,
   .no-print {
@@ -604,5 +669,9 @@ table.print-table--plain tbody tr:last-child td {
     border: 0;
     border-radius: 0;
     padding: 0;
+  }
+
+  table.print-table--plain tbody tr:nth-child(odd) {
+    background: none;
   }
 }
