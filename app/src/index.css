@@ -87,10 +87,58 @@ h3 {
   line-height: 1.25;
 }
 
+/*
+ * The two views sit on the bar's bottom border as a tab strip, so the selected
+ * one reads as the sheet that is open rather than a filter that is switched on.
+ */
+.tabs {
+  display: flex;
+  gap: 2px;
+  align-self: stretch;
+  margin: -10px 0 -11px;
+}
+
+.tab {
+  font: inherit;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.tab:hover {
+  color: var(--text);
+  background: var(--surface-sunken);
+}
+
+.tab[aria-selected="true"] {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 500;
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  border-radius: var(--radius);
+}
+
 .page {
   max-width: 1320px;
   margin: 0 auto;
   padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.panel {
   display: flex;
   flex-direction: column;
   gap: 16px;

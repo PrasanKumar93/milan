@@ -10,7 +10,7 @@ import { company } from "./data/masters";
 import { downloadExcel } from "./export/excel";
 import { downloadPdf } from "./export/pdf";
 import { useQuote } from "./state/useQuote";
-import { Button, Callout, Pill } from "./ui/controls";
+import { Button, Callout, Tabs } from "./ui/controls";
 
 export default function App() {
   const q = useQuote();
@@ -42,12 +42,14 @@ export default function App() {
 
         <span className="divider--v" />
 
-        <Pill active={view === "entry"} onClick={() => setView("entry")}>
-          Entry
-        </Pill>
-        <Pill active={view === "print"} onClick={() => setView("print")}>
-          What prints
-        </Pill>
+        <Tabs
+          value={view}
+          onChange={setView}
+          tabs={[
+            { value: "entry", label: "Entry" },
+            { value: "print", label: "What prints" },
+          ]}
+        />
 
         <span className="spacer" />
 
@@ -97,68 +99,75 @@ export default function App() {
           </Callout>
         )}
 
-        {view === "print" ? (
-          <>
-            <div className="no-print notices">
+        <div
+          className="panel"
+          role="tabpanel"
+          id={`panel-${view}`}
+          aria-labelledby={`tab-${view}`}
+        >
+          {view === "print" ? (
+            <>
+              <div className="no-print notices">
+                <OverrideSummary computed={computed} onResetAll={q.resetAll} />
+                <WarningList computed={computed} />
+              </div>
+              <PrintView computed={computed} />
+            </>
+          ) : (
+            <>
+              <QuoteHeader
+                quote={q.quote}
+                onChange={q.patchQuote}
+                onInputUnit={q.setInputUnit}
+                onPrintUnit={q.setPrintUnit}
+              />
+
+              {computed.sections.map((section, i) => (
+                <SectionEditor
+                  key={section.section.id}
+                  index={i}
+                  quote={q.quote}
+                  computed={section}
+                  canRemove={computed.sections.length > 1}
+                  onSetProduct={(product) => q.setProduct(section.section.id, product)}
+                  onPatchSection={(patch) => q.patchSection(section.section.id, patch)}
+                  onPatchLine={(lineId, patch) => q.patchLine(section.section.id, lineId, patch)}
+                  onResetLine={(lineId) => q.resetLine(section.section.id, lineId)}
+                  onRemoveLine={(lineId) => q.removeLine(section.section.id, lineId)}
+                  onAddLine={() => q.addLine(section.section.id)}
+                  onAddCharge={() => q.addCharge(section.section.id)}
+                  onPatchCharge={(id, patch) => q.patchCharge(section.section.id, id, patch)}
+                  onSetChargeLabel={(id, label) => q.setChargeLabel(section.section.id, id, label)}
+                  onRemoveCharge={(id) => q.removeCharge(section.section.id, id)}
+                  onResetSection={() => q.resetSection(section.section.id)}
+                  onRemoveSection={() => q.removeSection(section.section.id)}
+                />
+              ))}
+
+              <div className="row">
+                <Button onClick={q.addSection}>Add section</Button>
+                <span className="spacer" />
+                <Button variant="ghost" onClick={q.startBlank}>
+                  New quote
+                </Button>
+              </div>
+
               <OverrideSummary computed={computed} onResetAll={q.resetAll} />
               <WarningList computed={computed} />
-            </div>
-            <PrintView computed={computed} />
-          </>
-        ) : (
-          <>
-            <QuoteHeader
-              quote={q.quote}
-              onChange={q.patchQuote}
-              onInputUnit={q.setInputUnit}
-              onPrintUnit={q.setPrintUnit}
-            />
 
-            {computed.sections.map((section, i) => (
-              <SectionEditor
-                key={section.section.id}
-                index={i}
-                quote={q.quote}
-                computed={section}
-                canRemove={computed.sections.length > 1}
-                onSetProduct={(product) => q.setProduct(section.section.id, product)}
-                onPatchSection={(patch) => q.patchSection(section.section.id, patch)}
-                onPatchLine={(lineId, patch) => q.patchLine(section.section.id, lineId, patch)}
-                onResetLine={(lineId) => q.resetLine(section.section.id, lineId)}
-                onRemoveLine={(lineId) => q.removeLine(section.section.id, lineId)}
-                onAddLine={() => q.addLine(section.section.id)}
-                onAddCharge={() => q.addCharge(section.section.id)}
-                onPatchCharge={(id, patch) => q.patchCharge(section.section.id, id, patch)}
-                onSetChargeLabel={(id, label) => q.setChargeLabel(section.section.id, id, label)}
-                onRemoveCharge={(id) => q.removeCharge(section.section.id, id)}
-                onResetSection={() => q.resetSection(section.section.id)}
-                onRemoveSection={() => q.removeSection(section.section.id)}
-              />
-            ))}
-
-            <div className="row">
-              <Button onClick={q.addSection}>Add section</Button>
-              <span className="spacer" />
-              <Button variant="ghost" onClick={q.startBlank}>
-                New quote
-              </Button>
-            </div>
-
-            <OverrideSummary computed={computed} onResetAll={q.resetAll} />
-            <WarningList computed={computed} />
-
-            <section className="card">
-              <div className="card__body">
-                <div className="totals">
-                  <div className="totals__row totals__row--grand">
-                    <span className="totals__label strong">Total amount</span>
-                    <span className="totals__value">₹ {formatMoney(computed.grandTotal)}</span>
+              <section className="card">
+                <div className="card__body">
+                  <div className="totals">
+                    <div className="totals__row totals__row--grand">
+                      <span className="totals__label strong">Total amount</span>
+                      <span className="totals__value">₹ {formatMoney(computed.grandTotal)}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </section>
-          </>
-        )}
+              </section>
+            </>
+          )}
+        </div>
       </main>
     </div>
   );

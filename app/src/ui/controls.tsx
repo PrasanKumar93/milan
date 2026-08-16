@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import type { InputUnit } from "../core/types";
 import { formatInches, parseDimension } from "../core/units";
@@ -198,6 +198,55 @@ export function DimensionField({
       parse={(text) => (text.trim() === "" ? 0 : parseDimension(text, unit))}
       format={(v) => (unit === "inch" ? formatInches(v) : String(v))}
     />
+  );
+}
+
+/**
+ * The two views of the same quote, as a tab strip: one is being typed, the other
+ * is what comes out of the printer, and they are the same document either way.
+ * Arrow keys move between them, as a tab strip is expected to.
+ */
+export function Tabs<T extends string>({
+  value,
+  onChange,
+  tabs,
+}: {
+  value: T;
+  onChange: (v: T) => void;
+  tabs: Array<{ value: T; label: string }>;
+}) {
+  const strip = useRef<HTMLDivElement>(null);
+
+  const step = (by: number) => {
+    const from = tabs.findIndex((t) => t.value === value);
+    const to = (from + by + tabs.length) % tabs.length;
+    onChange(tabs[to].value);
+    strip.current?.querySelectorAll<HTMLButtonElement>('[role="tab"]')[to]?.focus();
+  };
+
+  return (
+    <div className="tabs" role="tablist" ref={strip}>
+      {tabs.map((tab) => (
+        <button
+          key={tab.value}
+          type="button"
+          role="tab"
+          className="tab"
+          id={`tab-${tab.value}`}
+          aria-selected={tab.value === value}
+          aria-controls={`panel-${tab.value}`}
+          tabIndex={tab.value === value ? 0 : -1}
+          onClick={() => onChange(tab.value)}
+          onKeyDown={(e) => {
+            if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
+            e.preventDefault();
+            step(e.key === "ArrowRight" ? 1 : -1);
+          }}
+        >
+          {tab.label}
+        </button>
+      ))}
+    </div>
   );
 }
 

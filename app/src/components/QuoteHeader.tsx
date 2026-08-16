@@ -26,6 +26,8 @@ export function QuoteHeader({
       </div>
 
       <div className="card__body">
+        {/* Four short fields to a row, then the three long ones at half width
+            underneath, so the form reads as two blocks rather than a ragged grid. */}
         <div className="form-grid">
           <Field label="Proforma no">
             <TextField
@@ -41,22 +43,20 @@ export function QuoteHeader({
               placeholder="dd/mm/yyyy"
             />
           </Field>
-          <Field label="Party no">
-            <TextField value={quote.partyNo} onChange={(v) => onChange({ partyNo: v })} />
+          <Field label="Order no">
+            <TextField value={quote.orderNo} onChange={(v) => onChange({ orderNo: v })} />
           </Field>
           <Field label="Doc no">
             <TextField value={quote.docNo} onChange={(v) => onChange({ docNo: v })} />
           </Field>
 
-          <div className="span-2">
-            <Field label="Customer">
-              <TextField
-                value={quote.customerName}
-                onChange={(v) => onChange({ customerName: v })}
-                placeholder="M/S ..."
-              />
-            </Field>
-          </div>
+          <Field label="Customer">
+            <TextField
+              value={quote.customerName}
+              onChange={(v) => onChange({ customerName: v })}
+              placeholder="M/S ..."
+            />
+          </Field>
           <Field label="GSTIN">
             <TextField
               value={quote.customerGstin}
@@ -65,6 +65,9 @@ export function QuoteHeader({
           </Field>
           <Field label="Ref person">
             <TextField value={quote.refPerson} onChange={(v) => onChange({ refPerson: v })} />
+          </Field>
+          <Field label="Party no">
+            <TextField value={quote.partyNo} onChange={(v) => onChange({ partyNo: v })} />
           </Field>
 
           <div className="span-2">
@@ -83,13 +86,13 @@ export function QuoteHeader({
               />
             </Field>
           </div>
-
-          <Field label="Order no">
-            <TextField value={quote.orderNo} onChange={(v) => onChange({ orderNo: v })} />
-          </Field>
           <div className="span-2">
             <Field label="Dispatch to">
-              <TextField value={quote.dispatchTo} onChange={(v) => onChange({ dispatchTo: v })} />
+              <TextField
+                value={quote.dispatchTo}
+                onChange={(v) => onChange({ dispatchTo: v })}
+                placeholder="Same as address"
+              />
             </Field>
           </div>
         </div>
