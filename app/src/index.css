@@ -388,6 +388,36 @@ h3 {
   flex: 0 0 auto;
 }
 
+/* The mark on a heading the app fills in for itself. Sized in its own em so it
+   stays small against the uppercase heading it sits in, and lower case because
+   the heading's text-transform would otherwise shout it. */
+.info {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  height: 13px;
+  margin-left: 2px;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 10px;
+  font-style: italic;
+  font-weight: 600;
+  line-height: 1;
+  text-transform: none;
+  color: var(--text-tertiary);
+  cursor: help;
+  vertical-align: middle;
+}
+
+.info:hover,
+.info:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
+  outline: none;
+}
+
 .modal {
   position: fixed;
   inset: 0;

@@ -3,8 +3,9 @@ import type { ComputedLine, ComputedSection } from "../core/engine";
 import type { Line, Quote } from "../core/types";
 import { formatInches } from "../core/units";
 import { shapes } from "../data/masters";
-import { Button, DimensionField, NumberField, OverrideDot, Select } from "../ui/controls";
+import { Button, DimensionField, Info, NumberField, OverrideDot, Select } from "../ui/controls";
 import { LineColumns } from "./columns";
+import { amountHint, areaHint, chargeableHint } from "./formulas";
 
 /**
  * The entry grid. What was measured and what was agreed — size, wastage, count
@@ -56,11 +57,12 @@ export function LineGrid({
               Actual size ({unit})
             </th>
             <th rowSpan={2}>Wastage</th>
+            {/* The three columns the app fills in for itself say so, and say how. */}
             <th className="grid__group" colSpan={2}>
-              Chargeable size ({unit})
+              Chargeable size ({unit}) <Info hint={chargeableHint(computed, quote)} />
             </th>
             <th rowSpan={2} className="num">
-              Area ({quote.printUnit})
+              Area ({quote.printUnit}) <Info hint={areaHint(computed, quote)} />
             </th>
             <th rowSpan={2} className="num">
               Qty
@@ -69,7 +71,7 @@ export function LineGrid({
               Rate
             </th>
             <th rowSpan={2} className="num">
-              Amount
+              Amount <Info hint={amountHint(computed)} />
             </th>
             <th rowSpan={2} />
           </tr>

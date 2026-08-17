@@ -380,6 +380,20 @@ export function OverrideDot({ title }: { title: string }) {
   return <span className="dot" title={title} />;
 }
 
+/**
+ * The mark beside a heading that the app fills in for itself: hover it and the
+ * browser shows the rule and what it did to the first row. A native tooltip
+ * rather than a bubble of our own, because the grid scrolls sideways on a narrow
+ * window and anything we drew would be cut off at the edge of it.
+ */
+export function Info({ hint }: { hint: string }) {
+  return (
+    <span className="info" title={hint} aria-label={hint} tabIndex={0} role="note">
+      i
+    </span>
+  );
+}
+
 export function Callout({
   tone = "info",
   title,
