@@ -132,8 +132,8 @@ async function retype(page: Page, proformaNo: string) {
     for (const [li, line] of section.lines.entries()) {
       if (li > 0) await card.getByRole("button", { name: "Add line" }).click();
       const row = card.locator("table.grid").first().locator("tbody tr").nth(li);
-      // #, shape, actual H, actual W, wastage, chargeable H, chargeable W, qty,
-      // area, rate, amount.
+      // #, shape, actual H, actual W, wastage, chargeable H, chargeable W, area,
+      // qty, rate, amount.
       const col = (n: number) => row.locator("td").nth(n).locator("input").first();
 
       await row
@@ -146,14 +146,14 @@ async function retype(page: Page, proformaNo: string) {
         await type(col(4), perLine[li]);
         notes.push(`S${si + 1} L${li + 1}: this row alone was cut at ${perLine[li]}`);
       }
-      await type(col(7), line.qty);
+      await type(col(8), line.qty);
       await type(col(9), line.rate);
 
       // Nothing below was typed: the row filled these in.
       const seen = `S${si + 1} L${li + 1}`;
       check(`${seen} chargeable H`, await col(5).inputValue(), line.ch);
       check(`${seen} chargeable W`, await col(6).inputValue(), line.cw);
-      check(`${seen} area`, await col(8).inputValue(), line.area);
+      check(`${seen} area`, await col(7).inputValue(), line.area);
       check(`${seen} amount`, await col(10).inputValue(), line.amount);
     }
 
@@ -170,14 +170,13 @@ async function retype(page: Page, proformaNo: string) {
         notes.push(`${extra.name} is not in the charge list, typed as an "other"`);
       }
 
-      // charge, qty, the empty area column, rate, amount. A charge the sheet
-      // printed without a count is typed without one, and the rate is then the
-      // whole charge.
+      // charge, qty, rate, amount. A charge the sheet printed without a count is
+      // typed without one, and the rate is then the whole charge.
       const col = (n: number) => row.locator("td").nth(n).locator("input.input--num").first();
       await type(col(1), extra.qty ?? 0);
-      await type(col(3), extra.qty ? extra.amount / extra.qty : extra.amount);
+      await type(col(2), extra.qty ? extra.amount / extra.qty : extra.amount);
 
-      check(`S${si + 1} ${extra.name}`, await col(4).inputValue(), extra.amount);
+      check(`S${si + 1} ${extra.name}`, await col(3).inputValue(), extra.amount);
     }
 
     const totals = card.locator(".totals");

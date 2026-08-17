@@ -115,7 +115,9 @@ export function SectionEditor({
           onRemoveLine={onRemoveLine}
         />
 
-        <div className="row">
+        {/* Both Add buttons sit at the right, under the end of the table they
+            fill, so adding a row is the same movement in either one. */}
+        <div className="row row--end">
           <Button onClick={onAddLine}>Add line</Button>
         </div>
 
@@ -127,7 +129,7 @@ export function SectionEditor({
           onRemove={onRemoveCharge}
         />
 
-        <div className="row">
+        <div className="row row--end">
           <Button onClick={onAddCharge}>Add charge</Button>
         </div>
 

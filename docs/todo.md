@@ -1,3 +1,5 @@
+- make charges table width smaller or fields near ?
+
 ## print
 
 - print tab must be A4 size width

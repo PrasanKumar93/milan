@@ -60,10 +60,10 @@ export function LineGrid({
               Chargeable size ({unit})
             </th>
             <th rowSpan={2} className="num">
-              Qty
+              Area ({quote.printUnit})
             </th>
             <th rowSpan={2} className="num">
-              Area ({quote.printUnit})
+              Qty
             </th>
             <th rowSpan={2} className="num">
               Rate
@@ -166,15 +166,6 @@ export function LineGrid({
                 </td>
 
                 <td className="num">
-                  <NumberField
-                    value={line.qty}
-                    width={56}
-                    decimals={0}
-                    onChange={(qty) => onPatchLine(line.id, { qty })}
-                  />
-                </td>
-
-                <td className="num">
                   <div className="pair">
                     <NumberField
                       value={l.area.value.toNumber()}
@@ -189,6 +180,15 @@ export function LineGrid({
                       <OverrideDot title={`Formula gives ${l.area.computed.toFixed(4)}`} />
                     )}
                   </div>
+                </td>
+
+                <td className="num">
+                  <NumberField
+                    value={line.qty}
+                    width={56}
+                    decimals={0}
+                    onChange={(qty) => onPatchLine(line.id, { qty })}
+                  />
                 </td>
 
                 <td className="num">

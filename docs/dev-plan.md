@@ -142,6 +142,8 @@ A line carrying a wastage different from its section's is flagged with a dot, so
 
 **Entry grid header follows the sheet's two-level layout** — a group heading `ACTUAL SIZE (mm)` spanning `HEIGHT` and `WIDTH` sub-labels, each sitting directly over its own box, and the same for `CHARGEABLE`. This is the layout the operators already read every day. The header is sticky so it stays visible on long quotes.
 
+**One column is in a different place on screen than on paper: area comes before the count.** The charges table sits in the same card, under the same column widths, and its count, rate and amount have to land under the glass's count, rate and amount — otherwise the money in a section is written in two places and added in a third. A charge has no area, so putting area last-but-three would leave a hole in the middle of every charge row. Area moves left of the count instead, the charge name takes the whole run to its left and stands at the right of it against the count, and both tables end with `QTY · RATE · AMOUNT · ✕`. The printed document is untouched: it keeps the sheet's own order (§2.10), where there is no charges table to line up with.
+
 **Kaccha (raw, untoughened) glass carries wastage too** — it is not a toughened-only rule, since the offcut is lost either way. The data agrees: all 27 kaccha lines use the standard +2 in. "Kaccha" is the raw sheet; toughened is the finished, processed product.
 
 ### 2.3 Amount and rounding

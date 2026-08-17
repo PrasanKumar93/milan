@@ -23,7 +23,6 @@ export function QuoteHeader({
     <section className="card">
       <div className="card__head">
         <h2>Quotation details</h2>
-        <span className="muted small">Printed at the top of the proforma</span>
       </div>
 
       <div className="card__body">

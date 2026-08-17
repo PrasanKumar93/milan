@@ -536,6 +536,17 @@ table.grid td.num .pair {
   justify-content: flex-end;
 }
 
+/* A charge has no sizes, so its name has the whole left of the row to itself.
+   It stands at the right of that run, against the count, and the empty space
+   falls where nothing is expected. */
+table.grid .charge__name {
+  text-align: right;
+}
+
+table.grid td.charge__name .row {
+  justify-content: flex-end;
+}
+
 /* A row is wide and its cells are far apart, so every other one is tinted to
    keep the eye on the line it is reading. */
 table.grid--zebra tbody tr:nth-child(odd) {

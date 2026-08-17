@@ -35,9 +35,8 @@ export function ChargeTable({
         <ChargeColumns />
         <thead>
           <tr>
-            <th>Charge</th>
+            <th className="charge__name">Charge</th>
             <th className="num">Qty</th>
-            <th />
             <th className="num">Rate</th>
             <th className="num">Amount</th>
             <th />
@@ -52,8 +51,20 @@ export function ChargeTable({
 
             return (
               <tr key={adj.id}>
-                <td>
+                {/* The name stands at the right of its run, against the count,
+                    so the charge reads as one block rather than a name marooned
+                    at one end of the card and its figures at the other. */}
+                <td className="charge__name">
                   <div className="row row--tight">
+                    {type?.unit === "rft" && (
+                      <Button
+                        variant="icon"
+                        title="Perimeter of every piece in this section"
+                        onClick={() => onPatch(adj.id, { qty: Number(perimeter.toFixed(2)) })}
+                      >
+                        Use {perimeter.toFixed(2)} rft
+                      </Button>
+                    )}
                     <Select
                       value={custom ? CUSTOM_CHARGE : adj.label}
                       width={168}
@@ -63,6 +74,7 @@ export function ChargeTable({
                         { value: CUSTOM_CHARGE, label: "Other — type it" },
                       ]}
                     />
+                    {/* The name that prints ends up nearest the figures either way. */}
                     {custom && (
                       <TextField
                         value={adj.label}
@@ -89,20 +101,6 @@ export function ChargeTable({
                     title="How many. Leave it empty for a charge that is not counted."
                     onChange={(qty) => onPatch(adj.id, { qty })}
                   />
-                </td>
-
-                {/* A charge has no area, so the fill-in-the-perimeter button for
-                    polish stands in that column, next to the count it fills. */}
-                <td>
-                  {type?.unit === "rft" && (
-                    <Button
-                      variant="icon"
-                      title={`Perimeter of every piece in this section: ${perimeter.toFixed(2)} rft`}
-                      onClick={() => onPatch(adj.id, { qty: Number(perimeter.toFixed(2)) })}
-                    >
-                      Use {perimeter.toFixed(2)} rft
-                    </Button>
-                  )}
                 </td>
 
                 <td className="num">
