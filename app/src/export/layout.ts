@@ -57,7 +57,14 @@ export const INK = {
 
 export type SheetRow = Cell[];
 
-/** SI NO, SHAPE, actual H and W, chargeable H and W, QTY, area, RATE, AMOUNT. */
+/**
+ * SI NO, SHAPE, actual H and W, chargeable H and W, area, QTY, RATE, AMOUNT.
+ *
+ * The area comes before the quantity, which is the one place this page departs
+ * from the sheet the office sends today: the entry grid ends on area, qty, rate,
+ * amount, and an operator checking a printed page against the screen should be
+ * reading the columns in the same order on both.
+ */
 export const COLUMNS = 10;
 
 /**
@@ -67,7 +74,7 @@ export const COLUMNS = 10;
  * cell padding and the rules between columns; the serial column is wide enough
  * to keep "SI NO" on one line.
  */
-export const COLUMN_WIDTHS = [28, 43, 46, 46, 46, 46, 39, 55, 46, 74];
+export const COLUMN_WIDTHS = [28, 43, 46, 46, 46, 46, 55, 39, 46, 74];
 
 const SKIP: Cell = { text: "", skip: true };
 
@@ -123,8 +130,8 @@ export function headRows(quote: Quote): SheetRow[] {
       1: head("SHAPE", { rowSpan: 2 }),
       2: head("ACTUAL SIZE", { colSpan: 2 }),
       4: head("CHARGEABLE", { colSpan: 2 }),
-      6: head("QTY", { rowSpan: 2 }),
-      7: head(quote.printUnit, { rowSpan: 2 }),
+      6: head(quote.printUnit, { rowSpan: 2 }),
+      7: head("QTY", { rowSpan: 2 }),
       8: head("RATE", { rowSpan: 2 }),
       9: head("AMOUNT", { rowSpan: 2 }),
     }),
@@ -154,8 +161,8 @@ export function lineRows(computed: ComputedSection, quote: Quote): SheetRow[] {
       3: fig(size(l.line.actualW), `line.${i}.actualW`, l.line.actualW),
       4: fig(size(l.chargeableH.value.toNumber()), `line.${i}.chargeableH`, l.chargeableH.value),
       5: fig(size(l.chargeableW.value.toNumber()), `line.${i}.chargeableW`, l.chargeableW.value),
-      6: fig(formatSheet(l.line.qty), `line.${i}.qty`, l.line.qty),
-      7: fig(formatArea(l.area.value), `line.${i}.area`, l.area.value),
+      6: fig(formatArea(l.area.value), `line.${i}.area`, l.area.value),
+      7: fig(formatSheet(l.line.qty), `line.${i}.qty`, l.line.qty),
       8: fig(formatSheet(l.line.rate), `line.${i}.rate`, l.line.rate),
       9: fig(formatSheet(l.amount.value), `line.${i}.amount`, l.amount.value),
     }),
@@ -172,10 +179,13 @@ export function lineRows(computed: ComputedSection, quote: Quote): SheetRow[] {
  * sheet prints: see the section total at the bottom.
  */
 export function tailRows(computed: ComputedSection, quote: Quote, alone = false): SheetRow[] {
-  const label = (text: string, withQty: boolean): Cell => ({
+  // A label below the lines starts under the area column and runs to whatever
+  // figure follows it — the rate column where there is a count or a tax rate,
+  // the amount where there is not.
+  const label = (text: string, beside: boolean): Cell => ({
     text,
     align: "left",
-    colSpan: withQty ? 1 : 2,
+    colSpan: beside ? 2 : 3,
   });
 
   const rows: SheetRow[] = [];
@@ -184,8 +194,8 @@ export function tailRows(computed: ComputedSection, quote: Quote, alone = false)
   if (computed.lines.length > 1) {
     rows.push(
       row({
-        6: fig(formatSheet(computed.totalQty), "total.qty", computed.totalQty),
-        7: fig(formatArea(computed.totalArea), "total.area", computed.totalArea),
+        6: fig(formatArea(computed.totalArea), "total.area", computed.totalArea),
+        7: fig(formatSheet(computed.totalQty), "total.qty", computed.totalQty),
         9: fig(formatSheet(computed.subtotal), "subtotal", computed.subtotal),
       }),
     );
@@ -199,7 +209,7 @@ export function tailRows(computed: ComputedSection, quote: Quote, alone = false)
     const counted = a.adjustment.qty > 0;
     rows.push(
       row({
-        7: label(a.adjustment.label, counted),
+        6: label(a.adjustment.label, counted),
         ...(counted
           ? { 8: fig(formatSheet(a.adjustment.qty), `adj.${i}.qty`, a.adjustment.qty) }
           : {}),
@@ -222,7 +232,7 @@ export function tailRows(computed: ComputedSection, quote: Quote, alone = false)
       const tax = name.toLowerCase();
       rows.push(
         row({
-          7: label(name, true),
+          6: label(name, true),
           // A rate, not a figure: the workbook writes it as a fraction shown as
           // a percentage, so the tax cell beside it can multiply by it.
           8: fig(`${formatSheet(quote.gstPct)}%`, `${tax}.pct`, quote.gstPct / 100),
@@ -237,7 +247,7 @@ export function tailRows(computed: ComputedSection, quote: Quote, alone = false)
   if (!alone) {
     rows.push(
       row({
-        7: { ...label(computed.section.shortCode, false), bold: true },
+        6: { ...label(computed.section.shortCode, false), bold: true },
         9: fig(formatSheet(computed.total), "total", computed.total, true),
       }),
     );
@@ -252,7 +262,7 @@ export function summaryRows(computed: ComputedQuote): SheetRow[] {
     computed.sections.length > 1
       ? computed.sections.map((s, i) =>
           row({
-            7: { text: s.section.shortCode, align: "left", colSpan: 2 },
+            6: { text: s.section.shortCode, align: "left", colSpan: 3 },
             9: fig(formatSheet(s.total), `section.${i}.total`, s.total),
           }),
         )
@@ -260,7 +270,7 @@ export function summaryRows(computed: ComputedQuote): SheetRow[] {
 
   rows.push(
     row({
-      7: { text: "TOTAL AMOUNT", align: "left", colSpan: 2, bold: true, highlight: true },
+      6: { text: "TOTAL AMOUNT", align: "left", colSpan: 3, bold: true, highlight: true },
       9: { ...fig(formatSheet(computed.grandTotal), "grandTotal", computed.grandTotal, true), highlight: true },
     }),
   );

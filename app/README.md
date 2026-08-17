@@ -53,6 +53,8 @@ src/export/
 
 `export/layout.ts` builds the rows of the proforma — the two-level head, the lines, the totals that sit unlabelled in the same columns, the summary — along with the column widths, which cells are ruled, and the colours the page is printed in. `PrintView` renders those rows as HTML, `pdf.ts` renders them through pdfmake, and `excel.ts` draws them into a worksheet. None of them owns the layout, so "what prints" cannot promise something the download does not deliver. If a column moves, it moves in one file.
 
+The printed page ends on the same four columns as the entry grid — area, qty, rate, amount — which is the one place it departs from the sheet the office sends today, where the count comes before the area. It is worth the departure: the columns that carry money read the same way wherever the quote is looked at.
+
 A row can also say what each figure *is* — a cell carries a `key` like `line.2.area` or `cgst`. The printed renderers ignore it; the workbook writes a live formula there instead of the number, and finds the cells that formula needs by looking their keys up, so the arithmetic never has to know the shape of the page.
 
 The two say the same thing in different vocabularies — CSS classes on one side, pdfmake's cell properties on the other — and that is where they can drift: the ruled grid once came out of the download unboxed while the preview looked right. So `renderings.test.tsx` asks each renderer to describe the sheet cell by cell — the text, whether it is ruled, whether it is filled — and requires the two descriptions to be the same list. It runs in the normal test suite and it fails on exactly that bug.

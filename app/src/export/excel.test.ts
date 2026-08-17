@@ -14,7 +14,7 @@ import { INK } from "./layout";
  * would and compare it with the engine, then check what the page looks like.
  *
  * Columns, as the sheet prints them: A SI NO, B SHAPE, C/D actual, E/F
- * chargeable, G QTY, H area, I RATE, J AMOUNT — then K and L, hidden, holding
+ * chargeable, G area, H QTY, I RATE, J AMOUNT — then K and L, hidden, holding
  * the wastage allowance and the rate behind a counted charge.
  */
 
@@ -115,11 +115,11 @@ describe("the workbook", () => {
     const { numberAt } = recalculate(sheet);
 
     for (const section of computed.sections) {
-      const row = rowOf(sheet, "H", section.section.shortCode);
+      const row = rowOf(sheet, "G", section.section.shortCode);
       expect(numberAt(`J${row}`)).toBeCloseTo(section.total.toNumber(), 6);
     }
 
-    const total = rowOf(sheet, "H", "TOTAL AMOUNT");
+    const total = rowOf(sheet, "G", "TOTAL AMOUNT");
     expect(numberAt(`J${total}`)).toBeCloseTo(computed.grandTotal.toNumber(), 6);
   });
 
@@ -131,7 +131,7 @@ describe("the workbook", () => {
 
     const sheet = sheetFor(q);
     const { numberAt } = recalculate(sheet);
-    const total = rowOf(sheet, "H", "TOTAL AMOUNT");
+    const total = rowOf(sheet, "G", "TOTAL AMOUNT");
 
     expect(numberAt(`J${total}`)).toBeCloseTo(computeQuote(q).grandTotal.toNumber(), 6);
   });
@@ -159,7 +159,7 @@ describe("the workbook", () => {
 
     expect(numberAt(`E${row}`)).toBe(2550);
     // 2.55 x 1.05 SQMT, two pieces, at 1238.
-    expect(numberAt(`H${row}`)).toBeCloseTo(5.355, 6);
+    expect(numberAt(`G${row}`)).toBeCloseTo(5.355, 6);
     expect(numberAt(`J${row}`)).toBeCloseTo(6629.49, 2);
   });
 
@@ -169,7 +169,7 @@ describe("the workbook", () => {
 
     const sheet = sheetFor(q);
     const row = rowOf(sheet, "C", 2000);
-    const cell = sheet.getCell(`H${row}`);
+    const cell = sheet.getCell(`G${row}`);
 
     expect(cell.value).toBe(5);
     expect(String(cell.note)).toContain("4.305");
@@ -192,7 +192,7 @@ describe("the workbook", () => {
 
     expect(formulas).toBeGreaterThan(20);
 
-    const total = rowOf(sheet, "H", "TOTAL AMOUNT");
+    const total = rowOf(sheet, "G", "TOTAL AMOUNT");
     const cached = sheet.getCell(`J${total}`).value as { result: number };
     expect(cached.result).toBeCloseTo(computed.grandTotal.toNumber(), 6);
   });
@@ -258,16 +258,16 @@ describe("the printed page of the workbook", () => {
   });
 
   it("boxes the figures under the lines and leaves the width beside them bare", () => {
-    const rounded = rowOf(sheet, "H", "HOLES");
+    const rounded = rowOf(sheet, "G", "HOLES");
 
     expect(sheet.getCell(`J${rounded}`).border?.top?.style).toBe("thin");
     expect(sheet.getCell(`B${rounded}`).border).toBeUndefined();
   });
 
   it("puts the total on the sheet's yellow", () => {
-    const total = rowOf(sheet, "H", "TOTAL AMOUNT");
+    const total = rowOf(sheet, "G", "TOTAL AMOUNT");
 
-    for (const column of ["H", "J"]) {
+    for (const column of ["G", "J"]) {
       expect(sheet.getCell(`${column}${total}`).fill).toMatchObject({
         fgColor: { argb: `FF${INK.totalFill.slice(1).toUpperCase()}` },
       });
@@ -282,7 +282,7 @@ describe("the printed page of the workbook", () => {
   });
 
   it("writes a tax rate as a percentage, and the tax beside it as money", () => {
-    const cgst = rowOf(sheet, "H", "CGST");
+    const cgst = rowOf(sheet, "G", "CGST");
 
     expect(sheet.getCell(`I${cgst}`).value).toBe(0.09);
     expect(sheet.getCell(`I${cgst}`).numFmt).toBe("0%");
@@ -305,7 +305,7 @@ describe("the printed page of the workbook", () => {
 
   it("keeps the allowance and the charge rate off the page but within reach", () => {
     const line = rowOf(sheet, "C", 2000);
-    const holes = rowOf(sheet, "H", "HOLES");
+    const holes = rowOf(sheet, "G", "HOLES");
 
     expect(sheet.getCell(`K${line}`).value).toBe(50);
     expect(sheet.getCell(`L${holes}`).value).toBe(30);
