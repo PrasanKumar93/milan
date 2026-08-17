@@ -616,49 +616,186 @@ table.grid tbody tr:hover {
 
 /* ---------- print view ---------- */
 
+/*
+ * The preview is the page itself: A4 wide, with the PDF's own margins and its
+ * 8pt type, laid on the desk so the edges of the paper show. Sizes below are in
+ * points and millimetres for that reason — read them against `pdf.ts`, where the
+ * same numbers set the document up.
+ */
+
+.page-sheet {
+  display: flex;
+  justify-content: center;
+}
+
+/* The colours are the ones `layout.ts` gives the PDF, kept in step by hand. */
 .print {
+  --ink-heading: #b3132c;
+  --ink-title: #5b2d8e;
+  --ink-note: #1b3fa0;
+  --ink-rule: #000;
+  --ink-head-fill: #e9e9e9;
+  --ink-total-fill: #ffe95c;
+
+  width: 210mm;
+  min-height: 297mm;
+  padding: 30pt 40pt;
   background: #fff;
   color: #000;
-  padding: 28px 32px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  font-size: 12px;
+  /* Near enough the Roboto the PDF is set in for the columns to break alike. */
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 8pt;
+  line-height: 1.15;
+  box-shadow: 0 4px 20px rgba(20, 23, 28, 0.14);
+  print-color-adjust: exact;
+  -webkit-print-color-adjust: exact;
 }
 
-.print h2 {
-  font-size: 15px;
+.print__head {
+  display: flex;
+  align-items: center;
+  gap: 10pt;
 }
 
-.print__center {
+/* A space the width of the mark, so the letterhead is centred on the page. */
+.print__head::after {
+  content: "";
+  flex: 0 0 54pt;
+}
+
+.print__logo {
+  flex: 0 0 54pt;
+  width: 54pt;
+  height: 54pt;
+  object-fit: contain;
+}
+
+.print__letterhead {
+  flex: 1;
   text-align: center;
+  color: var(--ink-heading);
 }
 
-.print__rule {
-  border-top: 1px solid #000;
-  margin: 10px 0;
+.print__letterhead h2 {
+  font-size: 15pt;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.print__title {
+  margin: 6pt 0;
+  text-align: center;
+  font-size: 12pt;
+  font-weight: 700;
+  color: var(--ink-title);
+}
+
+/* The sheet keeps each part of the page in a box of its own. */
+.print__box {
+  border: 0.5pt solid var(--ink-rule);
 }
 
 .print__meta {
-  margin: 10px 0;
+  margin-bottom: 10pt;
 }
 
 .print__meta-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
+}
+
+.print__meta-row--rule {
+  border-top: 0.5pt solid var(--ink-rule);
+}
+
+.print__meta-row > span {
+  padding: 3pt 5pt;
+}
+
+.print__meta-row > span + span {
+  border-left: 0.5pt solid var(--ink-rule);
+}
+
+.print__section {
+  margin-bottom: 10pt;
+}
+
+/* The last one runs straight into the summary, as it does on the printed page. */
+.print__section--last {
+  margin-bottom: 0;
+}
+
+/* It sits on the head of the table, which draws the rule between them. */
+.print__section-head {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  border-bottom: 0;
+  font-weight: 700;
+}
+
+.print__section-head > span {
+  padding: 3pt 5pt;
+}
+
+.print__section-head > span + span {
+  border-left: 0.5pt solid var(--ink-rule);
 }
 
 .print__cols {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
+  margin-bottom: 10pt;
 }
 
+.print__cols > div {
+  padding-bottom: 4pt;
+}
+
+.print__cols > div + div {
+  border-left: 0.5pt solid var(--ink-rule);
+}
+
+.print__cols > div > div:not(.print__block-head),
+.print__note > div:not(.print__block-head) {
+  padding: 0 5pt;
+}
+
+.print__block-head {
+  padding: 3pt 5pt;
+  border-bottom: 0.5pt solid var(--ink-rule);
+  text-align: center;
+  font-weight: 700;
+  color: var(--ink-heading);
+}
+
+.print__note {
+  margin-bottom: 10pt;
+  padding-bottom: 4pt;
+  text-align: center;
+  color: var(--ink-note);
+}
+
+/* The names sit on one line at the foot, under the stamp and the space to sign in. */
 .print__sign {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin-top: 26px;
+  align-items: end;
+  gap: 12pt;
+  padding: 4pt 5pt;
+  min-height: 66pt;
+}
+
+/* Held to the width of the name it stands over, so it is centred on the name. */
+.print__sign > div {
+  justify-self: start;
+}
+
+.print__stamp {
+  display: block;
+  width: 42pt;
+  height: 49pt;
+  margin: 0 auto;
+  object-fit: contain;
 }
 
 /*
@@ -668,48 +805,48 @@ table.grid tbody tr:hover {
 table.print-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 11px;
+  font-size: 8pt;
   table-layout: fixed;
   font-variant-numeric: tabular-nums;
 }
 
 table.print-table th,
 table.print-table td {
-  border-left: 1px solid #000;
-  border-right: 1px solid #000;
-  padding: 2px 4px;
+  border-left: 0.5pt solid var(--ink-rule);
+  border-right: 0.5pt solid var(--ink-rule);
+  padding: 2pt;
   vertical-align: top;
 }
 
 table.print-table thead th {
-  background: #e9e9e9;
-  border-top: 1px solid #000;
-  border-bottom: 1px solid #000;
-  font-weight: 600;
+  background: var(--ink-head-fill);
+  border-top: 0.5pt solid var(--ink-rule);
+  border-bottom: 0.5pt solid var(--ink-rule);
+  font-weight: 700;
 }
 
 table.print-table tbody tr:last-child td {
-  border-bottom: 1px solid #000;
-}
-
-table.print-table--plain th,
-table.print-table--plain td {
-  border: 0;
-  padding: 1px 4px;
-}
-
-table.print-table--plain tbody tr:last-child td {
-  border-bottom: 0;
+  border-bottom: 0.5pt solid var(--ink-rule);
 }
 
 /*
- * The totals and charges under a section put their label at one end of the page
- * and their figure at the other, so on screen every other line is tinted to lead
- * the eye across. It is a reading aid for the operator only: the printed page and
- * the PDF are white, as the customer's copy has always been.
+ * Below the lines only the figures are ruled, each in a box of its own, and the
+ * width beside them is left bare — the way the sheet separates a charge from the
+ * empty page next to it (see `boxed` in layout.ts).
  */
-table.print-table--plain tbody tr:nth-child(odd) {
-  background: var(--zebra);
+table.print-table--plain th,
+table.print-table--plain td,
+table.print-table--plain tbody tr:last-child td {
+  border: 0;
+  padding: 2pt;
+}
+
+table.print-table--plain td.boxed {
+  border: 0.5pt solid var(--ink-rule);
+}
+
+table.print-table--plain td.highlight {
+  background: var(--ink-total-fill);
 }
 
 @media print {
@@ -727,13 +864,16 @@ table.print-table--plain tbody tr:nth-child(odd) {
     max-width: none;
   }
 
+  /* The printer supplies the page, so the preview gives up its own. */
   .print {
-    border: 0;
-    border-radius: 0;
+    width: auto;
+    min-height: 0;
     padding: 0;
+    box-shadow: none;
   }
+}
 
-  table.print-table--plain tbody tr:nth-child(odd) {
-    background: none;
-  }
+@page {
+  size: A4;
+  margin: 30pt 40pt;
 }

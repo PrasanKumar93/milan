@@ -5,6 +5,8 @@ import {
   type Cell,
   type SheetRow,
   COLUMN_WIDTHS,
+  INK,
+  META_DIVIDER,
   bankRows,
   fileNameFor,
   headRows,
@@ -17,17 +19,21 @@ import {
   tailRows,
   termRows,
 } from "./layout";
+import { type Marks, marks } from "./marks";
 
 /**
  * The PDF, built from the same rows as the preview (see `layout.ts`).
  *
  * A4 rather than the Letter size the current sheet exports at: the office prints
  * on A4 anyway, so today's PDF is already being scaled to fit. Column
- * proportions are kept, so the page reads the same.
+ * proportions are kept, and so are the sheet's boxed blocks and its colours, so
+ * the page reads as the document the customer already knows.
  */
 
-const HEAD_FILL = "#e9e9e9";
 const RULE = 0.5;
+const PADDING = 2;
+
+type Margin = [number, number, number, number];
 
 function toCell(cell: Cell): TableCell {
   if (cell.skip) return {};
@@ -35,6 +41,8 @@ function toCell(cell: Cell): TableCell {
     text: cell.text,
     alignment: cell.align ?? "left",
     bold: cell.bold ?? false,
+    border: [cell.box ?? false, cell.box ?? false, cell.box ?? false, cell.box ?? false],
+    ...(cell.highlight ? { fillColor: INK.totalFill } : {}),
     ...(cell.colSpan ? { colSpan: cell.colSpan } : {}),
     ...(cell.rowSpan ? { rowSpan: cell.rowSpan } : {}),
   };
@@ -44,8 +52,6 @@ function toBody(rows: SheetRow[]): TableCell[][] {
   return rows.map((row) => row.map(toCell));
 }
 
-const PADDING = 2;
-
 /**
  * pdfmake rewrites the arrays it is handed in place, turning the strings into
  * its own node objects. Everything shared with the preview and the workbook is
@@ -53,60 +59,151 @@ const PADDING = 2;
  */
 const widths = () => [...COLUMN_WIDTHS];
 
-/** The lines are boxed and ruled down every column; the totals below them are not. */
+const padding = {
+  paddingTop: () => PADDING,
+  paddingBottom: () => PADDING,
+  paddingLeft: () => PADDING,
+  paddingRight: () => PADDING,
+};
+
+/** The lines are boxed and ruled down every column, with a tinted head. */
 function gridLayout(headCount: number) {
   return {
     hLineWidth: (i: number, node: { table: { body: unknown[] } }) =>
       i === 0 || i === headCount || i === node.table.body.length ? RULE : 0,
     vLineWidth: () => RULE,
-    hLineColor: () => "#000000",
-    vLineColor: () => "#000000",
-    fillColor: (i: number) => (i < headCount ? HEAD_FILL : null),
-    paddingTop: () => PADDING,
-    paddingBottom: () => PADDING,
-    paddingLeft: () => PADDING,
-    paddingRight: () => PADDING,
+    hLineColor: () => INK.rule,
+    vLineColor: () => INK.rule,
+    fillColor: (i: number) => (i < headCount ? INK.headFill : null),
+    ...padding,
   };
 }
 
-const noBorders = {
-  hLineWidth: () => 0,
-  vLineWidth: () => 0,
-  paddingTop: () => 1,
-  paddingBottom: () => 1,
-  paddingLeft: () => PADDING,
-  paddingRight: () => PADDING,
+/**
+ * Under the lines each figure is boxed on its own, so the rules come from the
+ * cells rather than from the table: `defaultBorder` off, and every cell that
+ * carries text asks for its four sides (see `boxed` in layout.ts).
+ */
+const cellBorders = {
+  defaultBorder: false,
+  hLineWidth: () => RULE,
+  vLineWidth: () => RULE,
+  hLineColor: () => INK.rule,
+  vLineColor: () => INK.rule,
+  ...padding,
 };
 
-export function buildDoc(computed: ComputedQuote): TDocumentDefinitions {
+/** A block of the page: ruled all round, and down the middle where it has two halves. */
+function boxLayout(divider = false, rules: number[] = []) {
+  return {
+    hLineWidth: (i: number, node: { table: { body: unknown[] } }) =>
+      i === 0 || i === node.table.body.length || rules.includes(i) ? RULE : 0,
+    vLineWidth: (i: number, node: { table: { body: unknown[][] } }) =>
+      i === 0 || i === node.table.body[0].length || divider ? RULE : 0,
+    hLineColor: () => INK.rule,
+    vLineColor: () => INK.rule,
+    paddingTop: () => 3,
+    paddingBottom: () => 3,
+    paddingLeft: () => 5,
+    paddingRight: () => 5,
+  };
+}
+
+const heading = (text: string, fontSize = 9): Content => ({
+  text,
+  bold: true,
+  fontSize,
+  color: INK.heading,
+  alignment: "center",
+});
+
+/** Room enough to sign in, or for the stamp that goes over the last name. */
+const SIGNING_SPACE = 30;
+const STAMP_WIDTH = 42;
+const STAMP_HEIGHT = 49;
+
+/**
+ * The four names at the foot of the page, with the company's stamp standing
+ * over the last of them. The others are dropped by the height of the stamp so
+ * all four names sit on one line.
+ */
+function signatures(stamp?: string): Content[] {
+  const drop = stamp ? STAMP_HEIGHT : SIGNING_SPACE;
+
+  return company.signatureBlocks.map((name, i) => {
+    const stamped = stamp && i === company.signatureBlocks.length - 1;
+    if (!stamped) return { text: name, margin: [0, drop, 0, 0] as Margin };
+
+    // Held to the width of the name it stands over, so it is centred on the
+    // name rather than on the quarter of the page the name starts in.
+    return {
+      columns: [
+        {
+          width: "auto",
+          stack: [
+            { image: stamp, width: STAMP_WIDTH, height: STAMP_HEIGHT, alignment: "center" },
+            { text: name },
+          ],
+        },
+      ],
+    };
+  });
+}
+
+export function buildDoc(computed: ComputedQuote, pictures: Marks = {}): TDocumentDefinitions {
   const quote = computed.quote;
+  const { logo, stamp } = pictures;
+
+  // The letterhead sits between the logo and a space of the same width, so the
+  // name stays centred on the page rather than on what is left of it.
   const content: Content[] = [
     {
-      stack: [
-        { text: company.name, bold: true, fontSize: 13 },
-        ...letterhead.slice(1).map((line) => ({ text: line })),
-        { text: "PROFORMA INVOICE", bold: true, margin: [0, 6, 0, 0] as [number, number, number, number] },
+      columns: [
+        logo ? { image: logo, width: 54, height: 54 } : { text: "", width: 54 },
+        {
+          width: "*",
+          stack: [
+            { text: company.name, bold: true, fontSize: 15, color: INK.heading },
+            ...letterhead.slice(1).map((line) => ({ text: line, color: INK.heading })),
+          ],
+          alignment: "center",
+        },
+        { text: "", width: 54 },
       ],
+      margin: [0, 0, 0, 6] as Margin,
+    },
+    {
+      text: "PROFORMA INVOICE",
+      bold: true,
+      fontSize: 12,
+      color: INK.title,
       alignment: "center",
-      margin: [0, 0, 0, 8],
+      margin: [0, 0, 0, 6] as Margin,
     },
     {
       table: { widths: ["*", "*"], body: metaRows(quote).map(([left, right]) => [left, right]) },
-      layout: noBorders,
-      margin: [0, 0, 0, 10],
+      layout: boxLayout(true, [META_DIVIDER]),
+      margin: [0, 0, 0, 10] as Margin,
     },
   ];
 
-  for (const section of computed.sections) {
+  for (const [index, section] of computed.sections.entries()) {
     const head = headRows(quote);
     const lines = lineRows(section, quote);
+    const last = index === computed.sections.length - 1;
 
     content.push({
-      columns: [
-        { text: sectionTitle(section), bold: true },
-        { text: hsnLabel, alignment: "right" },
-      ],
-      margin: [0, 0, 0, 3],
+      table: {
+        widths: ["*", "auto"],
+        body: [
+          [
+            { text: sectionTitle(section), bold: true, fontSize: 9 },
+            { text: hsnLabel, alignment: "right", bold: true },
+          ],
+        ],
+      },
+      layout: boxLayout(true),
+      margin: [0, 0, 0, 0] as Margin,
     });
 
     content.push({
@@ -119,15 +216,17 @@ export function buildDoc(computed: ComputedQuote): TDocumentDefinitions {
         widths: widths(),
         body: toBody(tailRows(section, quote, computed.sections.length === 1)),
       },
-      layout: noBorders,
-      margin: [0, 2, 0, 10],
+      layout: cellBorders,
+      // The last section runs straight into the summary, as the sheet has the
+      // total sitting on the charge above it.
+      margin: [0, 2, 0, last ? 0 : 10] as Margin,
     });
   }
 
   content.push({
     table: { widths: widths(), body: toBody(summaryRows(computed)) },
-    layout: noBorders,
-    margin: [0, 0, 0, 9],
+    layout: cellBorders,
+    margin: [0, 0, 0, 10] as Margin,
   });
 
   // The closing blocks read as one thing each, so none of them is allowed to be
@@ -136,40 +235,47 @@ export function buildDoc(computed: ComputedQuote): TDocumentDefinitions {
     table: {
       widths: ["*", "*"],
       body: [
-        [
-          { text: "BANK DETAILS", bold: true, alignment: "center" },
-          { text: "TERMS :-", bold: true },
-        ],
+        [heading("BANK DETAILS"), heading("TERMS :-")],
         [{ stack: [...bankRows] }, { stack: [...termRows] }],
       ],
     },
-    layout: noBorders,
+    layout: boxLayout(true, [1]),
     unbreakable: true,
-    margin: [0, 0, 0, 9],
+    margin: [0, 0, 0, 10] as Margin,
   });
 
   content.push({
-    stack: [{ text: "NOTE :", bold: true }, ...company.notes.map((n) => ({ text: n }))],
-    alignment: "center",
+    table: {
+      widths: ["*"],
+      body: [
+        [heading("NOTE :")],
+        [
+          {
+            stack: company.notes.map((n) => ({ text: n })),
+            alignment: "center",
+            color: INK.note,
+          },
+        ],
+      ],
+    },
+    layout: boxLayout(false, [1]),
     unbreakable: true,
-    margin: [0, 0, 0, 9],
+    margin: [0, 0, 0, 10] as Margin,
   });
 
   content.push({
-    stack: [
-      { text: "CUSTOMERS ACCEPTANCE", bold: true, alignment: "center" },
-      {
-        columns: company.signatureBlocks.map((b) => ({ text: b })),
-        margin: [0, 30, 0, 0] as [number, number, number, number],
-      },
-    ],
+    table: {
+      widths: ["*"],
+      body: [[heading("CUSTOMERS ACCEPTANCE")], [{ columns: signatures(stamp) }]],
+    },
+    layout: boxLayout(false, [1]),
     unbreakable: true,
   });
 
   return {
     pageSize: "A4",
     pageMargins: [40, 30, 40, 30],
-    defaultStyle: { font: "Roboto", fontSize: 8, lineHeight: 1.15 },
+    defaultStyle: { font: "Roboto", fontSize: 8, lineHeight: 1.15, color: INK.text },
     info: {
       title: `Proforma ${quote.proformaNo}`.trim(),
       author: company.name,
@@ -202,6 +308,6 @@ export async function printer() {
 }
 
 export async function downloadPdf(computed: ComputedQuote): Promise<void> {
-  const pdfMake = await printer();
-  pdfMake.createPdf(buildDoc(computed)).download(fileNameFor(computed.quote));
+  const [pdfMake, pictures] = await Promise.all([printer(), marks()]);
+  pdfMake.createPdf(buildDoc(computed, pictures)).download(fileNameFor(computed.quote));
 }

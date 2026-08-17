@@ -306,6 +306,8 @@ What stays on screen only: the wastage column, override badges and the override 
 
 **The print preview is a full replica of the PDF**, not a table of numbers: company header and GSTIN, all the meta fields, section blocks, summary lines, bank details, terms, notes and signature blocks. Anything less means the operator is checking one document and sending another. This is now enforced rather than promised: `export/layout.ts` describes the document once, and the preview and the PDF are two renderings of the same rows.
 
+**The preview is the page, at the size it leaves the printer.** It is 210 mm wide with the PDF's own margins (40 pt at the sides, 30 pt top and bottom) and its 8 pt type, laid on the desk of the app with the paper edges showing, so a line that wraps on screen is a line that wraps on paper. The document's own look is described once as well, in `layout.ts`: the letterhead mark from `public/logo.png`, the company stamp from `public/stamp.png` standing over Authorised Signatory as it does on the signed copies, the sheet's red headings and purple title, the note in blue, `TOTAL AMOUNT` on the sheet's yellow, and the boxed blocks — order details, section head, bank and terms, note, acceptance — that the office's own sheet is built from. Below the lines only the figures are ruled, each in a box of its own, which is how the existing sheet separates a charge from the empty width beside it. The colours print: `print-color-adjust: exact`, so Ctrl-P from the preview and Download PDF put the same page in front of the customer.
+
 One typo is corrected on the way: the column head reads ACTUAL SIZE, not `ACTAUL SIZE`. It is on the list in §8, and a heading is the safest place in the document to fix one.
 
 **The sheet never says a figure twice**, and three habits follow from that. Each was read off all 47 samples, and each is now a rule in `export/layout.ts`:
@@ -558,6 +560,8 @@ None of the first three errors is possible once areas and taxes are computed rat
 - **Finishes and treatments are charges, not products** — a rate, counted or not, on the same row (§2.9). Polish included, at ₹1 per mm of thickness per running foot (§3.3).
 - **The proforma number is typed**, not generated.
 - **The PDF does not change.** Same format, same content as today; all transparency is on screen (§2.10).
+- **The preview is A4 at true size**, with the PDF's margins and type, so what wraps on screen wraps on paper (§2.10).
+- **The document keeps the sheet's own look** — letterhead mark, the stamp over Authorised Signatory, red headings, purple title, blue note, boxed blocks and `TOTAL AMOUNT` on yellow — described once in `layout.ts` for both renderings, and printed in colour (§2.10).
 - **A quote of one section says each figure once** — no subtotal row over a single line, no taxable base without GST, no section total and no summary block (§2.10).
 - **Rounding a subtotal is the operator's, not the app's.** The office rounds up on some sheets and down on others (4 up, 5 down, 39 that cannot tell them apart), so the app rounds to the nearest rupee, shows the exact figure beside it, and lets the field be typed over (§2.3, §2.9).
 - **Standard fixed wastage is 50 mm / 2 in; 30 mm is a per-customer concession.** Editable at quote and line level.

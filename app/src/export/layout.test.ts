@@ -1,3 +1,4 @@
+import type { TableCell } from "pdfmake/interfaces";
 import { describe, expect, it } from "vitest";
 import { computeQuote } from "../core/engine";
 import type { Quote } from "../core/types";
@@ -5,6 +6,7 @@ import { sample, toQuote } from "../test/corpus";
 import {
   type SheetRow,
   COLUMN_WIDTHS,
+  INK,
   bankRows,
   headRows,
   lineRows,
@@ -120,28 +122,59 @@ describe("the printed document, against PROFORMA 6359", () => {
 });
 
 describe("the PDF", () => {
-  it("is A4, with the lines boxed and the totals loose beneath them", () => {
+  it("is A4, with the lines boxed and the totals ruled beneath them", () => {
     const doc = buildDoc(computeQuote(toQuote(sample("7178"))));
     const content = doc.content as unknown as Array<Record<string, unknown>>;
     const tables = content.filter((c) => "table" in c);
 
     expect(doc.pageSize).toBe("A4");
-    // The meta block, lines and totals for each of the two sections, the summary,
-    // and bank and terms side by side.
-    expect(tables).toHaveLength(7);
+    // The order block; a title, the lines and the totals for each of the two
+    // sections; the summary; then bank and terms, the note and the acceptance.
+    expect(tables).toHaveLength(11);
 
-    const lines = tables[1].table as { headerRows: number; body: unknown[][] };
+    const lines = tables[2].table as { headerRows: number; body: unknown[][] };
     expect(lines.headerRows).toBe(2);
     expect(lines.body).toHaveLength(2 + 3);
 
-    const totals = tables[2].table as { body: unknown[][] };
+    const totals = tables[3].table as { body: unknown[][] };
     expect(totals.body).toHaveLength(5);
 
-    // Every row is ten cells wide, spans included, or the columns would not line up.
-    for (const table of tables.slice(1, 5)) {
-      const body = (table.table as { body: unknown[][] }).body;
+    // Every row of the sheet is ten cells wide, spans included, or the columns
+    // would not line up: both sections and the summary under them.
+    for (const i of [2, 3, 5, 6, 7]) {
+      const body = (tables[i].table as { body: unknown[][] }).body;
       expect(body.every((row) => row.length === 10)).toBe(true);
     }
+  });
+
+  it("puts the figure the customer signs off on the sheet's yellow", () => {
+    const doc = buildDoc(computeQuote(toQuote(sample("7178"))));
+    const content = doc.content as unknown as Array<Record<string, unknown>>;
+    const summary = (content.filter((c) => "table" in c)[7].table as { body: TableCell[][] }).body;
+    const last = summary[summary.length - 1].filter(
+      (c) => (c as { text?: string }).text,
+    ) as Array<Record<string, unknown>>;
+
+    expect(last.map((c) => c.text)).toEqual(["TOTAL AMOUNT", "28294.04"]);
+    expect(last.every((c) => c.fillColor === INK.totalFill)).toBe(true);
+  });
+
+  it("carries the letterhead mark and stamps the last signature when given them", () => {
+    const doc = buildDoc(computeQuote(toQuote(sample("7178"))), {
+      logo: "data:image/png;base64,LOGO",
+      stamp: "data:image/png;base64,STAMP",
+    });
+    const content = doc.content as unknown as Array<Record<string, never>>;
+    const head = content[0] as unknown as { columns: Array<{ image?: string }> };
+    const acceptance = content[content.length - 1] as unknown as {
+      table: { body: Array<Array<{ columns: Array<{ stack?: Array<{ image?: string }> }> }>> };
+    };
+    const signatures = acceptance.table.body[1][0].columns;
+
+    expect(head.columns[0].image).toBe("data:image/png;base64,LOGO");
+    expect(signatures[signatures.length - 1].stack?.[0].image).toBe("data:image/png;base64,STAMP");
+    // Only over the last name — the other three are left to be signed by hand.
+    expect(signatures.slice(0, -1).every((c) => c.stack === undefined)).toBe(true);
   });
 
   // Catches a broken pdfmake import or an unregistered font, which would

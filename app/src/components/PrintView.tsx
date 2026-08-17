@@ -4,6 +4,7 @@ import { company } from "../data/masters";
 import {
   COLUMN_WIDTHS,
   type Cell,
+  META_DIVIDER,
   type SheetRow,
   bankRows,
   headRows,
@@ -16,78 +17,96 @@ import {
   tailRows,
   termRows,
 } from "../export/layout";
+import { LOGO_URL, STAMP_URL } from "../export/marks";
 
 /**
- * The document, on screen. Every row comes from `layout.ts`, which also builds
- * the PDF, so this preview cannot promise something the download does not
- * deliver. Nothing from the entry screen appears here: no wastage column, no
- * override markers, no working — the customer's copy has never shown any of it
- * (dev-plan §2.10).
+ * The document, on screen, at the size it comes out of the printer: an A4 page
+ * with the PDF's own margins and type sizes, so "what prints" is what prints.
+ *
+ * Every row comes from `layout.ts`, which also builds the PDF, so the preview
+ * cannot promise something the download does not deliver. Nothing from the entry
+ * screen appears here: no wastage column, no override markers, no working — the
+ * customer's copy has never shown any of it (dev-plan §2.10).
  */
 export function PrintView({ computed }: { computed: ComputedQuote }) {
   const quote = computed.quote;
+  const meta = metaRows(quote);
 
   return (
-    <div className="print">
-      <div className="print__center">
-        <h2>{company.name}</h2>
-        {letterhead.slice(1).map((line) => (
-          <div key={line}>{line}</div>
-        ))}
-        <div className="strong" style={{ marginTop: 6 }}>
-          PROFORMA INVOICE
-        </div>
-      </div>
-
-      <div className="print__meta">
-        {metaRows(quote).map(([left, right], i) => (
-          <div key={i} className="print__meta-row">
-            <span>{left}</span>
-            <span>{right}</span>
+    <div className="page-sheet">
+      <div className="print">
+        <div className="print__head">
+          <img className="print__logo" src={LOGO_URL} alt="" />
+          <div className="print__letterhead">
+            <h2>{company.name}</h2>
+            {letterhead.slice(1).map((line) => (
+              <div key={line}>{line}</div>
+            ))}
           </div>
-        ))}
-      </div>
+        </div>
 
-      {computed.sections.map((section) => (
-        <PrintSection
-          key={section.section.id}
-          quote={quote}
-          computed={section}
-          alone={computed.sections.length === 1}
-        />
-      ))}
+        <div className="print__title">PROFORMA INVOICE</div>
 
-      <Sheet rows={summaryRows(computed)} className="print-table print-table--plain" />
-
-      <div className="print__cols">
-        <div>
-          <div className="strong print__center">BANK DETAILS</div>
-          {bankRows.map((line) => (
-            <div key={line}>{line}</div>
+        <div className="print__box print__meta">
+          {meta.map(([left, right], i) => (
+            <div
+              key={i}
+              className={`print__meta-row${i === META_DIVIDER ? " print__meta-row--rule" : ""}`}
+            >
+              <span>{left}</span>
+              <span>{right}</span>
+            </div>
           ))}
         </div>
-        <div>
-          <div className="strong">TERMS :-</div>
-          {termRows.map((line) => (
-            <div key={line}>{line}</div>
+
+        {computed.sections.map((section, i) => (
+          <PrintSection
+            key={section.section.id}
+            quote={quote}
+            computed={section}
+            alone={computed.sections.length === 1}
+            last={i === computed.sections.length - 1}
+          />
+        ))}
+
+        <Sheet rows={summaryRows(computed)} className="print-table print-table--plain" />
+
+        <div className="print__box print__cols">
+          <div>
+            <div className="print__block-head">BANK DETAILS</div>
+            {bankRows.map((line) => (
+              <div key={line}>{line}</div>
+            ))}
+          </div>
+          <div>
+            <div className="print__block-head">TERMS :-</div>
+            {termRows.map((line) => (
+              <div key={line}>{line}</div>
+            ))}
+          </div>
+        </div>
+
+        <div className="print__box print__note">
+          <div className="print__block-head">NOTE :</div>
+          {company.notes.map((n) => (
+            <div key={n}>{n}</div>
           ))}
         </div>
-      </div>
 
-      <div className="print__center" style={{ marginTop: 12 }}>
-        <div className="strong">NOTE :</div>
-        {company.notes.map((n) => (
-          <div key={n}>{n}</div>
-        ))}
-      </div>
-
-      <div className="print__center strong" style={{ marginTop: 12 }}>
-        CUSTOMERS ACCEPTANCE
-      </div>
-      <div className="print__sign">
-        {company.signatureBlocks.map((b) => (
-          <div key={b}>{b}</div>
-        ))}
+        <div className="print__box">
+          <div className="print__block-head">CUSTOMERS ACCEPTANCE</div>
+          {/* The company's stamp stands over the last of the four names. */}
+          <div className="print__sign">
+            {company.signatureBlocks.map((name, i) => (
+              <div key={name}>
+                {i === company.signatureBlocks.length - 1 && (
+                  <img className="print__stamp" src={STAMP_URL} alt="" />
+                )}
+                <div>{name}</div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -97,15 +116,17 @@ function PrintSection({
   quote,
   computed,
   alone,
+  last,
 }: {
   quote: Quote;
   computed: ComputedSection;
   alone: boolean;
+  last: boolean;
 }) {
   return (
-    <div style={{ marginBottom: 14 }}>
-      <div className="row row--between">
-        <span className="strong">{sectionTitle(computed)}</span>
+    <div className={`print__section${last ? " print__section--last" : ""}`}>
+      <div className="print__box print__section-head">
+        <span>{sectionTitle(computed)}</span>
         <span>{hsnLabel}</span>
       </div>
       <Sheet head={headRows(quote)} rows={lineRows(computed, quote)} />
@@ -155,6 +176,7 @@ function renderCell(cell: Cell, key: number, tag: "td" | "th") {
     key,
     colSpan: cell.colSpan,
     rowSpan: cell.rowSpan,
+    className: `${cell.box ? "boxed" : ""}${cell.highlight ? " highlight" : ""}`.trim() || undefined,
     style: { textAlign: cell.align ?? "left", fontWeight: cell.bold ? 600 : undefined } as const,
   };
 

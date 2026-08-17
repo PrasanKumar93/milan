@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { computeQuote } from "../src/core/engine";
 import { buildWorkbook } from "../src/export/excel";
@@ -20,7 +20,12 @@ const [proformaNo = "7178", outDir = "."] = process.argv.slice(2);
 mkdirSync(outDir, { recursive: true });
 
 const quote = toQuote(sample(proformaNo));
-const doc = buildDoc(computeQuote(quote));
+
+// The browser fetches the mark and the stamp; here they are read off disk and
+// handed over the same way, as data URLs.
+const png = (name: string) =>
+  `data:image/png;base64,${readFileSync(resolve(`public/${name}.png`)).toString("base64")}`;
+const doc = buildDoc(computeQuote(quote), { logo: png("logo"), stamp: png("stamp") });
 
 // The node build reads fonts off disk rather than out of a virtual file system.
 const fonts = resolve("node_modules/pdfmake/fonts/Roboto");

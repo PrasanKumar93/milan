@@ -23,7 +23,27 @@ export interface Cell {
   rowSpan?: number;
   /** A position covered by a span above or to the left. */
   skip?: boolean;
+  /** Ruled on all four sides, the way the sheet boxes a figure below the lines. */
+  box?: boolean;
+  /** The figure the customer is agreeing to, on the sheet's yellow. */
+  highlight?: boolean;
 }
+
+/**
+ * The colours of the document the office already sends: a red letterhead, a
+ * purple title, the note in blue, and the total on yellow. They are held here
+ * rather than in either renderer, so the preview and the PDF cannot disagree
+ * about what the page looks like.
+ */
+export const INK = {
+  heading: "#b3132c",
+  title: "#5b2d8e",
+  note: "#1b3fa0",
+  text: "#000000",
+  rule: "#000000",
+  headFill: "#e9e9e9",
+  totalFill: "#ffe95c",
+} as const;
 
 export type SheetRow = Cell[];
 
@@ -34,9 +54,10 @@ export const COLUMNS = 10;
  * Column widths in points, in the proportions the current PDFs use: the size,
  * quantity and money columns are near enough equal, and the two on the left
  * carry the serial number and the shape. The total leaves room for A4 margins,
- * cell padding and the rules between columns.
+ * cell padding and the rules between columns; the serial column is wide enough
+ * to keep "SI NO" on one line.
  */
-export const COLUMN_WIDTHS = [24, 47, 46, 46, 46, 46, 39, 55, 46, 74];
+export const COLUMN_WIDTHS = [28, 43, 46, 46, 46, 46, 39, 55, 46, 74];
 
 const SKIP: Cell = { text: "", skip: true };
 
@@ -58,6 +79,14 @@ function row(cells: Record<number, Cell | undefined>): SheetRow {
 }
 
 const num = (text: string, bold = false): Cell => ({ text, align: "right", bold });
+
+/**
+ * Below the lines the sheet rules a box round each figure it prints and leaves
+ * the rest of the width bare, which is what tells a charge from the empty space
+ * beside it. Everything that carries text is boxed; nothing else is.
+ */
+const boxed = (rows: SheetRow[]): SheetRow[] =>
+  rows.map((row) => row.map((cell) => (cell.text === "" ? cell : { ...cell, box: true })));
 
 /**
  * The two-level head. "ACTAUL SIZE" is spelt correctly here — it is one of the
@@ -192,7 +221,7 @@ export function tailRows(computed: ComputedSection, quote: Quote, alone = false)
     );
   }
 
-  return rows;
+  return boxed(rows);
 }
 
 /** Each section total again, then the figure the customer is agreeing to. */
@@ -209,12 +238,12 @@ export function summaryRows(computed: ComputedQuote): SheetRow[] {
 
   rows.push(
     row({
-      7: { text: "TOTAL AMOUNT", align: "left", colSpan: 2, bold: true },
-      9: num(formatSheet(computed.grandTotal), true),
+      7: { text: "TOTAL AMOUNT", align: "left", colSpan: 2, bold: true, highlight: true },
+      9: { ...num(formatSheet(computed.grandTotal), true), highlight: true },
     }),
   );
 
-  return rows;
+  return boxed(rows);
 }
 
 export function sectionTitle(computed: ComputedSection): string {
@@ -222,6 +251,12 @@ export function sectionTitle(computed: ComputedSection): string {
 }
 
 export const hsnLabel = `HSNCODE ${HSN}`;
+
+/**
+ * The order details are boxed as two groups: what the order is, then who it is
+ * for. This is the row the rule is drawn above.
+ */
+export const META_DIVIDER = 4;
 
 /** The two-column block between the letterhead and the first section. */
 export function metaRows(quote: Quote): Array<[string, string]> {
