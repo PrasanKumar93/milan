@@ -37,13 +37,18 @@ const PADDING = 2;
 
 type Margin = [number, number, number, number];
 
+/**
+ * A cell asks for its four sides only where the layout leaves the choice to it —
+ * the boxed figures under the lines. In the ruled grid it says nothing and takes
+ * the table's own rules, because a cell that names its borders overrides them.
+ */
 function toCell(cell: Cell): TableCell {
   if (cell.skip) return {};
   return {
     text: cell.text,
     alignment: cell.align ?? "left",
     bold: cell.bold ?? false,
-    border: [cell.box ?? false, cell.box ?? false, cell.box ?? false, cell.box ?? false],
+    ...(cell.box ? { border: [true, true, true, true] } : {}),
     ...(cell.highlight ? { fillColor: INK.totalFill } : {}),
     ...(cell.colSpan ? { colSpan: cell.colSpan } : {}),
     ...(cell.rowSpan ? { rowSpan: cell.rowSpan } : {}),
