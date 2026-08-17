@@ -1,0 +1,61 @@
+# The quote screen is a static site — no server, no database (dev-plan §5) — so
+# every push to main builds it and publishes it to GitHub Pages.
+#
+# The tests run first and the build fails on a type error, so what goes live is
+# a version that computes the sample quotes correctly. The browser check
+# (`npm run retype`) is deliberately left out: it drives a real Chrome against a
+# dev server and belongs on a desk, not in front of a deploy.
+
+name: Deploy to Pages
+
+on:
+  push:
+    branches: [main]
+  # So a deploy can be re-run from the Actions tab without a commit.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time; a newer commit waits rather than races. It is not
+# cancelled, so main and the published site cannot end up out of step.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: app/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -23,6 +23,12 @@ npm run verify                 # build, tests, and every sample retyped through 
 
 `retype` needs `npm run dev` in another terminal. It opens the app in Chrome, types a sample's sizes, rates and charges as an operator would, and compares every cell the app worked out for itself against the figures on the original PDF — chargeable sizes, areas, amounts, charges, totals, GST and the grand total — then screenshots both tabs and downloads the PDF and the workbook into `/tmp/retype`. The tests prove the arithmetic; this proves the screen is wired to it. `npm run retype -- all` sweeps every sample in one browser and prints only what differs; the quotes that do not come out identical are the documented ones in dev-plan §9 — hand-typed areas, ±₹1 roundings, a missing GST section and two mirror lines charged over the rule.
 
+## Where it runs
+
+The site is static — a folder of files, nothing behind it — so it is published to GitHub Pages at **https://prasankumar93.github.io/milan/**. `.github/workflows/deploy.yml` does that on every push to `main`: lint, tests, build, publish. The tests are the gate, so a version that gets the sample quotes wrong does not go live.
+
+There is nothing to set per environment. `vite.config.ts` has `base: "./"` so assets are looked for beside the page rather than at the domain root, which is what a project page needs, and a quote lives in the browser's own storage until it is downloaded, so there is no address for the app to be told about.
+
 ## Layout
 
 ```
