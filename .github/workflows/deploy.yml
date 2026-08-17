@@ -1,10 +1,15 @@
 # The quote screen is a static site — no server, no database (dev-plan §5) — so
 # every push to main builds it and publishes it to GitHub Pages.
 #
-# The tests run first and the build fails on a type error, so what goes live is
-# a version that computes the sample quotes correctly. The browser check
-# (`npm run retype`) is deliberately left out: it drives a real Chrome against a
-# dev server and belongs on a desk, not in front of a deploy.
+# The lint and the tests run first and the build fails on a type error, so a
+# version that does not hold together cannot reach the office.
+#
+# Two checks are missing here on purpose. The tests that read the parsed sample
+# quotations cannot run: those are the customers' own documents and are not in
+# this public repository, so they are skipped where the files are absent (see
+# `vite.config.ts`) and run on the machine that has them. And `npm run retype`
+# drives a real Chrome against a dev server — it belongs on a desk, not in front
+# of a deploy. Both are what `npm run verify` is for, before a release.
 
 name: Deploy to Pages
 

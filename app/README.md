@@ -25,7 +25,9 @@ npm run verify                 # build, tests, and every sample retyped through 
 
 ## Where it runs
 
-The site is static — a folder of files, nothing behind it — so it is published to GitHub Pages at **https://prasankumar93.github.io/milan/**. `.github/workflows/deploy.yml` does that on every push to `main`: lint, tests, build, publish. The tests are the gate, so a version that gets the sample quotes wrong does not go live.
+The site is static — a folder of files, nothing behind it — so it is published to GitHub Pages at **https://prasankumar93.github.io/milan/**. `.github/workflows/deploy.yml` does that on every push to `main`: lint, tests, build, publish.
+
+The suite it runs is the smaller one. The samples the engine is tested against are the customers' own quotations, kept out of this public repository, so the three test files that read them are skipped where the files are absent and run in full on a machine that has them — which is where the engine gets changed anyway. Run `npm test` before pushing and the difference does not arise; `npm run verify` before a release covers the rest.
 
 There is nothing to set per environment. `vite.config.ts` has `base: "./"` so assets are looked for beside the page rather than at the domain root, which is what a project page needs, and a quote lives in the browser's own storage until it is downloaded, so there is no address for the app to be told about.
 
