@@ -32,7 +32,8 @@ import { type Marks, marks } from "./marks";
  * the page reads as the document the customer already knows.
  */
 
-const RULE = 0.5;
+/** A pixel at 96dpi, which is what the preview rules in. */
+const RULE = 0.75;
 const PADDING = 2;
 
 type Margin = [number, number, number, number];

@@ -52,6 +52,8 @@ src/export/
 
 `export/layout.ts` builds the rows of the proforma — the two-level head, the lines, the totals that sit unlabelled in the same columns, the summary — along with the column widths, which cells are ruled, and the colours the page is printed in. `PrintView` renders those rows as HTML and `pdf.ts` renders them through pdfmake. Neither owns the layout, so "what prints" cannot promise something the download does not deliver. If a column moves, it moves in one file.
 
+The two say the same thing in different vocabularies — CSS classes on one side, pdfmake's cell properties on the other — and that is where they can drift: the ruled grid once came out of the download unboxed while the preview looked right. So `renderings.test.tsx` asks each renderer to describe the sheet cell by cell — the text, whether it is ruled, whether it is filled — and requires the two descriptions to be the same list. It runs in the normal test suite and it fails on exactly that bug.
+
 The **What prints** tab is the page at true size: 210 mm wide, with the PDF's own margins and 8 pt type, so a heading that wraps on screen wraps on paper. Both renderings carry the sheet's own look — the mark from `public/logo.png`, the stamp from `public/stamp.png` over Authorised Signatory, red headings, a purple title, the note in blue, the boxed blocks and `TOTAL AMOUNT` on yellow — and the colours survive Ctrl-P as well as Download PDF. Replacing either picture is dropping a new PNG into `public/`; `export/marks.ts` fetches them once and hands pdfmake the bytes.
 
 ## Nothing is filed away

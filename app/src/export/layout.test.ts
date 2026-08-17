@@ -9,6 +9,7 @@ import {
   COLUMN_WIDTHS,
   INK,
   bankRows,
+  fileNameFor,
   headRows,
   lineRows,
   summaryRows,
@@ -126,6 +127,24 @@ interface SignatureBlock {
   text?: string;
   columns?: Array<{ stack: Array<{ image?: string; text?: string }> }>;
 }
+
+describe("the downloaded file", () => {
+  const quote = toQuote(sample("7178"));
+
+  it("is named for the proforma it is", () => {
+    expect(fileNameFor(quote)).toBe("PROFORMA-7178.pdf");
+    expect(fileNameFor(quote, "xlsx")).toBe("PROFORMA-7178.xlsx");
+  });
+
+  it("is just PROFORMA while the number is still blank", () => {
+    expect(fileNameFor({ ...quote, proformaNo: "  " })).toBe("PROFORMA.pdf");
+  });
+
+  // Anything typed into the number reaches a file name, and some of it cannot.
+  it("keeps a typed number safe to save", () => {
+    expect(fileNameFor({ ...quote, proformaNo: "7178/A rev 2" })).toBe("PROFORMA-7178-A-rev-2.pdf");
+  });
+});
 
 describe("the PDF", () => {
   it("is A4, with the lines boxed and the totals ruled beneath them", () => {

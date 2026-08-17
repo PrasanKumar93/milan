@@ -73,7 +73,7 @@ async function retype(page: Page, proformaNo: string) {
   await page.evaluate(() => localStorage.clear()); // a leftover draft would be offered back
   await page.reload();
 
-  await type(page.getByPlaceholder("7178"), parsed.proforma_no);
+  await type(page.getByLabel("Proforma no"), parsed.proforma_no);
   await type(page.getByPlaceholder("dd/mm/yyyy"), parsed.date);
   await type(page.getByPlaceholder("M/S ..."), parsed.customer);
   const inputUnit = inferUnit(sections[0], sections[0].lines[0]);
@@ -223,9 +223,10 @@ async function retype(page: Page, proformaNo: string) {
       page.waitForEvent("download"),
       page.getByRole("button", { name: button }).click(),
     ]);
-    await download.saveAs(
-      resolve(outDir, `${proformaNo}${button.endsWith("PDF") ? ".pdf" : ".xlsx"}`),
-    );
+    // Saved under the name the browser was offered, so the name the office ends
+    // up filing the job under is visible here too.
+    await download.saveAs(resolve(outDir, download.suggestedFilename()));
+    notes.push(`downloaded ${download.suggestedFilename()}`);
   }
 
   const shown = (await page.locator(".topbar .strong.num").textContent()) ?? "";

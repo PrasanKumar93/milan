@@ -30,11 +30,7 @@ export function QuoteHeader({
             underneath, so the form reads as two blocks rather than a ragged grid. */}
         <div className="form-grid">
           <Field label="Proforma no">
-            <TextField
-              value={quote.proformaNo}
-              onChange={(v) => onChange({ proformaNo: v })}
-              placeholder="7178"
-            />
+            <TextField value={quote.proformaNo} onChange={(v) => onChange({ proformaNo: v })} />
           </Field>
           <Field label="Date">
             <TextField

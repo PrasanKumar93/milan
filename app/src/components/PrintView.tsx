@@ -202,12 +202,19 @@ function renderCell(cell: Cell, key: number, tag: "td" | "th") {
   if (cell.skip) return null;
 
   const props = {
-    key,
     colSpan: cell.colSpan,
     rowSpan: cell.rowSpan,
     className: `${cell.box ? "boxed" : ""}${cell.highlight ? " highlight" : ""}`.trim() || undefined,
     style: { textAlign: cell.align ?? "left", fontWeight: cell.bold ? 600 : undefined } as const,
   };
 
-  return tag === "th" ? <th {...props}>{cell.text}</th> : <td {...props}>{cell.text}</td>;
+  return tag === "th" ? (
+    <th key={key} {...props}>
+      {cell.text}
+    </th>
+  ) : (
+    <td key={key} {...props}>
+      {cell.text}
+    </td>
+  );
 }

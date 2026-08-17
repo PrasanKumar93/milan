@@ -311,10 +311,11 @@ export const termRows: Field[] = company.terms.map((t) => field(`${t.label} :`, 
 /** The four names at the foot: labels with a blank beside each, so all bold. */
 export const signatureRows: Field[] = company.signatureBlocks.map((b) => field(b));
 
-/** What the file is called when it lands in the operator's downloads. */
+/**
+ * What the file is called when it lands in the operator's downloads:
+ * `PROFORMA-7178.pdf`, or `PROFORMA.pdf` while the number is still blank.
+ */
 export function fileNameFor(quote: Quote, extension = "pdf"): string {
-  const parts = ["PROFORMA", quote.proformaNo, quote.customerName]
-    .filter((p) => p.trim() !== "")
-    .join(" ");
-  return `${parts.replace(/[\\/:*?"<>|]/g, "-")}.${extension}`;
+  const no = quote.proformaNo.trim().replace(/[\\/:*?"<>|\s]+/g, "-");
+  return `PROFORMA${no === "" ? "" : `-${no}`}.${extension}`;
 }
