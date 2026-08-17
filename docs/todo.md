@@ -1,7 +1,6 @@
 ## print
 
-- ~~print tab must be A4 size width~~ done
-- ~~add logo , yellow color total , same existing print structure~~ done — boxed blocks, red headings, purple title, blue note
+- excel and pdf download must look same
 
 - download pdf name must be - PROFORMA-NumberName
 - check with original pdf : logo and other things missing

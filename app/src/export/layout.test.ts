@@ -4,6 +4,7 @@ import { computeQuote } from "../core/engine";
 import type { Quote } from "../core/types";
 import { sample, toQuote } from "../test/corpus";
 import {
+  type Field,
   type SheetRow,
   COLUMN_WIDTHS,
   INK,
@@ -121,6 +122,11 @@ describe("the printed document, against PROFORMA 6359", () => {
   });
 });
 
+interface SignatureBlock {
+  text?: string;
+  columns?: Array<{ stack: Array<{ image?: string; text?: string }> }>;
+}
+
 describe("the PDF", () => {
   it("is A4, with the lines boxed and the totals ruled beneath them", () => {
     const doc = buildDoc(computeQuote(toQuote(sample("7178"))));
@@ -167,14 +173,17 @@ describe("the PDF", () => {
     const content = doc.content as unknown as Array<Record<string, never>>;
     const head = content[0] as unknown as { columns: Array<{ image?: string }> };
     const acceptance = content[content.length - 1] as unknown as {
-      table: { body: Array<Array<{ columns: Array<{ stack?: Array<{ image?: string }> }> }>> };
+      table: { body: Array<Array<{ columns: SignatureBlock[] }>> };
     };
     const signatures = acceptance.table.body[1][0].columns;
+    const stamped = signatures[signatures.length - 1];
 
     expect(head.columns[0].image).toBe("data:image/png;base64,LOGO");
-    expect(signatures[signatures.length - 1].stack?.[0].image).toBe("data:image/png;base64,STAMP");
+    // Nested in a block of its own so it is held to the width of the name and
+    // centred on it, rather than on the quarter of the page the name sits in.
+    expect(stamped.columns?.[0].stack[0].image).toBe("data:image/png;base64,STAMP");
     // Only over the last name — the other three are left to be signed by hand.
-    expect(signatures.slice(0, -1).every((c) => c.stack === undefined)).toBe(true);
+    expect(signatures.slice(0, -1).every((c) => c.columns === undefined)).toBe(true);
   });
 
   // Catches a broken pdfmake import or an unregistered font, which would
@@ -187,8 +196,9 @@ describe("the PDF", () => {
     // pdfmake rewrites the arrays it is handed into its own nodes. It once did
     // that to the shared layout, and the next workbook came out with pdfmake's
     // objects where the bank details belong.
-    expect(bankRows.every((r) => typeof r === "string")).toBe(true);
-    expect(termRows.every((r) => typeof r === "string")).toBe(true);
+    const intact = (f: Field) => typeof f.label === "string" && typeof f.value === "string";
+    expect(bankRows.every(intact)).toBe(true);
+    expect(termRows.every(intact)).toBe(true);
     expect(COLUMN_WIDTHS.every((w) => typeof w === "number")).toBe(true);
   }, 30000);
 });

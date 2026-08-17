@@ -258,16 +258,36 @@ export const hsnLabel = `HSNCODE ${HSN}`;
  */
 export const META_DIVIDER = 4;
 
+/**
+ * A line written as `LABEL : value`. The two are kept apart because the label is
+ * printed bold and the value is not — it is what makes a page of headings and
+ * blanks readable at a glance. A line with no label is a plain one; a label with
+ * no value is a blank to be filled in by hand.
+ */
+export interface Field {
+  label: string;
+  value: string;
+}
+
+const field = (label: string, value = ""): Field => ({ label, value });
+
+/** The same line as one string, for anywhere that cannot set part of it bold. */
+export const fieldText = (f: Field): string =>
+  f.label && f.value ? `${f.label} ${f.value}` : f.label || f.value;
+
 /** The two-column block between the letterhead and the first section. */
-export function metaRows(quote: Quote): Array<[string, string]> {
+export function metaRows(quote: Quote): Array<[Field, Field]> {
   return [
-    [`DATE : ${quote.date}`, `PROJECT REMARK : ${quote.projectRemark}`],
-    [`PROFORMA NO : ${quote.proformaNo}`, `REF PERSON : ${quote.refPerson}`],
-    [`ORDER NO : ${quote.orderNo}`, `PARTY NO : ${quote.partyNo}`],
-    ["", `DOC NO : ${quote.docNo}`],
-    [`NAME : ${quote.customerName}`, "DISPATCH TO :"],
-    [`ADDRESS : ${quote.customerAddress}`, `ADDRESS : ${quote.dispatchTo || quote.customerAddress}`],
-    [`GSTIN : ${quote.customerGstin}`, ""],
+    [field("DATE :", quote.date), field("PROJECT REMARK :", quote.projectRemark)],
+    [field("PROFORMA NO :", quote.proformaNo), field("REF PERSON :", quote.refPerson)],
+    [field("ORDER NO :", quote.orderNo), field("PARTY NO :", quote.partyNo)],
+    [field(""), field("DOC NO :", quote.docNo)],
+    [field("NAME :", quote.customerName), field("DISPATCH TO :")],
+    [
+      field("ADDRESS :", quote.customerAddress),
+      field("ADDRESS :", quote.dispatchTo || quote.customerAddress),
+    ],
+    [field("GSTIN :", quote.customerGstin), field("")],
   ];
 }
 
@@ -278,15 +298,18 @@ export const letterhead = [
   company.phones.join("/"),
 ];
 
-export const bankRows = [
-  company.bank.accountName,
-  company.bank.bankName,
-  `A/C NO : ${company.bank.accountNo}`,
-  `IFSC CODE : ${company.bank.ifsc}`,
-  `BRANCH : ${company.bank.branch}`,
+export const bankRows: Field[] = [
+  field("", company.bank.accountName),
+  field("", company.bank.bankName),
+  field("A/C NO :", company.bank.accountNo),
+  field("IFSC CODE :", company.bank.ifsc),
+  field("BRANCH :", company.bank.branch),
 ];
 
-export const termRows = company.terms.map((t) => `${t.label} : ${t.value}`);
+export const termRows: Field[] = company.terms.map((t) => field(`${t.label} :`, t.value));
+
+/** The four names at the foot: labels with a blank beside each, so all bold. */
+export const signatureRows: Field[] = company.signatureBlocks.map((b) => field(b));
 
 /** What the file is called when it lands in the operator's downloads. */
 export function fileNameFor(quote: Quote, extension = "pdf"): string {

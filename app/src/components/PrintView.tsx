@@ -4,6 +4,7 @@ import { company } from "../data/masters";
 import {
   COLUMN_WIDTHS,
   type Cell,
+  type Field,
   META_DIVIDER,
   type SheetRow,
   bankRows,
@@ -13,6 +14,7 @@ import {
   lineRows,
   metaRows,
   sectionTitle,
+  signatureRows,
   summaryRows,
   tailRows,
   termRows,
@@ -53,8 +55,12 @@ export function PrintView({ computed }: { computed: ComputedQuote }) {
               key={i}
               className={`print__meta-row${i === META_DIVIDER ? " print__meta-row--rule" : ""}`}
             >
-              <span>{left}</span>
-              <span>{right}</span>
+              <span>
+                <Labelled field={left} />
+              </span>
+              <span>
+                <Labelled field={right} />
+              </span>
             </div>
           ))}
         </div>
@@ -74,41 +80,64 @@ export function PrintView({ computed }: { computed: ComputedQuote }) {
         <div className="print__box print__cols">
           <div>
             <div className="print__block-head">BANK DETAILS</div>
-            {bankRows.map((line) => (
-              <div key={line}>{line}</div>
-            ))}
+            <div className="print__block-body">
+              {bankRows.map((line) => (
+                <div key={line.label + line.value}>
+                  <Labelled field={line} />
+                </div>
+              ))}
+            </div>
           </div>
           <div>
             <div className="print__block-head">TERMS :-</div>
-            {termRows.map((line) => (
-              <div key={line}>{line}</div>
-            ))}
+            <div className="print__block-body">
+              {termRows.map((line) => (
+                <div key={line.label}>
+                  <Labelled field={line} />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
         <div className="print__box print__note">
           <div className="print__block-head">NOTE :</div>
-          {company.notes.map((n) => (
-            <div key={n}>{n}</div>
-          ))}
+          <div className="print__block-body">
+            {company.notes.map((n) => (
+              <div key={n}>{n}</div>
+            ))}
+          </div>
         </div>
 
         <div className="print__box">
           <div className="print__block-head">CUSTOMERS ACCEPTANCE</div>
           {/* The company's stamp stands over the last of the four names. */}
           <div className="print__sign">
-            {company.signatureBlocks.map((name, i) => (
-              <div key={name}>
-                {i === company.signatureBlocks.length - 1 && (
+            {signatureRows.map((name, i) => (
+              <div key={name.label}>
+                {i === signatureRows.length - 1 && (
                   <img className="print__stamp" src={STAMP_URL} alt="" />
                 )}
-                <div>{name}</div>
+                <div>
+                  <Labelled field={name} />
+                </div>
               </div>
             ))}
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+/** `LABEL : value` — the label bold, the value as typed (see `Field`). */
+function Labelled({ field }: { field: Field }) {
+  return (
+    <>
+      {field.label && <span className="print__label">{field.label}</span>}
+      {field.label && field.value ? " " : ""}
+      {field.value}
+    </>
   );
 }
 

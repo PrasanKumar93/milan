@@ -4,7 +4,15 @@ import type { ComputedQuote, ComputedSection } from "../core/engine";
 import type { Quote, Section } from "../core/types";
 import { SQFT_PER_SQM, MM_PER_FOOT } from "../core/units";
 import { HSN, company } from "../data/masters";
-import { bankRows, fileNameFor, letterhead, metaRows, termRows } from "./layout";
+import {
+  bankRows,
+  fieldText,
+  fileNameFor,
+  letterhead,
+  metaRows,
+  signatureRows,
+  termRows,
+} from "./layout";
 
 /**
  * The workbook — the quote as a working document rather than a picture of one.
@@ -158,9 +166,9 @@ export function buildWorkbook(computed: ComputedQuote, workbook: Workbook): Work
   r += 1;
 
   for (const [left, right] of metaRows(quote)) {
-    write(sheet, r, 1, left);
+    write(sheet, r, 1, fieldText(left));
     merge(sheet, r, "A", "E");
-    write(sheet, r, 6, right);
+    write(sheet, r, 6, fieldText(right));
     merge(sheet, r, "F", LAST_PRINTED);
     r += 1;
   }
@@ -198,11 +206,11 @@ export function buildWorkbook(computed: ComputedQuote, workbook: Workbook): Work
 
   for (let i = 0; i < Math.max(bankRows.length, termRows.length); i += 1) {
     if (bankRows[i]) {
-      write(sheet, r, 1, bankRows[i]);
+      write(sheet, r, 1, fieldText(bankRows[i]));
       merge(sheet, r, "A", "E");
     }
     if (termRows[i]) {
-      write(sheet, r, 6, termRows[i]);
+      write(sheet, r, 6, fieldText(termRows[i]));
       merge(sheet, r, "F", LAST_PRINTED);
     }
     r += 1;
@@ -216,8 +224,8 @@ export function buildWorkbook(computed: ComputedQuote, workbook: Workbook): Work
   centre(sheet, r++, "CUSTOMERS ACCEPTANCE", true);
   r += 2;
 
-  for (const [i, block] of company.signatureBlocks.entries()) {
-    write(sheet, r, 1 + i * 3, block);
+  for (const [i, block] of signatureRows.entries()) {
+    write(sheet, r, 1 + i * 3, fieldText(block), true);
   }
 
   sheet.pageSetup.printArea = `A1:${LAST_PRINTED}${r}`;

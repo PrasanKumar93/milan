@@ -3,6 +3,7 @@ import type { ComputedQuote } from "../core/engine";
 import { company } from "../data/masters";
 import {
   type Cell,
+  type Field,
   type SheetRow,
   COLUMN_WIDTHS,
   INK,
@@ -15,6 +16,7 @@ import {
   lineRows,
   metaRows,
   sectionTitle,
+  signatureRows,
   summaryRows,
   tailRows,
   termRows,
@@ -102,8 +104,8 @@ function boxLayout(divider = false, rules: number[] = []) {
       i === 0 || i === node.table.body[0].length || divider ? RULE : 0,
     hLineColor: () => INK.rule,
     vLineColor: () => INK.rule,
-    paddingTop: () => 3,
-    paddingBottom: () => 3,
+    paddingTop: () => 4,
+    paddingBottom: () => 4,
     paddingLeft: () => 5,
     paddingRight: () => 5,
   };
@@ -115,6 +117,14 @@ const heading = (text: string, fontSize = 9): Content => ({
   fontSize,
   color: INK.heading,
   alignment: "center",
+});
+
+/** `LABEL : value` — the label bold, the value as typed (see `Field`). */
+const fieldText = (f: Field): { text: Array<{ text: string; bold?: boolean }> } => ({
+  text: [
+    ...(f.label ? [{ text: f.label, bold: true }] : []),
+    ...(f.value ? [{ text: f.label ? ` ${f.value}` : f.value }] : []),
+  ],
 });
 
 /** Room enough to sign in, or for the stamp that goes over the last name. */
@@ -130,9 +140,9 @@ const STAMP_HEIGHT = 49;
 function signatures(stamp?: string): Content[] {
   const drop = stamp ? STAMP_HEIGHT : SIGNING_SPACE;
 
-  return company.signatureBlocks.map((name, i) => {
-    const stamped = stamp && i === company.signatureBlocks.length - 1;
-    if (!stamped) return { text: name, margin: [0, drop, 0, 0] as Margin };
+  return signatureRows.map((name, i) => {
+    const stamped = stamp && i === signatureRows.length - 1;
+    if (!stamped) return { ...fieldText(name), margin: [0, drop, 0, 0] as Margin };
 
     // Held to the width of the name it stands over, so it is centred on the
     // name rather than on the quarter of the page the name starts in.
@@ -142,7 +152,7 @@ function signatures(stamp?: string): Content[] {
           width: "auto",
           stack: [
             { image: stamp, width: STAMP_WIDTH, height: STAMP_HEIGHT, alignment: "center" },
-            { text: name },
+            fieldText(name),
           ],
         },
       ],
@@ -181,7 +191,10 @@ export function buildDoc(computed: ComputedQuote, pictures: Marks = {}): TDocume
       margin: [0, 0, 0, 6] as Margin,
     },
     {
-      table: { widths: ["*", "*"], body: metaRows(quote).map(([left, right]) => [left, right]) },
+      table: {
+        widths: ["*", "*"],
+        body: metaRows(quote).map(([left, right]) => [fieldText(left), fieldText(right)]),
+      },
       layout: boxLayout(true, [META_DIVIDER]),
       margin: [0, 0, 0, 10] as Margin,
     },
@@ -236,7 +249,7 @@ export function buildDoc(computed: ComputedQuote, pictures: Marks = {}): TDocume
       widths: ["*", "*"],
       body: [
         [heading("BANK DETAILS"), heading("TERMS :-")],
-        [{ stack: [...bankRows] }, { stack: [...termRows] }],
+        [{ stack: bankRows.map(fieldText) }, { stack: termRows.map(fieldText) }],
       ],
     },
     layout: boxLayout(true, [1]),
