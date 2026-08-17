@@ -12,7 +12,7 @@ import { CUSTOM_PRODUCT } from "./data/masters";
 afterEach(cleanup);
 beforeEach(() => localStorage.clear());
 
-/** The entry grid in column order: H, W, wastage, chargeable H, chargeable W, area, qty, rate, amount. */
+/** The entry grid in column order: H, W, wastage, chargeable H, chargeable W, qty, area, rate, amount. */
 function firstRow() {
   // The first grid on screen is the lines; the one after it holds the charges.
   const grid = document.querySelectorAll<HTMLElement>("table.grid")[0];
@@ -48,7 +48,7 @@ describe("the entry screen", () => {
     expect(cells[2].value).toBe("50");
     expect(cells[3].value).toBe("2050");
     expect(cells[4].value).toBe("1050");
-    expect(cells[5].value).toBe("2.1525");
+    expect(cells[6].value).toBe("2.1525");
     expect(cells[8].value).toBe("1076.25");
   });
 
@@ -70,7 +70,7 @@ describe("the entry screen", () => {
   it("works out the cut size, the area and the amount, and lets none of them be typed", () => {
     fillOneLine();
     const cells = firstRow();
-    for (const i of [3, 4, 5, 8]) expect(cells[i].disabled).toBe(true);
+    for (const i of [3, 4, 6, 8]) expect(cells[i].disabled).toBe(true);
 
     // The way to cut a row differently is the allowance it was cut by.
     type(cells[2], "30");

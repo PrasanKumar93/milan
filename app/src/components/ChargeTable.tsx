@@ -37,6 +37,9 @@ export function ChargeTable({
           <tr>
             <th className="charge__name">Charge</th>
             <th className="num">Qty</th>
+            {/* A charge has no area; the column stands empty so that everything
+                after it stays under the same heading as the glass above. */}
+            <th />
             <th className="num">Rate</th>
             <th className="num">Amount</th>
             <th />
@@ -102,6 +105,8 @@ export function ChargeTable({
                     onChange={(qty) => onPatch(adj.id, { qty })}
                   />
                 </td>
+
+                <td />
 
                 <td className="num">
                   <NumberField

@@ -53,7 +53,7 @@ src/export/
 
 `export/layout.ts` builds the rows of the proforma — the two-level head, the lines, the totals that sit unlabelled in the same columns, the summary — along with the column widths, which cells are ruled, and the colours the page is printed in. `PrintView` renders those rows as HTML, `pdf.ts` renders them through pdfmake, and `excel.ts` draws them into a worksheet. None of them owns the layout, so "what prints" cannot promise something the download does not deliver. If a column moves, it moves in one file.
 
-The printed page ends on the same four columns as the entry grid — area, qty, rate, amount — which is the one place it departs from the sheet the office sends today, where the count comes before the area. It is worth the departure: the columns that carry money read the same way wherever the quote is looked at.
+The printed page ends on the same four columns as the entry grid — qty, area, rate, amount — which is also the order the office's own sheet has always used. The count is read before the area because it is inside it: the area is the chargeable height by the width by the count, so meeting the area first means meeting a figure whose ingredients have not been shown yet.
 
 A row can also say what each figure *is* — a cell carries a `key` like `line.2.area` or `cgst`. The printed renderers ignore it; the workbook writes a live formula there instead of the number, and finds the cells that formula needs by looking their keys up, so the arithmetic never has to know the shape of the page.
 

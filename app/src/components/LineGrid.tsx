@@ -61,11 +61,12 @@ export function LineGrid({
             <th className="grid__group" colSpan={2}>
               Chargeable size ({unit}) <Info hint={chargeableHint(computed, quote)} />
             </th>
-            <th rowSpan={2} className="num">
-              Area ({quote.printUnit}) <Info hint={areaHint(computed, quote)} />
-            </th>
+            {/* The count is read before the area because it is inside it. */}
             <th rowSpan={2} className="num">
               Qty
+            </th>
+            <th rowSpan={2} className="num">
+              Area ({quote.printUnit}) <Info hint={areaHint(computed, quote)} />
             </th>
             <th rowSpan={2} className="num">
               Rate
@@ -168,6 +169,15 @@ export function LineGrid({
                 </td>
 
                 <td className="num">
+                  <NumberField
+                    value={line.qty}
+                    width={56}
+                    decimals={0}
+                    onChange={(qty) => onPatchLine(line.id, { qty })}
+                  />
+                </td>
+
+                <td className="num">
                   <div className="pair">
                     <NumberField
                       value={l.area.value.toNumber()}
@@ -182,15 +192,6 @@ export function LineGrid({
                       <OverrideDot title={`Formula gives ${l.area.computed.toFixed(4)}`} />
                     )}
                   </div>
-                </td>
-
-                <td className="num">
-                  <NumberField
-                    value={line.qty}
-                    width={56}
-                    decimals={0}
-                    onChange={(qty) => onPatchLine(line.id, { qty })}
-                  />
                 </td>
 
                 <td className="num">
