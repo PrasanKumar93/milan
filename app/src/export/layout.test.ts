@@ -9,9 +9,11 @@ import {
   COLUMN_WIDTHS,
   INK,
   bankRows,
+  fieldText,
   fileNameFor,
   headRows,
   lineRows,
+  metaRows,
   summaryRows,
   tailRows,
   termRows,
@@ -120,6 +122,33 @@ describe("the printed document, against PROFORMA 6359", () => {
       // total, because TOTAL AMOUNT below is the same figure.
       "TOTAL AMOUNT 5373",
     ]);
+  });
+});
+
+/**
+ * The order block is a form: the office fills a few of its lines and writes the
+ * rest in by hand. Not one of the 62 samples prints a delivery address, so the
+ * line stays a blank to write on rather than being filled with something the
+ * operator never typed.
+ */
+describe("the order details", () => {
+  const rows = (quote: Quote) => metaRows(quote).map(([left, right]) => [left, right] as const);
+
+  it("prints where a quote is going against the label that asks", () => {
+    const quote = { ...toQuote(sample("7178")), dispatchTo: "SITE 2, WHITEFIELD" };
+    const right = rows(quote).map(([, r]) => fieldText(r));
+
+    expect(right).toContain("DISPATCH TO : SITE 2, WHITEFIELD");
+    expect(right.filter((line) => line === "ADDRESS :")).toHaveLength(1);
+  });
+
+  it("leaves the delivery address blank when nothing was typed", () => {
+    const quote = { ...toQuote(sample("7178")), customerAddress: "12 MG ROAD" };
+    const [left, right] = [rows(quote).map(([l]) => fieldText(l)), rows(quote).map(([, r]) => fieldText(r))];
+
+    expect(left).toContain("ADDRESS : 12 MG ROAD");
+    expect(right).toContain("DISPATCH TO :");
+    expect(right.join("\n")).not.toContain("12 MG ROAD");
   });
 });
 

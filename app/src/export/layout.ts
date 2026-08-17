@@ -304,11 +304,10 @@ export function metaRows(quote: Quote): Array<[Field, Field]> {
     [field("PROFORMA NO :", quote.proformaNo), field("REF PERSON :", quote.refPerson)],
     [field("ORDER NO :", quote.orderNo), field("PARTY NO :", quote.partyNo)],
     [field(""), field("DOC NO :", quote.docNo)],
-    [field("NAME :", quote.customerName), field("DISPATCH TO :")],
-    [
-      field("ADDRESS :", quote.customerAddress),
-      field("ADDRESS :", quote.dispatchTo || quote.customerAddress),
-    ],
+    [field("NAME :", quote.customerName), field("DISPATCH TO :", quote.dispatchTo)],
+    // The delivery address is a line to write on: the sheet has always had it,
+    // and not one of the 62 samples prints anything against it.
+    [field("ADDRESS :", quote.customerAddress), field("ADDRESS :")],
     [field("GSTIN :", quote.customerGstin), field("")],
   ];
 }

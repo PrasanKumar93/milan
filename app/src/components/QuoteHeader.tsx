@@ -84,11 +84,7 @@ export function QuoteHeader({
           </div>
           <div className="span-2">
             <Field label="Dispatch to">
-              <TextField
-                value={quote.dispatchTo}
-                onChange={(v) => onChange({ dispatchTo: v })}
-                placeholder="Same as address"
-              />
+              <TextField value={quote.dispatchTo} onChange={(v) => onChange({ dispatchTo: v })} />
             </Field>
           </div>
         </div>

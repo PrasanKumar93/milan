@@ -1,6 +1,7 @@
 ## print
 
-- ~~excel and pdf download must look same~~ done: the workbook is drawn from the same layout rows as the PDF — colours, boxes, logo, stamp, yellow total — with the formulas left in
+- info icon on section or how derived fields calculated
+- qty , rate , amount fields in print tab / pdf ..etc
 
 - check with original pdf : logo and other things missing
 
