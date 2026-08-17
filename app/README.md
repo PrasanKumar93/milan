@@ -46,11 +46,14 @@ src/export/
   layout.ts      the printed document, described once: rows, columns, formats
   pdf.ts         that layout through pdfmake
   excel.ts       the same page as a working sheet, with the formulas left in
+  marks.ts       the letterhead mark and the stamp, as bytes
 ```
 
-## One document, two renderings
+## One document, three renderings
 
-`export/layout.ts` builds the rows of the proforma — the two-level head, the lines, the totals that sit unlabelled in the same columns, the summary — along with the column widths, which cells are ruled, and the colours the page is printed in. `PrintView` renders those rows as HTML and `pdf.ts` renders them through pdfmake. Neither owns the layout, so "what prints" cannot promise something the download does not deliver. If a column moves, it moves in one file.
+`export/layout.ts` builds the rows of the proforma — the two-level head, the lines, the totals that sit unlabelled in the same columns, the summary — along with the column widths, which cells are ruled, and the colours the page is printed in. `PrintView` renders those rows as HTML, `pdf.ts` renders them through pdfmake, and `excel.ts` draws them into a worksheet. None of them owns the layout, so "what prints" cannot promise something the download does not deliver. If a column moves, it moves in one file.
+
+A row can also say what each figure *is* — a cell carries a `key` like `line.2.area` or `cgst`. The printed renderers ignore it; the workbook writes a live formula there instead of the number, and finds the cells that formula needs by looking their keys up, so the arithmetic never has to know the shape of the page.
 
 The two say the same thing in different vocabularies — CSS classes on one side, pdfmake's cell properties on the other — and that is where they can drift: the ruled grid once came out of the download unboxed while the preview looked right. So `renderings.test.tsx` asks each renderer to describe the sheet cell by cell — the text, whether it is ruled, whether it is filled — and requires the two descriptions to be the same list. It runs in the normal test suite and it fails on exactly that bug.
 
@@ -62,9 +65,9 @@ The app is fill-and-print: no quotation database, no quote list, no backup file.
 
 ## The workbook is how an old quote gets changed
 
-Because nothing is filed away, **Download Excel** is the reopen button. The sheet is the same page as the PDF, but every derived figure is a live formula: change a size, a rate or a quantity and the chargeable size, area, amount, subtotal, GST and totals all follow, using the same rules as the engine. The wastage allowance and the unit rate behind a per-unit charge are in hidden columns so the formulas have their inputs and the printed page stays the document the customer knows; it is set to A4 and fit to one page wide, so printing from Excel gives the proforma.
+Because nothing is filed away, **Download Excel** is the reopen button. The sheet is the page the PDF prints — same columns, same boxed figures, the mark, the stamp, the total on yellow — but every derived figure is a live formula: change a size, a rate or a quantity and the chargeable size, area, amount, subtotal, GST and totals all follow, using the same rules as the engine. The wastage allowance and the unit rate behind a counted charge are in hidden columns so the formulas have their inputs and the printed page stays the document the customer knows; it is set to A4 and fit to one page wide, so printing from Excel gives the proforma.
 
-Two details worth knowing. A figure that was typed over in the app is written as that number rather than a formula, with a note recording what the formula gives — a revision must not quietly undo a deliberate override. And every formula is written with its answer cached beside it, so the file reads correctly in Google Sheets or on a phone, which never recalculate. `excel.test.ts` recalculates the workbook the way Excel would and checks it agrees with the engine.
+Three details worth knowing. A figure that was typed over in the app is written as that number rather than a formula, with a note recording what the formula gives — a revision must not quietly undo a deliberate override. Every formula is written with its answer cached beside it, so the file reads correctly in Google Sheets or on a phone, which never recalculate. And an inch quote is written in a fraction format: the page reads `35 1/4` while the cell holds 35.25, so the sizes look printed and still multiply. `excel.test.ts` recalculates the workbook the way Excel would, checks it agrees with the engine, and then checks the page it draws — the workbook is the one rendering nobody looks at until weeks later.
 
 ## What is typed, and what is worked out
 

@@ -1,3 +1,4 @@
+import type Decimal from "decimal.js";
 import type { ComputedQuote, ComputedSection } from "../core/engine";
 import { formatArea, formatSheet } from "../core/money";
 import type { Quote } from "../core/types";
@@ -27,6 +28,15 @@ export interface Cell {
   box?: boolean;
   /** The figure the customer is agreeing to, on the sheet's yellow. */
   highlight?: boolean;
+  /**
+   * What figure this is — `line.2.area`, `rounded`, `cgst`. The workbook writes
+   * the formula for it here instead of the number, and finds the cells the
+   * formula needs by looking up their keys (see `excel.ts`). The printed
+   * renderers ignore it.
+   */
+  key?: string;
+  /** The figure itself, unrounded and unformatted, for a renderer that writes numbers. */
+  value?: number;
 }
 
 /**
@@ -79,6 +89,13 @@ function row(cells: Record<number, Cell | undefined>): SheetRow {
 }
 
 const num = (text: string, bold = false): Cell => ({ text, align: "right", bold });
+
+/** A figure that is worth something to a spreadsheet: printed text, plus what it is. */
+const fig = (text: string, key: string, value: Decimal | number, bold = false): Cell => ({
+  ...num(text, bold),
+  key,
+  value: typeof value === "number" ? value : value.toNumber(),
+});
 
 /**
  * Below the lines the sheet rules a box round each figure it prints and leaves
@@ -133,14 +150,14 @@ export function lineRows(computed: ComputedSection, quote: Quote): SheetRow[] {
     row({
       0: { text: String(i + 1), align: "center" },
       1: { text: l.line.shape },
-      2: num(size(l.line.actualH)),
-      3: num(size(l.line.actualW)),
-      4: num(size(l.chargeableH.value.toNumber())),
-      5: num(size(l.chargeableW.value.toNumber())),
-      6: num(formatSheet(l.line.qty)),
-      7: num(formatArea(l.area.value)),
-      8: num(formatSheet(l.line.rate)),
-      9: num(formatSheet(l.amount.value)),
+      2: fig(size(l.line.actualH), `line.${i}.actualH`, l.line.actualH),
+      3: fig(size(l.line.actualW), `line.${i}.actualW`, l.line.actualW),
+      4: fig(size(l.chargeableH.value.toNumber()), `line.${i}.chargeableH`, l.chargeableH.value),
+      5: fig(size(l.chargeableW.value.toNumber()), `line.${i}.chargeableW`, l.chargeableW.value),
+      6: fig(formatSheet(l.line.qty), `line.${i}.qty`, l.line.qty),
+      7: fig(formatArea(l.area.value), `line.${i}.area`, l.area.value),
+      8: fig(formatSheet(l.line.rate), `line.${i}.rate`, l.line.rate),
+      9: fig(formatSheet(l.amount.value), `line.${i}.amount`, l.amount.value),
     }),
   );
 }
@@ -167,24 +184,26 @@ export function tailRows(computed: ComputedSection, quote: Quote, alone = false)
   if (computed.lines.length > 1) {
     rows.push(
       row({
-        6: num(formatSheet(computed.totalQty)),
-        7: num(formatArea(computed.totalArea)),
-        9: num(formatSheet(computed.subtotal)),
+        6: fig(formatSheet(computed.totalQty), "total.qty", computed.totalQty),
+        7: fig(formatArea(computed.totalArea), "total.area", computed.totalArea),
+        9: fig(formatSheet(computed.subtotal), "subtotal", computed.subtotal),
       }),
     );
   }
 
-  rows.push(row({ 9: num(formatSheet(computed.rounded.value)) }));
+  rows.push(row({ 9: fig(formatSheet(computed.rounded.value), "rounded", computed.rounded.value) }));
 
   // A counted charge prints its count — `HOLES 6 180`. One that was not counted
   // prints the amount alone, the way a document charge always has.
-  for (const a of computed.adjustments) {
+  for (const [i, a] of computed.adjustments.entries()) {
     const counted = a.adjustment.qty > 0;
     rows.push(
       row({
         7: label(a.adjustment.label, counted),
-        ...(counted ? { 8: num(formatSheet(a.adjustment.qty)) } : {}),
-        9: num(formatSheet(a.amount.value)),
+        ...(counted
+          ? { 8: fig(formatSheet(a.adjustment.qty), `adj.${i}.qty`, a.adjustment.qty) }
+          : {}),
+        9: fig(formatSheet(a.amount.value), `adj.${i}.amount`, a.amount.value),
       }),
     );
   }
@@ -192,7 +211,7 @@ export function tailRows(computed: ComputedSection, quote: Quote, alone = false)
   // The taxable base only earns a line of its own where there is tax to work out
   // on it; without GST the charges simply run into the total.
   if (quote.gstApplicable && computed.adjustments.length > 0) {
-    rows.push(row({ 9: num(formatSheet(computed.taxableBase)) }));
+    rows.push(row({ 9: fig(formatSheet(computed.taxableBase), "taxable", computed.taxableBase) }));
   }
 
   if (quote.gstApplicable) {
@@ -200,11 +219,14 @@ export function tailRows(computed: ComputedSection, quote: Quote, alone = false)
       ["CGST", computed.cgst],
       ["SGST", computed.sgst],
     ] as const) {
+      const tax = name.toLowerCase();
       rows.push(
         row({
           7: label(name, true),
-          8: num(`${formatSheet(quote.gstPct)}%`),
-          9: num(formatSheet(value)),
+          // A rate, not a figure: the workbook writes it as a fraction shown as
+          // a percentage, so the tax cell beside it can multiply by it.
+          8: fig(`${formatSheet(quote.gstPct)}%`, `${tax}.pct`, quote.gstPct / 100),
+          9: fig(formatSheet(value), tax, value),
         }),
       );
     }
@@ -216,7 +238,7 @@ export function tailRows(computed: ComputedSection, quote: Quote, alone = false)
     rows.push(
       row({
         7: { ...label(computed.section.shortCode, false), bold: true },
-        9: num(formatSheet(computed.total), true),
+        9: fig(formatSheet(computed.total), "total", computed.total, true),
       }),
     );
   }
@@ -228,10 +250,10 @@ export function tailRows(computed: ComputedSection, quote: Quote, alone = false)
 export function summaryRows(computed: ComputedQuote): SheetRow[] {
   const rows =
     computed.sections.length > 1
-      ? computed.sections.map((s) =>
+      ? computed.sections.map((s, i) =>
           row({
             7: { text: s.section.shortCode, align: "left", colSpan: 2 },
-            9: num(formatSheet(s.total)),
+            9: fig(formatSheet(s.total), `section.${i}.total`, s.total),
           }),
         )
       : [];
@@ -239,7 +261,7 @@ export function summaryRows(computed: ComputedQuote): SheetRow[] {
   rows.push(
     row({
       7: { text: "TOTAL AMOUNT", align: "left", colSpan: 2, bold: true, highlight: true },
-      9: { ...num(formatSheet(computed.grandTotal), true), highlight: true },
+      9: { ...fig(formatSheet(computed.grandTotal), "grandTotal", computed.grandTotal, true), highlight: true },
     }),
   );
 

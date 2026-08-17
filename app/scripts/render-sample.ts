@@ -25,7 +25,8 @@ const quote = toQuote(sample(proformaNo));
 // handed over the same way, as data URLs.
 const png = (name: string) =>
   `data:image/png;base64,${readFileSync(resolve(`public/${name}.png`)).toString("base64")}`;
-const doc = buildDoc(computeQuote(quote), { logo: png("logo"), stamp: png("stamp") });
+const pictures = { logo: png("logo"), stamp: png("stamp") };
+const doc = buildDoc(computeQuote(quote), pictures);
 
 // The node build reads fonts off disk rather than out of a virtual file system.
 const fonts = resolve("node_modules/pdfmake/fonts/Roboto");
@@ -48,7 +49,7 @@ console.log(pdfPath);
 
 const ExcelJS = (await import("exceljs")).default;
 const workbook = new ExcelJS.Workbook();
-buildWorkbook(computeQuote(quote), workbook);
+buildWorkbook(computeQuote(quote), workbook, pictures);
 
 const xlsxPath = resolve(outDir, fileNameFor(quote, "xlsx"));
 await workbook.xlsx.writeFile(xlsxPath);
