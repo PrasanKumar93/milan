@@ -77,10 +77,13 @@ export function LineGrid({
             <th rowSpan={2} />
           </tr>
           <tr>
-            <th className="grid__sub">H</th>
-            <th className="grid__sub">W</th>
-            <th className="grid__sub">H</th>
-            <th className="grid__sub">W</th>
+            {/* Spelt out, as the printed sheet spells them: the pair of boxes
+                is the one place on the screen where guessing which is which
+                costs a re-cut. */}
+            <th className="grid__sub">Height</th>
+            <th className="grid__sub">Width</th>
+            <th className="grid__sub">Height</th>
+            <th className="grid__sub">Width</th>
           </tr>
         </thead>
 

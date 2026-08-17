@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { createPortal } from "react-dom";
 import type { InputUnit } from "../core/types";
 import { formatInches, parseDimension } from "../core/units";
 
@@ -381,18 +382,66 @@ export function OverrideDot({ title }: { title: string }) {
 }
 
 /**
- * The mark beside a heading that the app fills in for itself: hover it and the
- * browser shows the rule and what it did to the first row. A native tooltip
- * rather than a bubble of our own, because the grid scrolls sideways on a narrow
- * window and anything we drew would be cut off at the edge of it.
+ * The mark beside a heading the app fills in for itself: hover it and the rule,
+ * with the first row of the section put through it, appears at once.
+ *
+ * The bubble is drawn at the end of the document rather than beside the mark,
+ * and placed from the mark's position on screen. The grid it sits in scrolls
+ * sideways, and anything drawn inside that would be cut off at the edge of it —
+ * which is the whole reason the browser's own slow tooltip was here first.
  */
 export function Info({ hint }: { hint: string }) {
+  const mark = useRef<HTMLSpanElement>(null);
+  const [at, setAt] = useState<{ top: number; left: number } | null>(null);
+
+  const show = () => {
+    const box = mark.current?.getBoundingClientRect();
+    if (!box) return;
+
+    // Nudged left of the mark where the mark is near the right edge — the last
+    // heading in the grid is the last thing on the window.
+    const left = Math.min(box.left, window.innerWidth - TIP_WIDTH - MARGIN);
+    setAt({ top: box.bottom + 8, left: Math.max(MARGIN, left) });
+  };
+
+  const hide = () => setAt(null);
+
+  // Placed once, from where the mark was: scrolling the page or the grid under
+  // it would leave the bubble pointing at nothing.
+  useEffect(() => {
+    if (!at) return;
+    window.addEventListener("scroll", hide, true);
+    return () => window.removeEventListener("scroll", hide, true);
+  }, [at]);
+
   return (
-    <span className="info" title={hint} aria-label={hint} tabIndex={0} role="note">
-      i
-    </span>
+    <>
+      <span
+        ref={mark}
+        className="info"
+        role="note"
+        aria-label={hint}
+        tabIndex={0}
+        onMouseEnter={show}
+        onMouseLeave={hide}
+        onFocus={show}
+        onBlur={hide}
+      >
+        i
+      </span>
+      {at &&
+        createPortal(
+          <span className="tip" style={{ top: at.top, left: at.left, width: TIP_WIDTH }}>
+            {hint}
+          </span>,
+          document.body,
+        )}
+    </>
   );
 }
+
+const TIP_WIDTH = 420;
+const MARGIN = 12;
 
 export function Callout({
   tone = "info",

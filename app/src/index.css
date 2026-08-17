@@ -413,9 +413,32 @@ h3 {
 
 .info:hover,
 .info:focus-visible {
+  background: var(--accent);
   border-color: var(--accent);
-  color: var(--accent);
+  color: #fff;
   outline: none;
+}
+
+/* What the mark says. Drawn at the end of the document and placed from the
+   mark, so the scrolling grid cannot cut it off. `pre-line` keeps the blank
+   line the wording puts between the rule and the worked row. */
+.tip {
+  position: fixed;
+  z-index: 80;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  background: #1c2128;
+  color: #f2f4f7;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.6;
+  letter-spacing: 0;
+  text-align: left;
+  text-transform: none;
+  white-space: pre-line;
+  box-shadow: 0 10px 24px rgb(16 20 26 / 28%);
+  pointer-events: none;
 }
 
 .modal {
@@ -548,10 +571,14 @@ table.grid thead .grid__group {
   padding-bottom: 2px;
 }
 
+/* Over the right edge of the box it names, as every other heading on a column
+   of figures is — the sizes are typed right-aligned, and the field fills the
+   column exactly, so the word and the number end on the same line. */
 table.grid thead .grid__sub {
   font-size: 10px;
   letter-spacing: 0.06em;
   padding-top: 0;
+  text-align: right;
 }
 
 table.grid td.num,
