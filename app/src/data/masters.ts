@@ -3,7 +3,7 @@ import chargeTypesJson from "./chargeTypes.json";
 import productsJson from "./products.json";
 import rateCardJson from "./rateCard.json";
 import { splitProduct } from "../core/products";
-import type { ChargeBasis, InputUnit, WastageRule } from "../core/types";
+import type { ChargeBasis, InputUnit, PrintUnit, WastageRule } from "../core/types";
 
 /**
  * Typed access to the JSON masters. Everything the business can change — company
@@ -62,9 +62,30 @@ export function chargeTypeFor(label: string): ChargeType | undefined {
   return chargeTypes.filter((c) => c.label === label.toUpperCase())[0];
 }
 
-/** Default rate for a line of this product, from the rate card. */
-export function cardRate(product: string, printUnit: "SQFT" | "SQMT"): number | undefined {
+/**
+ * What the card asks for this glass, and whether that figure has tax in it.
+ *
+ * The two columns are not the same price in two units: ₹1414 the square metre is
+ * before GST and ₹155 the square foot is after it — 1414 × 1.18 ÷ 10.764 — which
+ * is how the office quotes and is why every SQFT sample prints no tax line
+ * (dev-plan §2.5). The card says so itself rather than the app assuming it, so a
+ * future card that prices both columns the same way only has to say that.
+ */
+export interface CardPrice {
+  rate: number;
+  includesGst: boolean;
+}
+
+export function cardPrice(product: string, printUnit: PrintUnit): CardPrice | undefined {
   const item = rateCard.items.filter((i) => i.product === product.toUpperCase())[0];
   if (!item) return undefined;
-  return printUnit === "SQFT" ? item.sqft : item.sqmt;
+
+  return printUnit === "SQFT"
+    ? { rate: item.sqft, includesGst: rateCard.sqftIncludesGst }
+    : { rate: item.sqmt, includesGst: rateCard.sqmtIncludesGst };
+}
+
+/** Default rate for a line of this product, from the rate card. */
+export function cardRate(product: string, printUnit: PrintUnit): number | undefined {
+  return cardPrice(product, printUnit)?.rate;
 }

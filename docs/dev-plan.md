@@ -209,6 +209,10 @@ The rate card from the notes still holds as the default, and the SQFT/SQMT relat
 
 So the SQFT rate is the GST-inclusive equivalent of the SQMT rate, rounded to a tidy number. Rate cards need an effective date; the sample card is dated 14/8/26.
 
+**The card says which of its columns has tax in it.** That relationship is not a rounding curiosity, it is the whole reason every SQFT sample prints no tax line while every SQMT one prints two: ₹1414 the square metre is a price before GST and ₹155 the square foot is the same price after it. The card carries `sqmtIncludesGst: false` and `sqftIncludesGst: true` rather than the app inferring it from the unit, so a card that one day prices both columns the same way only has to say so.
+
+Two settings decide which of those the operator ends up with — the printed unit and the GST switch — and they are set independently, so a quote can tax a taxed price or print a pre-tax price with no tax on it. Neither looks wrong on the page. So the section header shows the card figure with what it includes ("Card ₹1,414 / SQMT · GST to be added"), and §7 carries the two warnings for the mismatches. The rate still auto-fills from the card: across the 41 sample sections that have a card price, the card figure is the one that was billed in 33 of them, so filling it saves the typing far more often than it needs correcting — and a rate that has been typed over is taken as deliberate, which is also what silences the warnings.
+
 **The card covers toughened glass and nothing else** (confirmed with the customer). Mirror, fluted, kaccha, laminated, DGU and the rest have no default: the rate is typed on the line, and the §7 check that catches a SQFT rate in a SQMT quote has nothing to compare against on those sections. Extending the card is a JSON edit whenever the office writes the other prices down.
 
 **Brown and black share a price but stay two products.** The card prices them together — "8MM BROWN & BLACK 170" — and it would be one row less to name the product `BLACK / BROWN TOUGHENED GLASS`. That name would then print on the customer's proforma, which is a document naming glass that was actually cut: the customer bought brown or they bought black. So the catalogue lists both and the card carries both, with the same figures. It also costs nothing the day the two prices diverge.
@@ -527,6 +531,10 @@ Validation advises and never prevents — the operator is holding the phone, and
 5. A row with no rate, or no quantity. A row with no sizes typed yet is the next row, not a mistake, and is left alone.
 6. A section whose wastage rule differs from the one its glass type implies (§2.2).
 7. A discount above `DISCOUNT_WARN_PCT` of the subtotal, which reads as "larger than a rounding" on the warning.
+8. A GST-inclusive card price being taxed again — a SQFT quote with GST on, still at the card rate. The warning names the pre-tax figure so the correction is a copy rather than a calculation.
+9. A pre-tax card price on a quote that adds no tax — a SQMT quote at the card rate with GST off.
+
+(8) and (9) only fire while the rate is within 2% of the card's: once the operator types their own rate they have decided what it includes, and the app has nothing left to compare against.
 
 ---
 

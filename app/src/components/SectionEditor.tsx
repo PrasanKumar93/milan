@@ -1,7 +1,7 @@
 import type { ComputedSection } from "../core/engine";
 import { perimeterRft } from "../core/products";
 import type { Adjustment, Line, Quote, Section, WastageRule } from "../core/types";
-import { HSN } from "../data/masters";
+import { HSN, cardPrice } from "../data/masters";
 import { Button, DimensionField, Pill } from "../ui/controls";
 import { ChargeTable } from "./ChargeTable";
 import { LineGrid } from "./LineGrid";
@@ -51,6 +51,7 @@ export function SectionEditor({
 }) {
   const section = computed.section;
   const footToFoot = section.wastageRule === "foot_to_foot";
+  const price = cardPrice(section.product, quote.printUnit);
   const perimeter = perimeterRft(
     computed.lines.map((l) => ({
       line: l.line,
@@ -73,6 +74,22 @@ export function SectionEditor({
         <span className="muted small" title={`Prints as ${section.shortCode} in the summary block`}>
           {section.product} · HSN {HSN}
         </span>
+
+        {/*
+         * What the card asks, and what that figure includes. The two columns of
+         * the card are not the same price in two units — the square-foot one has
+         * GST in it (§2.5) — so the price is never shown without saying which it
+         * is. Glass the card has no price for says nothing at all.
+         */}
+        {price && (
+          <span
+            className="muted-2 small"
+            title="The rate this row starts on. Rates are negotiated, so type over it."
+          >
+            Card ₹{price.rate.toLocaleString("en-IN")} / {quote.printUnit} ·{" "}
+            {price.includesGst ? "GST included" : "GST to be added"}
+          </span>
+        )}
         <span className="spacer" />
         {canRemove && (
           <Button variant="danger" onClick={onRemoveSection} title="Remove this section">

@@ -36,6 +36,41 @@ describe("warnings", () => {
     );
   });
 
+  /*
+   * The card prices square metres before tax and square feet after it (§2.5),
+   * and the printed unit and the GST switch are set independently, so both
+   * mismatches are a click away and neither looks wrong on the page.
+   */
+  it("catch a card price that already includes GST being taxed again", () => {
+    const texts = textsFor(
+      quoteWith((q) => {
+        q.printUnit = "SQFT";
+        q.sections[0].lines[0].rate = 135;
+      }),
+    );
+
+    expect(texts.some((t) => t.includes("already includes GST"))).toBe(true);
+    // And says what the rate would be without it: 135 / 1.18.
+    expect(texts.some((t) => t.includes("114.41"))).toBe(true);
+  });
+
+  it("catch a pre-tax card price on a quote that adds no tax", () => {
+    const texts = textsFor(quoteWith((q) => (q.gstApplicable = false)));
+    expect(texts.some((t) => t.includes("before GST, and this quote adds none"))).toBe(true);
+  });
+
+  it("say nothing where the operator has priced it themselves", () => {
+    // 114 is the square-foot rate with the tax taken out — a deliberate figure.
+    const texts = textsFor(
+      quoteWith((q) => {
+        q.printUnit = "SQFT";
+        q.sections[0].lines[0].rate = 114;
+      }),
+    );
+
+    expect(texts.some((t) => t.includes("GST"))).toBe(false);
+  });
+
   it("name a discount rather than object to it", () => {
     const texts = textsFor(
       quoteWith((q) => {

@@ -1,6 +1,8 @@
 {
   "_note": "dev-plan §2.5. Toughened glass only — the card the office wrote out covers nothing else, so mirror, fluted, kaccha, laminated and the rest have no default and their rate is typed on the line. Defaults only in any case: rates are negotiated per job and edited per line. Brown and black are one price on the card and are listed separately here, because the proforma has to name the glass the customer bought. sqft_rate is the GST-inclusive equivalent of sqmt_rate, rounded to a tidy number: sqmt x 1.18 / 10.764.",
   "effectiveFrom": "2026-08-14",
+  "sqmtIncludesGst": false,
+  "sqftIncludesGst": true,
   "items": [
     {
       "product": "5MM CLEAR TOUGHENED GLASS",
