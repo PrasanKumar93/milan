@@ -1,4 +1,3 @@
-/// <reference types="vitest/config" />
 import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import react from "@vitejs/plugin-react";

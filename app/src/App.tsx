@@ -182,6 +182,10 @@ export default function App() {
                   </div>
                 </div>
               </section>
+
+              {/* On the working screen only. The proforma is the customer's
+                  document and carries the firm's name, not ours. */}
+              <footer className="credit">Developed by Lakshman Rajpurohit</footer>
             </>
           )}
         </div>
