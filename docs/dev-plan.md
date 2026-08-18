@@ -134,7 +134,9 @@ Confirmed that **the biller decides the wastage on each job** rather than it bei
    2922    832        50           2972    882
 ```
 
-The apparent asymmetric allowances in the samples are not asymmetric wastage at all — they are foot-to-foot rounding landing differently on each side, which is why that rule (above) removes the need for a two-part wastage column. Under foot to foot the column becomes a read-only display of what the rounding added, shown as `H +150` over `W +270`.
+The apparent asymmetric allowances in the samples are not asymmetric wastage at all — they are foot-to-foot rounding landing differently on each side, which is why that rule (above) removes the need for a two-part wastage column.
+
+**Under foot to foot the column reads the row in feet.** There is no allowance to type, so it is headed `IN FEET` and shows `7.51 → 8 ft` over `1.12 → 2 ft` — where each side stands and the foot it is charged at, in the order of the boxes either side of it. The customer asked for this: the column used to say "to next foot", which told an operator the rule was in force but never what it did to the piece in front of them, and the rule is the one place on the screen where a size grows by a foot without anyone typing a number. The heading's own note steps the conversion out in full — `2290 ÷ 304.8 = 7.51 ft`, `up to the next foot = 8 ft`, `8 × 304.8 = 2438.4`, `up to the next 5 mm = 2440` — and each side of a row repeats those steps on hover, so a queried piece can be explained from the screen it was priced on.
 
 **The cut size is shown, not typed** (§2.8). v2 kept it editable so that a large mirror could be entered as "charge it as 3660 × 915" rather than as an allowance; the team asked for it to be locked, on the grounds that a cut size which disagrees with the sizes beside it is unexplainable when the piece is queried. A row that has to be cut differently sets its own wastage, and both sides move together.
 

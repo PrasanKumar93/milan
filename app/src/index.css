@@ -612,6 +612,22 @@ table.grid td.charge__name .row {
   justify-content: flex-end;
 }
 
+/* What foot to foot did to a row: the height over the width, in the order of
+   the boxes either side. Small and quiet — it is a reading of the sizes, not
+   another figure in the price. */
+.feet {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: help;
+}
+
 /* A row is wide and its cells are far apart, so every other one is tinted to
    keep the eye on the line it is reading. */
 table.grid--zebra tbody tr:nth-child(odd) {

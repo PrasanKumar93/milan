@@ -1,7 +1,7 @@
-import type Decimal from "decimal.js";
+import Decimal from "decimal.js";
 import type { ComputedSection } from "../core/engine";
-import type { Quote } from "../core/types";
-import { SQFT_PER_SQM, formatInches } from "../core/units";
+import type { InputUnit, Quote } from "../core/types";
+import { MM_PER_FOOT, SQFT_PER_SQM, formatInches, toNextFoot } from "../core/units";
 
 /**
  * The worked-out columns, in words.
@@ -20,30 +20,79 @@ import { SQFT_PER_SQM, formatInches } from "../core/units";
 const round = (value: Decimal, places: number) => value.toDecimalPlaces(places).toString();
 
 /** A size the way the row shows it: eighths for an inch quote, plain millimetres otherwise. */
-const size = (quote: Quote) => (value: Decimal | number) => {
+const shown = (value: Decimal | number, unit: InputUnit) => {
   const n = typeof value === "number" ? value : value.toNumber();
-  return quote.inputUnit === "inch" ? formatInches(n) : String(n);
+  return unit === "inch" ? formatInches(n) : String(n);
 };
+
+const size = (quote: Quote) => (value: Decimal | number) => shown(value, quote.inputUnit);
 
 const lines = (rule: string, example?: string) =>
   example ? `${rule}\n\nRow 1:  ${example}` : rule;
+
+/** How long the size is in feet, which is the number the foot-to-foot rule acts on. */
+const perFoot = (unit: InputUnit) => (unit === "mm" ? MM_PER_FOOT : new Decimal(12));
+
+const feetOf = (value: number, unit: InputUnit) => new Decimal(value).div(perFoot(unit));
+
+/**
+ * `7.51 → 8 ft` — where the size stands in feet and the foot it is charged at.
+ * Shown on the row itself, because "to next foot" told an operator the rule was
+ * in force but never what it did to this particular piece.
+ */
+export function feetSpan(actual: number, unit: InputUnit): string {
+  if (actual <= 0) return "";
+  const feet = feetOf(actual, unit);
+  return `${feet.toFixed(2)} → ${feet.ceil()} ft`;
+}
+
+/** The same conversion end to end, for the cell that shows what came out of it. */
+export function footSteps(actual: number, unit: InputUnit): string {
+  if (actual <= 0) return "";
+
+  const feet = feetOf(actual, unit);
+  const whole = feet.ceil();
+  const exact = whole.times(perFoot(unit));
+  const charged = toNextFoot(actual, unit);
+
+  const steps = [
+    `${actual} ÷ ${perFoot(unit)} = ${feet.toFixed(2)} ft`,
+    `up to the next foot = ${whole} ft`,
+    `${whole} × ${perFoot(unit)} = ${exact}`,
+  ];
+
+  // Millimetres land on a fraction — 8 ft is 2438.4 — and the shop cuts to five.
+  if (unit === "mm" && !exact.eq(charged)) steps.push(`up to the next 5 mm = ${charged}`);
+
+  return steps.join("\n");
+}
+
+/**
+ * Both sides of a row, each stepped out under its own heading.
+ *
+ * The feet column is one box covering the height and the width, so it says both:
+ * asking the operator to hover twice for one row, and telling them different
+ * things depending which line they happened to be over, is how a rule ends up
+ * half understood.
+ */
+export function footStepsPair(actualH: number, actualW: number, unit: InputUnit): string {
+  const side = (label: string, actual: number) =>
+    actual > 0 ? `${label} ${shown(actual, unit)}:\n${footSteps(actual, unit)}` : "";
+
+  return [side("Height", actualH), side("Width", actualW)].filter(Boolean).join("\n\n");
+}
 
 /** Actual plus the allowance, or up to the next foot — whichever this section is on. */
 export function chargeableHint(computed: ComputedSection, quote: Quote): string {
   const show = size(quote);
   const first = computed.lines[0];
+  const unit = quote.inputUnit;
 
   if (computed.section.wastageRule === "foot_to_foot") {
-    const nextFoot =
-      quote.inputUnit === "mm"
-        ? "the next whole foot (304.8 mm) and then up to the next 5 mm"
-        : "the next whole foot (12 in)";
+    const rule = `Chargeable = the size taken up to the next whole foot (${perFoot(unit)} ${unit}). Only an overhang moves it up: a size already on a foot is left where it is.`;
+    const steps = first ? footStepsPair(first.line.actualH, first.line.actualW, unit) : "";
 
-    return lines(
-      `Chargeable = the actual size taken up to ${nextFoot}. A size that already lands on a foot is left where it is.`,
-      first &&
-        `${show(first.line.actualH)} → ${show(first.chargeableH.value)} and ${show(first.line.actualW)} → ${show(first.chargeableW.value)}`,
-    );
+    return steps ? `${rule}\n\nRow 1\n\n${steps}` : rule;
   }
 
   return lines(

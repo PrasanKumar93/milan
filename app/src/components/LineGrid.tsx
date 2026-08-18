@@ -5,7 +5,7 @@ import { formatInches } from "../core/units";
 import { shapes } from "../data/masters";
 import { Button, DimensionField, Info, NumberField, OverrideDot, Select } from "../ui/controls";
 import { LineColumns } from "./columns";
-import { amountHint, areaHint, chargeableHint } from "./formulas";
+import { amountHint, areaHint, chargeableHint, feetSpan, footSteps, footStepsPair } from "./formulas";
 
 /**
  * The entry grid. What was measured and what was agreed — size, wastage, count
@@ -56,7 +56,11 @@ export function LineGrid({
             <th className="grid__group" colSpan={2}>
               Actual size ({unit})
             </th>
-            <th rowSpan={2}>Wastage</th>
+            {/* Under foot to foot there is no allowance to type: the column
+                shows what the rule did instead, so it is named for that. */}
+            <th rowSpan={2} className={footToFoot ? "num" : undefined}>
+              {footToFoot ? "In feet" : "Wastage"}
+            </th>
             {/* The three columns the app fills in for itself say so, and say how. */}
             <th className="grid__group" colSpan={2}>
               Chargeable size ({unit}) <Info hint={chargeableHint(computed, quote)} />
@@ -120,11 +124,15 @@ export function LineGrid({
                   />
                 </td>
 
-                <td>
+                <td className={footToFoot ? "num" : undefined}>
                   {footToFoot ? (
-                    <span className="muted small" title="Foot to foot ignores the allowance">
-                      to next foot
-                    </span>
+                    /* Where each side stands in feet, and the foot it is
+                       charged at — the height above the width, in the order of
+                       the boxes on either side of it. */
+                    <div className="feet" title={footStepsPair(line.actualH, line.actualW, unit)}>
+                      <span>{feetSpan(line.actualH, unit)}</span>
+                      <span>{feetSpan(line.actualW, unit)}</span>
+                    </div>
                   ) : (
                     <div className="pair">
                       <DimensionField
@@ -156,7 +164,7 @@ export function LineGrid({
                     unit={unit}
                     disabled
                     className="input--derived"
-                    title={`Actual + ${showSize(l.addedH)}`}
+                    title={footToFoot ? footSteps(line.actualH, unit) : `Actual + ${showSize(l.addedH)}`}
                     onChange={() => {}}
                   />
                 </td>
@@ -166,7 +174,7 @@ export function LineGrid({
                     unit={unit}
                     disabled
                     className="input--derived"
-                    title={`Actual + ${showSize(l.addedW)}`}
+                    title={footToFoot ? footSteps(line.actualW, unit) : `Actual + ${showSize(l.addedW)}`}
                     onChange={() => {}}
                   />
                 </td>
