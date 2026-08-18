@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { polishRate } from "../core/products";
 import { wastageRuleFor } from "../core/products";
 import type { Adjustment, InputUnit, Line, Quote, Section } from "../core/types";
-import { cardRate, chargeTypeFor, shortCodeFor } from "../data/masters";
+import { chargeTypeFor, shortCodeFor } from "../data/masters";
 import { clearDraft, isWorthRestoring, loadDraft, saveDraft } from "../storage/draft";
 import { newAdjustment, newLine, newQuote, newSection, switchInputUnit } from "./factory";
 
@@ -72,28 +72,14 @@ export function useQuote() {
       },
 
       /**
-       * Changing the printed unit changes what a rate means, so the rate card is
-       * re-read for any line still sitting on a card rate.
+       * Changing the printed unit changes what a rate means, and the rates are
+       * left exactly as they are. Every one of them was typed by someone who had
+       * read the card figure beside the glass, so rewriting them would be the app
+       * overruling a price; the §7 warning says a square-metre rate is now in a
+       * square-foot quote, and the operator decides what it should be.
        */
       setPrintUnit(printUnit: Quote["printUnit"]) {
-        setQuote((q) => {
-          if (q.printUnit === printUnit) return q;
-          return {
-            ...q,
-            printUnit,
-            sections: q.sections.map((s) => {
-              const before = cardRate(s.product, q.printUnit);
-              const after = cardRate(s.product, printUnit);
-              if (after === undefined) return s;
-              return {
-                ...s,
-                lines: s.lines.map((l) =>
-                  l.rate === 0 || l.rate === before ? { ...l, rate: after } : l,
-                ),
-              };
-            }),
-          };
-        });
+        setQuote((q) => (q.printUnit === printUnit ? q : { ...q, printUnit }));
       },
 
       addSection() {
@@ -113,30 +99,23 @@ export function useQuote() {
       /**
        * The glass decides the section title, the short code, the wastage rule and
        * the polish rate, so all four follow the product in one step.
+       *
+       * The rate is not one of them. The card is a list price and the price on a
+       * job is negotiated, so the figure is shown beside the glass and typed on
+       * the row — a rate that appeared on its own is a rate nobody checked.
        */
       setProduct(sectionId: string, product: string) {
-        mapSection(sectionId, (s) => {
-          const before = cardRate(s.product, quote.printUnit);
-          const rate = cardRate(product, quote.printUnit);
-          return {
-            ...s,
-            product,
-            shortCode: shortCodeFor(product),
-            wastageRule: wastageRuleFor(product),
-            // A rate nobody has touched follows the glass, exactly as it follows
-            // a change of printed unit above. A rate that was negotiated stays:
-            // it is the one number on the row that was actually agreed.
-            lines:
-              rate === undefined
-                ? s.lines
-                : s.lines.map((l) => (l.rate === 0 || l.rate === before ? { ...l, rate } : l)),
-            adjustments: s.adjustments.map((a) =>
-              chargeTypeFor(a.label)?.ratePerThicknessMm === undefined
-                ? a
-                : { ...a, rate: polishRate(product) },
-            ),
-          };
-        });
+        mapSection(sectionId, (s) => ({
+          ...s,
+          product,
+          shortCode: shortCodeFor(product),
+          wastageRule: wastageRuleFor(product),
+          adjustments: s.adjustments.map((a) =>
+            chargeTypeFor(a.label)?.ratePerThicknessMm === undefined
+              ? a
+              : { ...a, rate: polishRate(product) },
+          ),
+        }));
       },
 
       addLine(sectionId: string) {
@@ -226,7 +205,7 @@ export function useQuote() {
         setQuote(restored);
       },
     }),
-    [mapSection, patchSection, quote.printUnit],
+    [mapSection, patchSection],
   );
 
   return {

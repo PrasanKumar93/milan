@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { newLine, newQuote } from "../state/factory";
+import { newLine, newQuote, newSection } from "../state/factory";
 import { computeQuote } from "./engine";
 import type { Quote } from "./types";
 import { warningsFor } from "./validate";
@@ -8,18 +8,50 @@ import { warningsFor } from "./validate";
 
 function quoteWith(edit: (q: Quote) => void): Quote {
   const q = newQuote("7178");
-  const s = q.sections[0];
+  // A new section starts with no glass on it, so a quote being checked has to
+  // pick one the way an operator does.
+  const s = newSection("mm", "10MM CLEAR TOUGHENED GLASS");
   s.lines = [{ ...newLine(s), actualH: 2000, actualW: 1000, rate: 1238 }];
+  q.sections = [s];
   edit(q);
   return q;
 }
 
 const textsFor = (q: Quote) => warningsFor(computeQuote(q)).map((w) => w.text);
+const tagsFor = (q: Quote) => warningsFor(computeQuote(q)).map((w) => w.tag);
 
 describe("warnings", () => {
   it("say nothing about a quote that is simply being typed", () => {
     expect(textsFor(newQuote())).toEqual([]);
     expect(textsFor(quoteWith(() => {}))).toEqual([]);
+  });
+
+  // The list is read while somebody is waiting, so each line opens with what it
+  // is and the sentence is there for the operator who then asks why.
+  it("name the mistake before explaining it", () => {
+    expect(
+      tagsFor(
+        quoteWith((q) => {
+          q.printUnit = "SQFT";
+          q.sections[0].lines[0].rate = 135;
+        }),
+      ),
+    ).toContain("GST twice");
+
+    expect(tagsFor(quoteWith((q) => (q.gstApplicable = false)))).toContain("GST missing");
+    expect(tagsFor(quoteWith((q) => (q.sections[0].lines[0].rate = 0)))).toContain("No rate");
+    expect(tagsFor(quoteWith((q) => (q.sections[0].rounded = 2000)))).toContain("Discount");
+  });
+
+  it("catch a section that was priced without a glass being chosen", () => {
+    const blank = quoteWith((q) => (q.sections[0].product = ""));
+    expect(textsFor(blank)).toContain(
+      "Section 1 has no glass chosen, so the proforma has nothing to describe it by.",
+    );
+
+    // Half a name is still no glass; a name off nobody's catalogue is a glass.
+    expect(textsFor(quoteWith((q) => (q.sections[0].product = "12MM")))).toHaveLength(1);
+    expect(textsFor(quoteWith((q) => (q.sections[0].product = "12MM LOW IRON")))).toEqual([]);
   });
 
   it("catch a SQFT rate left in a SQMT quote", () => {

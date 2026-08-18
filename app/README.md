@@ -97,7 +97,11 @@ Number fields take numbers only, in the loose way an entry grid needs: "2." and 
 
 ₹1,232 the square metre and ₹135 the square foot are the same 10 mm glass: the square-foot figure is the square-metre one with GST already in it, which is how the office quotes and why no SQFT sample prints a tax line. `rateCard.json` says which is which (`sqmtIncludesGst`, `sqftIncludesGst`) rather than the app inferring it from the unit.
 
-The section heading therefore never shows a price without saying what it includes — `Card ₹1,232 / SQMT · GST to be added` — and the rate still fills itself in from the card, because across the samples the card figure is the one that was billed in 33 of 41 sections. The printed unit and the GST switch are set separately, so the two ways of getting it wrong — taxing a taxed price, printing a pre-tax price with no tax — are each a click away and neither looks wrong on the page. `validate.ts` names them, with the pre-tax figure worked out so the correction is a copy rather than a calculation. Both go quiet once the rate has been typed over: an operator who priced it themselves has decided what it includes.
+The section heading therefore never shows a price without saying what it includes — `₹1,232 / SQMT · GST to be added`, coloured, beside the glass it prices. It is shown and never applied: no rate is filled in from it, nothing rewrites a rate, and switching the printed unit leaves every rate alone. The card is a list price, the price on a job is negotiated, and a rate that appeared on its own is a rate nobody checked.
+
+The printed unit and the GST switch are set separately, so the two ways of getting the tax wrong — taxing a taxed price, printing a pre-tax price with no tax — are each a click away and neither looks wrong on the page. `validate.ts` names them, with the pre-tax figure worked out so the correction is a copy rather than a calculation. Both go quiet once the rate is more than 2% off the card: a figure typed to something else was decided by someone who knew what it included.
+
+Nothing else is chosen for the operator either. Both product dropdowns open on `— Select —`, because the glass is the line the proforma prints as the description of what was sold; a section that has been typed into with no glass on it is a warning, not a silent default.
 
 ## Two things to know before changing the engine
 

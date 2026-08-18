@@ -31,7 +31,6 @@ export const chargeTypes = chargeTypesJson.charges as ChargeType[];
 export const thicknesses = productsJson.thicknesses;
 export const glassTypes = productsJson.glassTypes as GlassType[];
 export const shapes = productsJson.shapes;
-export const defaultProduct = productsJson.defaultProduct;
 export const rateCard = rateCardJson;
 
 /** Every section of all 47 samples prints 7007 (dev-plan §4). */
@@ -70,6 +69,9 @@ export function chargeTypeFor(label: string): ChargeType | undefined {
  * is how the office quotes and is why every SQFT sample prints no tax line
  * (dev-plan §2.5). The card says so itself rather than the app assuming it, so a
  * future card that prices both columns the same way only has to say that.
+ *
+ * The card is quoted and never applied: this is what the section header shows,
+ * and the rate on the row is always typed.
  */
 export interface CardPrice {
   rate: number;
@@ -83,9 +85,4 @@ export function cardPrice(product: string, printUnit: PrintUnit): CardPrice | un
   return printUnit === "SQFT"
     ? { rate: item.sqft, includesGst: rateCard.sqftIncludesGst }
     : { rate: item.sqmt, includesGst: rateCard.sqmtIncludesGst };
-}
-
-/** Default rate for a line of this product, from the rate card. */
-export function cardRate(product: string, printUnit: PrintUnit): number | undefined {
-  return cardPrice(product, printUnit)?.rate;
 }

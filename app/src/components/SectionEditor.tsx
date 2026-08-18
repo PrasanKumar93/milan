@@ -70,24 +70,30 @@ export function SectionEditor({
         <ProductPicker product={section.product} onChange={onSetProduct} />
         {/* The section title exactly as it prints, which is also the name the
             rate card is looked up by. The short code is what the summary block
-            prints, and it is a hover away rather than in the operator's face. */}
-        <span className="muted small" title={`Prints as ${section.shortCode} in the summary block`}>
-          {section.product} · HSN {HSN}
+            prints, and it is a hover away rather than in the operator's face.
+            Until a glass is chosen there is no title to show, and the HSN stands
+            on its own rather than after an empty name. */}
+        <span
+          className="muted small"
+          title={section.shortCode ? `Prints as ${section.shortCode} in the summary block` : undefined}
+        >
+          {section.product ? `${section.product} · ` : ""}HSN {HSN}
         </span>
 
         {/*
          * What the card asks, and what that figure includes. The two columns of
          * the card are not the same price in two units — the square-foot one has
          * GST in it (§2.5) — so the price is never shown without saying which it
-         * is. Glass the card has no price for says nothing at all.
+         * is. Nothing fills the rate in from this, which is why it is coloured:
+         * it is the one place the price is offered, and it has to be seen to be
+         * typed. Glass the card has no price for says nothing at all.
          */}
         {price && (
-          <span
-            className="muted-2 small"
-            title="The rate this row starts on. Rates are negotiated, so type over it."
-          >
-            Card ₹{price.rate.toLocaleString("en-IN")} / {quote.printUnit} ·{" "}
-            {price.includesGst ? "GST included" : "GST to be added"}
+          <span className="card-rate" title="The list price. Rates are negotiated, so type what was agreed.">
+            <strong>₹{price.rate.toLocaleString("en-IN")}</strong> / {quote.printUnit}
+            <span className="card-rate__tax">
+              {price.includesGst ? "GST included" : "GST to be added"}
+            </span>
           </span>
         )}
         <span className="spacer" />

@@ -10,7 +10,12 @@ import { MM_PER_FOOT } from "./units";
  * saved before a catalogue change still prints exactly as it did.
  */
 
-const THICKNESS = /^\s*(\d+(?:\s*\+\s*\d+)?\s*MM)\s+(.*)$/i;
+/**
+ * The glass name may be half typed — a section starts with neither dropdown
+ * chosen, so "10MM" on its own is a thickness waiting for a glass rather than a
+ * glass called 10MM, and the trailing part is allowed to be empty.
+ */
+const THICKNESS = /^\s*(\d+(?:\s*\+\s*\d+)?\s*MM)\s*(.*)$/i;
 
 export function splitProduct(product: string): { thickness: string; glassType: string } {
   const m = THICKNESS.exec(product);

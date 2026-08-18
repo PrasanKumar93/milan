@@ -21,6 +21,11 @@ describe("new quote defaults", () => {
 });
 
 describe("new section", () => {
+  it("starts with no glass, so the printed description is one somebody chose", () => {
+    expect(newSection("mm").product).toBe("");
+    expect(newSection("mm").shortCode).toBe("");
+  });
+
   it("takes its wastage rule from the glass and its allowance from the unit", () => {
     expect(newSection("mm").wastageRule).toBe("fixed");
     expect(newSection("mm").wastage).toBe(50);
@@ -29,7 +34,7 @@ describe("new section", () => {
   });
 
   it("carries the short code the summary block prints", () => {
-    expect(newSection("mm").shortCode).toBe("10MM CTG");
+    expect(newSection("mm", "10MM CLEAR TOUGHENED GLASS").shortCode).toBe("10MM CTG");
     expect(newSection("mm", "6MM CLEAR MIRROR").shortCode).toBe("6MM MIRROR");
     expect(newSection("mm", "SOMETHING CUSTOM").shortCode).toBe("SOMETHING CUSTOM");
   });

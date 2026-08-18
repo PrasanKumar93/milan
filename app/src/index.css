@@ -396,6 +396,32 @@ h3 {
   flex: 0 0 auto;
 }
 
+/* The card price, beside the glass it prices. Nothing fills the rate in from it,
+   so this is the whole of the offer and it is coloured to be read — the tax
+   status sits in the same chip because the figure means nothing without it. */
+.card-rate {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid #cfe0fb;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.card-rate strong {
+  font-weight: 600;
+}
+
+.card-rate__tax {
+  padding-left: 6px;
+  border-left: 1px solid #cfe0fb;
+  color: var(--text-secondary);
+}
+
 /* The mark on a heading the app fills in for itself. Sized in its own em so it
    stays small against the uppercase heading it sits in, and lower case because
    the heading's text-transform would otherwise shout it. */
@@ -511,6 +537,38 @@ h3 {
 .callout__title {
   font-weight: 600;
   font-size: 13px;
+}
+
+/* One warning per line, each opening with what it is. The tag is read first and
+   the sentence explains it, so the tags are held to one column and the wording
+   runs on from there rather than under a bullet. */
+.warnings {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.warnings li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.warnings__tag {
+  flex: 0 0 auto;
+  min-width: 92px;
+  padding: 1px 8px;
+  border-radius: 4px;
+  border: 1px solid #f0dcb8;
+  background: var(--warn-soft);
+  color: var(--warn);
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
 }
 
 /* ---------- forms ---------- */

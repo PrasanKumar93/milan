@@ -132,24 +132,36 @@ describe("the entry screen", () => {
     expect(screen.queryByPlaceholderText("Glass name as it should print")).toBeNull();
   });
 
-  it("moves an untouched rate to the new glass, and leaves an agreed one alone", () => {
+  it("starts on no glass at all, and waits for both halves of the name", () => {
     render(<App />);
-    const glass = () => screen.getAllByRole("combobox")[1];
+    const [thickness, glass] = screen.getAllByRole("combobox") as HTMLSelectElement[];
+    expect(thickness.value).toBe("");
+    expect(glass.value).toBe("");
 
-    // A fresh row has no rate until a glass is picked; the card then carries
-    // 12 MM clear at ₹1414 the square metre and 12 MM black at ₹2007.
+    // Half a name is not a glass the catalogue knows, and must not tip the
+    // section into the free-text box that a name it does not know would.
+    fireEvent.change(thickness, { target: { value: "12MM" } });
+    expect(screen.queryByPlaceholderText("Glass name as it should print")).toBeNull();
+
+    fireEvent.change(glass, { target: { value: "CLEAR TOUGHENED GLASS" } });
+    expect(screen.getByText("12MM CLEAR TOUGHENED GLASS · HSN 7007")).toBeTruthy();
+  });
+
+  it("offers the card price beside the glass and still leaves the rate to be typed", () => {
+    render(<App />);
+    const [thickness, glass] = screen.getAllByRole("combobox") as HTMLSelectElement[];
+
+    // Nothing to offer until there is a glass to price.
+    expect(document.body.textContent).not.toContain("GST to be added");
+
+    fireEvent.change(glass, { target: { value: "CLEAR TOUGHENED GLASS" } });
+    fireEvent.change(thickness, { target: { value: "12MM" } });
+
+    // The card asks ₹1,414 the square metre, before tax — and the row stays at 0
+    // until somebody types the price that was agreed.
+    expect(document.body.textContent).toContain("₹1,414 / SQMT");
+    expect(document.body.textContent).toContain("GST to be added");
     expect(firstRow()[7].value).toBe("0");
-
-    fireEvent.change(screen.getAllByRole("combobox")[0], { target: { value: "12MM" } });
-    expect(firstRow()[7].value).toBe("1414");
-
-    fireEvent.change(glass(), { target: { value: "BLACK TOUGHENED GLASS" } });
-    expect(firstRow()[7].value).toBe("2007");
-
-    // A rate that was negotiated is the one number on the row that was agreed.
-    type(firstRow()[7], "1900");
-    fireEvent.change(glass(), { target: { value: "CLEAR TOUGHENED GLASS" } });
-    expect(firstRow()[7].value).toBe("1900");
   });
 
   it("asks before throwing the quote away", () => {

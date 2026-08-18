@@ -211,7 +211,9 @@ So the SQFT rate is the GST-inclusive equivalent of the SQMT rate, rounded to a 
 
 **The card says which of its columns has tax in it.** That relationship is not a rounding curiosity, it is the whole reason every SQFT sample prints no tax line while every SQMT one prints two: ₹1414 the square metre is a price before GST and ₹155 the square foot is the same price after it. The card carries `sqmtIncludesGst: false` and `sqftIncludesGst: true` rather than the app inferring it from the unit, so a card that one day prices both columns the same way only has to say so.
 
-Two settings decide which of those the operator ends up with — the printed unit and the GST switch — and they are set independently, so a quote can tax a taxed price or print a pre-tax price with no tax on it. Neither looks wrong on the page. So the section header shows the card figure with what it includes ("Card ₹1,414 / SQMT · GST to be added"), and §7 carries the two warnings for the mismatches. The rate still auto-fills from the card: across the 41 sample sections that have a card price, the card figure is the one that was billed in 33 of them, so filling it saves the typing far more often than it needs correcting — and a rate that has been typed over is taken as deliberate, which is also what silences the warnings.
+Two settings decide which of those the operator ends up with — the printed unit and the GST switch — and they are set independently, so a quote can tax a taxed price or print a pre-tax price with no tax on it. Neither looks wrong on the page. So the section header shows the card figure with what it includes, coloured, beside the glass it prices: **₹1,414 / SQMT · GST to be added**. §7 carries the two warnings for the mismatches.
+
+**The card is quoted and never applied.** An earlier build filled the rate in from the card and left the operator to correct it — the card figure is the one that was billed in 33 of the 41 sample sections that have a card price, so it was right far more often than not. It is still the wrong default, for the same reason a default glass is: a rate that appears on its own is a rate nobody checked, and the one it is wrong for is a negotiated price the customer will argue about. The figure is shown and the rate is typed. Nothing rewrites it either, not even switching the printed unit — that turns a square-metre rate into a square-foot quote, and warning (2) already says so.
 
 **The card covers toughened glass and nothing else** (confirmed with the customer). Mirror, fluted, kaccha, laminated, DGU and the rest have no default: the rate is typed on the line, and the §7 check that catches a SQFT rate in a SQMT quote has nothing to compare against on those sections. Extending the card is a JSON edit whenever the office writes the other prices down.
 
@@ -386,6 +388,8 @@ Only clear, kaccha, mirror, black and fluted appear on any quote. Frosted, acid 
 
 Two things stay attached to the product: the **wastage rule** it defaults to (§2.2) and the **short code that prints in the summary block** (`10MM CTG` for 10 MM clear toughened). The summary codes in the samples are abbreviations of the section title, not the title itself, so the master carries both.
 
+**Neither dropdown starts on anything.** Both open on `— Select —`, so a section has no glass until somebody picks one. 10 MM clear toughened would be right on a good half of the quotes and was the default until the customer asked for this, and they are right: the product line is what the proforma prints as the description of what was sold, and a default that is usually correct is one nobody reads on the quote where it is not. The half-chosen state that follows is real — a thickness with no glass yet — and is treated as no glass rather than as a glass named "12MM", which is also what §7 (10) warns about once sizes are typed.
+
 ### 3.3 Polish
 
 **Polish is an ordinary charge, not a rule in the engine.** It sits in the catalogue as a per-unit charge billed in running feet:
@@ -522,7 +526,7 @@ Because the deliverable is a downloaded file, there is nothing in the browser wo
 
 ## 7. Validation — warnings only, never blocks
 
-Validation advises and never prevents — the operator is holding the phone, and the app is not. Warnings appear inline and are collected into a pre-download summary the operator can dismiss. Built in `core/validate.ts`, except (1) and (4), which the engine already tracks and `OverrideSummary` lists:
+Validation advises and never prevents — the operator is holding the phone, and the app is not. Warnings appear inline and are collected into a pre-download summary the operator can dismiss. **Each one opens with a tag** — `GST missing`, `Wastage rule`, `No rate`, `Discount` — held in a column down the left of the list, because the list is read while somebody is waiting: the tag is what has to land in a glance, and the sentence is there for the operator who then asks why. Built in `core/validate.ts`, except (1) and (4), which the engine already tracks and `OverrideSummary` lists:
 
 1. Any value that differs from its formula — from a restored draft or an edited workbook (§2.8) — listed with the figure the formula gives.
 2. A rate that looks like a SQFT rate in a SQMT section, or vice versa. Judged against the rate card rather than a fixed threshold: five times off in either direction is a unit mistake, not a deal.
@@ -533,8 +537,9 @@ Validation advises and never prevents — the operator is holding the phone, and
 7. A discount above `DISCOUNT_WARN_PCT` of the subtotal, which reads as "larger than a rounding" on the warning.
 8. A GST-inclusive card price being taxed again — a SQFT quote with GST on, still at the card rate. The warning names the pre-tax figure so the correction is a copy rather than a calculation.
 9. A pre-tax card price on a quote that adds no tax — a SQMT quote at the card rate with GST off.
+10. A section that has been typed into with no glass chosen (§3.2). It is the line the proforma prints as the description of what was sold, and nothing fills it in.
 
-(8) and (9) only fire while the rate is within 2% of the card's: once the operator types their own rate they have decided what it includes, and the app has nothing left to compare against.
+(8) and (9) only fire while the rate is within 2% of the card's: a rate typed to some other figure was decided by someone who knew what it included, and the app has nothing left to compare against.
 
 ---
 

@@ -9,9 +9,12 @@ export function WarningList({ computed }: { computed: ComputedQuote }) {
 
   return (
     <Callout tone="info" title={warnings.length === 1 ? "One thing to check" : `${warnings.length} things to check`}>
-      <ul className="small" style={{ margin: 0, paddingLeft: 18 }}>
+      <ul className="warnings small">
         {warnings.map((w, i) => (
-          <li key={i}>{w.text}</li>
+          <li key={i}>
+            <span className="warnings__tag">{w.tag}</span>
+            {w.text}
+          </li>
         ))}
       </ul>
     </Callout>

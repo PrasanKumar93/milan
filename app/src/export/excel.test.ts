@@ -85,7 +85,7 @@ function quote(): Quote {
   const q = newQuote("7200");
   q.customerName = "G FOCUSS INTERIORS";
 
-  const toughened = q.sections[0];
+  const toughened = newSection("mm", "10MM CLEAR TOUGHENED GLASS");
   toughened.lines = [
     { ...newLine(toughened), actualH: 2000, actualW: 1000, qty: 2, rate: 1238 },
     { ...newLine(toughened), actualH: 1220, actualW: 610, qty: 1, rate: 1238 },
@@ -97,7 +97,7 @@ function quote(): Quote {
 
   const mirror = newSection("mm", "6MM CLEAR MIRROR");
   mirror.lines = [{ ...newLine(mirror), actualH: 2290, actualW: 340, qty: 1, rate: 1323 }];
-  q.sections.push(mirror);
+  q.sections = [toughened, mirror];
 
   return q;
 }

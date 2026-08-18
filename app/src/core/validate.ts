@@ -1,7 +1,7 @@
 import { cardPrice } from "../data/masters";
 import type { ComputedQuote } from "./engine";
 import { formatMoney } from "./money";
-import { wastageRuleFor } from "./products";
+import { splitProduct, wastageRuleFor } from "./products";
 
 /**
  * Warnings, never blocks (dev-plan §7).
@@ -12,11 +12,17 @@ import { wastageRuleFor } from "./products";
  * a mirror left on fixed wastage — plus the one the samples were right about but
  * only by habit: which of the card's two prices already has GST in it.
  * Everything here leaves the decision with the operator.
+ *
+ * Each warning carries a tag as well as its sentence. The list is read while
+ * somebody is waiting on the phone, and "GST twice" is the part that has to land
+ * in a glance; the sentence is there for the operator who then asks why.
  */
 
 export interface Warning {
   sectionId: string;
   lineId?: string;
+  /** Two or three words naming the mistake, read before the sentence explaining it. */
+  tag: string;
   text: string;
 }
 
@@ -33,11 +39,26 @@ export function warningsFor(computed: ComputedQuote): Warning[] {
   const quote = computed.quote;
   const out: Warning[] = [];
 
-  for (const s of computed.sections) {
+  for (const [n, s] of computed.sections.entries()) {
     const section = s.section;
     const id = section.id;
     const price = cardPrice(section.product, quote.printUnit);
     const card = price?.rate;
+    const started = s.lines.some((l) => l.line.actualH > 0 || l.line.actualW > 0);
+
+    /*
+     * Nothing is chosen for the operator any more, which means a section can be
+     * priced and printed with no glass on it — the one line of the proforma that
+     * says what was sold. A section nobody has typed a size into is the next
+     * section, not a mistake, so this waits until the work has started.
+     */
+    if (started && splitProduct(section.product).glassType === "") {
+      out.push({
+        sectionId: id,
+        tag: "No glass",
+        text: `Section ${n + 1} has no glass chosen, so the proforma has nothing to describe it by.`,
+      });
+    }
 
     /*
      * The card's two columns mean different things: a square-metre price is
@@ -60,6 +81,7 @@ export function warningsFor(computed: ComputedQuote): Warning[] {
       if (onTheCard && price.includesGst && quote.gstApplicable) {
         out.push({
           sectionId: id,
+          tag: "GST twice",
           text: `${section.shortCode} is at the card's ₹${price.rate.toLocaleString("en-IN")} per ${quote.printUnit}, which already includes GST, and this quote adds GST on top. Before tax it is about ₹${formatMoney(price.rate / (1 + quote.gstPct / 50))}.`,
         });
       }
@@ -67,6 +89,7 @@ export function warningsFor(computed: ComputedQuote): Warning[] {
       if (onTheCard && !price.includesGst && !quote.gstApplicable) {
         out.push({
           sectionId: id,
+          tag: "GST missing",
           text: `${section.shortCode} is at the card's ₹${price.rate.toLocaleString("en-IN")} per ${quote.printUnit}, which is before GST, and this quote adds none.`,
         });
       }
@@ -75,6 +98,7 @@ export function warningsFor(computed: ComputedQuote): Warning[] {
     if (section.wastageRule !== wastageRuleFor(section.product)) {
       out.push({
         sectionId: id,
+        tag: "Wastage rule",
         text: `${section.shortCode} is usually measured ${
           wastageRuleFor(section.product) === "foot_to_foot" ? "foot to foot" : "on a fixed allowance"
         }, and this section is set the other way.`,
@@ -87,17 +111,23 @@ export function warningsFor(computed: ComputedQuote): Warning[] {
       if (line.actualH <= 0 && line.actualW <= 0) return;
 
       if (line.rate <= 0) {
-        out.push({ sectionId: id, lineId: line.id, text: `Row ${i + 1} has no rate.` });
+        out.push({ sectionId: id, lineId: line.id, tag: "No rate", text: `Row ${i + 1} has no rate.` });
       } else if (card !== undefined && (line.rate < card / RATE_FACTOR || line.rate > card * RATE_FACTOR)) {
         out.push({
           sectionId: id,
           lineId: line.id,
+          tag: "Rate unit",
           text: `Row ${i + 1} is at ₹${formatMoney(line.rate)} per ${quote.printUnit} where the rate card says ₹${formatMoney(card)}. Check the unit.`,
         });
       }
 
       if (line.qty <= 0) {
-        out.push({ sectionId: id, lineId: line.id, text: `Row ${i + 1} has no quantity.` });
+        out.push({
+          sectionId: id,
+          lineId: line.id,
+          tag: "No quantity",
+          text: `Row ${i + 1} has no quantity.`,
+        });
       }
     });
 
@@ -108,6 +138,8 @@ export function warningsFor(computed: ComputedQuote): Warning[] {
       const big = Math.abs(pct) > DISCOUNT_WARN_PCT;
       out.push({
         sectionId: id,
+        // Which of the two it is, before the sentence says how much.
+        tag: big ? "Discount" : "Rounding",
         text: `${section.shortCode} is rounded ${s.discount.isPositive() ? "down" : "up"} by ₹${formatMoney(
           s.discount.abs(),
         )}, ${Math.abs(pct).toFixed(1)}% of the total${big ? " — larger than a rounding" : ""}.`,

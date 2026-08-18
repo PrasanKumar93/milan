@@ -1,14 +1,6 @@
 import { wastageRuleFor } from "../core/products";
 import type { Adjustment, InputUnit, Line, Quote, Section } from "../core/types";
-import {
-  chargeTypeFor,
-  chargeTypes,
-  company,
-  defaultProduct,
-  defaultWastage,
-  shapes,
-  shortCodeFor,
-} from "../data/masters";
+import { chargeTypeFor, chargeTypes, company, defaultWastage, shapes, shortCodeFor } from "../data/masters";
 import { polishRate } from "../core/products";
 
 /**
@@ -48,7 +40,13 @@ export function newLine(section: Section): Line {
   };
 }
 
-export function newSection(inputUnit: InputUnit, product = defaultProduct): Section {
+/**
+ * A section starts with no glass chosen. There is a most common glass, and
+ * filling it in would save a click on many quotes — but it is the line the
+ * proforma prints as the description of what was sold, and a default that is
+ * right most of the time is one nobody reads the rest of the time.
+ */
+export function newSection(inputUnit: InputUnit, product = ""): Section {
   const section: Section = {
     id: id("s"),
     product,
