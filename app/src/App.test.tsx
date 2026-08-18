@@ -132,6 +132,26 @@ describe("the entry screen", () => {
     expect(screen.queryByPlaceholderText("Glass name as it should print")).toBeNull();
   });
 
+  it("moves an untouched rate to the new glass, and leaves an agreed one alone", () => {
+    render(<App />);
+    const glass = () => screen.getAllByRole("combobox")[1];
+
+    // A fresh row has no rate until a glass is picked; the card then carries
+    // 12 MM clear at ₹1414 the square metre and 12 MM black at ₹2007.
+    expect(firstRow()[7].value).toBe("0");
+
+    fireEvent.change(screen.getAllByRole("combobox")[0], { target: { value: "12MM" } });
+    expect(firstRow()[7].value).toBe("1414");
+
+    fireEvent.change(glass(), { target: { value: "BLACK TOUGHENED GLASS" } });
+    expect(firstRow()[7].value).toBe("2007");
+
+    // A rate that was negotiated is the one number on the row that was agreed.
+    type(firstRow()[7], "1900");
+    fireEvent.change(glass(), { target: { value: "CLEAR TOUGHENED GLASS" } });
+    expect(firstRow()[7].value).toBe("1900");
+  });
+
   it("asks before throwing the quote away", () => {
     fillOneLine();
     fireEvent.click(screen.getByText("New quote"));

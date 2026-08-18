@@ -5,6 +5,7 @@
     { "name": "CLEAR TOUGHENED GLASS", "shortCode": "CTG", "wastageRule": "fixed" },
     { "name": "EXTRA CLEAR TOUGHENED GLASS", "shortCode": "EXTRA CLEAR", "wastageRule": "fixed" },
     { "name": "BLACK TOUGHENED GLASS", "shortCode": "BLACK", "wastageRule": "fixed" },
+    { "name": "BROWN TOUGHENED GLASS", "shortCode": "BROWN", "wastageRule": "fixed" },
     { "name": "CLEAR FLUTED TOUGHENED GLASS", "shortCode": "CLEAR FLUTED", "wastageRule": "fixed" },
     { "name": "BLACK FLUTED TOUGHENED GLASS", "shortCode": "BLACK FLUTED", "wastageRule": "fixed" },
     { "name": "BROWN FLUTED TOUGHENED GLASS", "shortCode": "BROWN FLUTED", "wastageRule": "fixed" },

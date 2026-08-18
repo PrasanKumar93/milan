@@ -209,6 +209,10 @@ The rate card from the notes still holds as the default, and the SQFT/SQMT relat
 
 So the SQFT rate is the GST-inclusive equivalent of the SQMT rate, rounded to a tidy number. Rate cards need an effective date; the sample card is dated 14/8/26.
 
+**The card covers toughened glass and nothing else** (confirmed with the customer). Mirror, fluted, kaccha, laminated, DGU and the rest have no default: the rate is typed on the line, and the §7 check that catches a SQFT rate in a SQMT quote has nothing to compare against on those sections. Extending the card is a JSON edit whenever the office writes the other prices down.
+
+**Brown and black share a price but stay two products.** The card prices them together — "8MM BROWN & BLACK 170" — and it would be one row less to name the product `BLACK / BROWN TOUGHENED GLASS`. That name would then print on the customer's proforma, which is a document naming glass that was actually cut: the customer bought brown or they bought black. So the catalogue lists both and the card carries both, with the same figures. It also costs nothing the day the two prices diverge.
+
 ### 2.6 Mirror — foot to foot (revised in v3)
 
 v2 recorded this as "a rare large-mirror job with hand-typed sizes, no rule to find". The customer has since named the rule: **mirror is foot to foot** (§2.2). That reading is better than the v2 one because it explains where the numbers came from rather than declaring them arbitrary — 2440 × 610 is exactly 8 ft × 2 ft, and 3660 × 915 is exactly 12 ft × 3 ft. Two of the three G FOCUSS lines were still charged a further two feet over what the rule gives, and the app no longer reproduces those (§9).

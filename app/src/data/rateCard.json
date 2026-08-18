@@ -1,14 +1,61 @@
 {
-  "_note": "dev-plan §2.5. Defaults only — rates are negotiated per job and edited per line. sqft_rate is the GST-inclusive equivalent of sqmt_rate, rounded to a tidy number: sqmt x 1.18 / 10.764.",
+  "_note": "dev-plan §2.5. Toughened glass only — the card the office wrote out covers nothing else, so mirror, fluted, kaccha, laminated and the rest have no default and their rate is typed on the line. Defaults only in any case: rates are negotiated per job and edited per line. Brown and black are one price on the card and are listed separately here, because the proforma has to name the glass the customer bought. sqft_rate is the GST-inclusive equivalent of sqmt_rate, rounded to a tidy number: sqmt x 1.18 / 10.764.",
   "effectiveFrom": "2026-08-14",
   "items": [
-    { "product": "5MM CLEAR TOUGHENED GLASS", "sqmt": 775, "sqft": 85 },
-    { "product": "6MM CLEAR TOUGHENED GLASS", "sqmt": 867, "sqft": 95 },
-    { "product": "8MM CLEAR TOUGHENED GLASS", "sqmt": 1044, "sqft": 115 },
-    { "product": "10MM CLEAR TOUGHENED GLASS", "sqmt": 1238, "sqft": 135 },
-    { "product": "12MM CLEAR TOUGHENED GLASS", "sqmt": 1414, "sqft": 155 },
-    { "product": "8MM BLACK TOUGHENED GLASS", "sqmt": 1550, "sqft": 170 },
-    { "product": "10MM BLACK TOUGHENED GLASS", "sqmt": 1733, "sqft": 190 },
-    { "product": "12MM BLACK TOUGHENED GLASS", "sqmt": 2007, "sqft": 220 }
+    {
+      "product": "5MM CLEAR TOUGHENED GLASS",
+      "sqmt": 775,
+      "sqft": 85
+    },
+    {
+      "product": "6MM CLEAR TOUGHENED GLASS",
+      "sqmt": 867,
+      "sqft": 95
+    },
+    {
+      "product": "8MM CLEAR TOUGHENED GLASS",
+      "sqmt": 1044,
+      "sqft": 115
+    },
+    {
+      "product": "10MM CLEAR TOUGHENED GLASS",
+      "sqmt": 1232,
+      "sqft": 135
+    },
+    {
+      "product": "12MM CLEAR TOUGHENED GLASS",
+      "sqmt": 1414,
+      "sqft": 155
+    },
+    {
+      "product": "8MM BLACK TOUGHENED GLASS",
+      "sqmt": 1550,
+      "sqft": 170
+    },
+    {
+      "product": "10MM BLACK TOUGHENED GLASS",
+      "sqmt": 1733,
+      "sqft": 190
+    },
+    {
+      "product": "12MM BLACK TOUGHENED GLASS",
+      "sqmt": 2007,
+      "sqft": 220
+    },
+    {
+      "product": "8MM BROWN TOUGHENED GLASS",
+      "sqmt": 1550,
+      "sqft": 170
+    },
+    {
+      "product": "10MM BROWN TOUGHENED GLASS",
+      "sqmt": 1733,
+      "sqft": 190
+    },
+    {
+      "product": "12MM BROWN TOUGHENED GLASS",
+      "sqmt": 2007,
+      "sqft": 220
+    }
   ]
 }

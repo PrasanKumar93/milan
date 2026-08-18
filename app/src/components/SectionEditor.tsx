@@ -67,8 +67,11 @@ export function SectionEditor({
       <div className="card__head">
         <h2>Section {index + 1}</h2>
         <ProductPicker product={section.product} onChange={onSetProduct} />
-        <span className="muted small">
-          {section.shortCode} · HSN {HSN}
+        {/* The section title exactly as it prints, which is also the name the
+            rate card is looked up by. The short code is what the summary block
+            prints, and it is a hover away rather than in the operator's face. */}
+        <span className="muted small" title={`Prints as ${section.shortCode} in the summary block`}>
+          {section.product} · HSN {HSN}
         </span>
         <span className="spacer" />
         {canRemove && (

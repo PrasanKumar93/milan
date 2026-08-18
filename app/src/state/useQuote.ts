@@ -116,16 +116,20 @@ export function useQuote() {
        */
       setProduct(sectionId: string, product: string) {
         mapSection(sectionId, (s) => {
+          const before = cardRate(s.product, quote.printUnit);
           const rate = cardRate(product, quote.printUnit);
           return {
             ...s,
             product,
             shortCode: shortCodeFor(product),
             wastageRule: wastageRuleFor(product),
+            // A rate nobody has touched follows the glass, exactly as it follows
+            // a change of printed unit above. A rate that was negotiated stays:
+            // it is the one number on the row that was actually agreed.
             lines:
               rate === undefined
                 ? s.lines
-                : s.lines.map((l) => (l.rate === 0 ? { ...l, rate } : l)),
+                : s.lines.map((l) => (l.rate === 0 || l.rate === before ? { ...l, rate } : l)),
             adjustments: s.adjustments.map((a) =>
               chargeTypeFor(a.label)?.ratePerThicknessMm === undefined
                 ? a
