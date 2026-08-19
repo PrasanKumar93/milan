@@ -120,3 +120,21 @@ scroll past.
 
 Section 7 of the dev plan records why each rule exists; most of them are errors
 found in the 47 sample quotations, listed in §9.
+
+---
+
+## Where a rule's answer comes from
+
+Three of the checks above ask a master rather than deciding for themselves, and
+that is deliberate: the customer's answers change, and a rule that keeps its own
+copy of one goes on giving the old answer long after the file has been
+corrected. `Wastage rule` reads the `wastageRule` on the glass in
+`products.json`; `GST twice` and `GST missing` read the `sqmtIncludesGst` and
+`sqftIncludesGst` flags in `rateCard.json`; `Rate unit` and both GST checks
+measure against that card's own price.
+
+`engine.test.ts` holds the app to those files under **"what the masters say is
+what the app does"** — it walks every glass, every card entry and every charge
+and asks whether the app agrees with the catalogue. Editing a master is
+therefore enough: nothing in the code has an opinion of its own left to
+contradict it, and a test fails if one is ever added.

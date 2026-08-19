@@ -2,7 +2,16 @@ import Decimal from "decimal.js";
 import { describe, expect, it } from "vitest";
 import { corpus, inferUnit, toQuote } from "../test/corpus";
 import { computeQuote } from "./engine";
-import { wastageRuleFor } from "../data/masters";
+import {
+  chargeTypes,
+  company,
+  glassTypes,
+  rateCard,
+  shortCodeFor,
+  thicknesses,
+  wastageRuleFor,
+} from "../data/masters";
+import { newAdjustment, newQuote, newSection } from "../state/factory";
 import { polishRate, thicknessMm } from "./products";
 import { areaOf, formatInches, parseDimension, toNextFoot } from "./units";
 
@@ -101,9 +110,65 @@ describe("products", () => {
     expect(wastageRuleFor("22MM LAXMAN GLASS")).toBe("fixed");
   });
 
-  it("prices polish at 1 rupee per mm of thickness per running foot", () => {
-    expect(polishRate("10MM CLEAR TOUGHENED GLASS")).toBe(10);
-    expect(polishRate("12MM CLEAR TOUGHENED GLASS")).toBe(12);
+  it("prices polish by the thickness, at the charge master's rupees per mm", () => {
+    expect(polishRate("10MM CLEAR TOUGHENED GLASS", 1)).toBe(10);
+    expect(polishRate("12MM CLEAR TOUGHENED GLASS", 1)).toBe(12);
+    // The rate is the master's to change, and this is what changing it does.
+    expect(polishRate("10MM CLEAR TOUGHENED GLASS", 2)).toBe(20);
+  });
+});
+
+/*
+ * The masters are the specification: `products.json`, `chargeTypes.json`,
+ * `rateCard.json` and `company.json` are where the customer's answers live, and
+ * the code is supposed to have no opinion of its own to contradict them. That
+ * is easy to break quietly — a keyword list beside the catalogue kept calling
+ * extra clear foot to foot for months after the answer changed — because
+ * nothing fails when the two disagree; the app simply stops doing what the file
+ * says. These read the files and ask the app what it thinks.
+ */
+describe("what the masters say is what the app does", () => {
+  it("measures every glass the way the catalogue says", () => {
+    for (const thickness of thicknesses) {
+      for (const glass of glassTypes) {
+        expect(wastageRuleFor(`${thickness} ${glass.name}`)).toBe(glass.wastageRule);
+      }
+    }
+  });
+
+  it("names every glass in the summary the way the catalogue does", () => {
+    for (const glass of glassTypes) {
+      expect(shortCodeFor(`10MM ${glass.name}`)).toBe(`10MM ${glass.shortCode}`);
+    }
+  });
+
+  // A card entry no pair of dropdowns can produce is a price nobody will see:
+  // the header shows nothing, and the two GST checks have nothing to compare.
+  it("prices glass the dropdowns can actually make", () => {
+    const catalogue = new Set(thicknesses.flatMap((t) => glassTypes.map((g) => `${t} ${g.name}`)));
+
+    for (const item of rateCard.items) expect(catalogue.has(item.product)).toBe(true);
+  });
+
+  it("starts a new quote on the company's own defaults", () => {
+    const q = newQuote();
+
+    expect(q.gstPct).toBe(company.defaults.gstPct);
+    expect(newSection("mm").wastage).toBe(company.defaults.wastageMm);
+    expect(newSection("inch").wastage).toBe(company.defaults.wastageInch);
+  });
+
+  it("opens a charge on the count and the rate the charge master gives it", () => {
+    const section = newSection("mm", "10MM CLEAR TOUGHENED GLASS");
+
+    for (const type of chargeTypes) {
+      const a = newAdjustment(section, type.label);
+
+      expect(a.qty).toBe(type.basis === "per_unit" ? 1 : 0);
+      expect(a.rate).toBe(
+        type.ratePerThicknessMm === undefined ? (type.rate ?? 0) : 10 * type.ratePerThicknessMm,
+      );
+    }
   });
 });
 

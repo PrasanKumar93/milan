@@ -32,11 +32,15 @@ export function thicknessMm(product: string): number {
   return digits ? digits.reduce((sum, x) => sum + Number(x), 0) : 0;
 }
 
-/** Polish is ₹1 per mm of thickness per running foot, so 10 MM glass polishes at ₹10/rft. */
-export const POLISH_RATE_PER_MM = 1;
-
-export function polishRate(product: string): number {
-  return thicknessMm(product) * POLISH_RATE_PER_MM;
+/**
+ * Polish as job work is priced by the glass it is done on: so many rupees per
+ * millimetre of thickness, per running foot (§3.3). How many rupees is the
+ * charge master's `ratePerThicknessMm` — today ₹1, so 10 MM polishes at ₹10 —
+ * and it is passed in rather than kept here, because a price held in two places
+ * is a price that will be changed in one of them.
+ */
+export function polishRate(product: string, perMm: number): number {
+  return thicknessMm(product) * perMm;
 }
 
 /**

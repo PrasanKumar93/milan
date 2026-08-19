@@ -1,8 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { computeSection } from "../core/engine";
 import type { Quote, Section } from "../core/types";
+import { chargeTypes } from "../data/masters";
 import { newLine, newQuote, newSection } from "../state/factory";
-import { amountHint, areaHint, chargeableHint, feetSpan, footStepsPair, polishHint } from "./formulas";
+import {
+  amountHint,
+  areaHint,
+  chargeableHint,
+  feetSpan,
+  footStepsPair,
+  polishHint,
+} from "./formulas";
 
 /**
  * The headings explain the columns the app fills in for itself, so what they say
@@ -14,10 +22,12 @@ function quoteWith(patch: Partial<Quote> = {}): Quote {
   return { ...newQuote("7200"), ...patch };
 }
 
+/** What the charge master asks per millimetre of glass, as the app reads it. */
+const perMm = chargeTypes.filter((c) => c.ratePerThicknessMm !== undefined)[0]
+  .ratePerThicknessMm as number;
+
 function sectionWith(quote: Quote, section: Section) {
-  section.lines = [
-    { ...newLine(section), actualH: 2000, actualW: 1000, qty: 2, rate: 1238 },
-  ];
+  section.lines = [{ ...newLine(section), actualH: 2000, actualW: 1000, qty: 2, rate: 1238 }];
   return computeSection(section, quote);
 }
 
@@ -111,7 +121,9 @@ describe("the heading that explains a column", () => {
     const quote = quoteWith();
     const section = sectionWith(quote, newSection("mm", "10MM CLEAR TOUGHENED GLASS"));
 
-    const hint = polishHint(section, quote);
+    // The rupees per millimetre come from the charge master, so the hint says
+    // whatever that file says rather than a figure of its own.
+    const hint = polishHint(section, quote, perMm);
     expect(hint).toContain("₹1 × 10 mm = ₹10 per running foot");
     // Two pieces cut 2050 x 1050: 3100 twice round, twice over, in feet.
     expect(hint).toContain("((2050 + 1050) × 2 × 2) ÷ 304.8 = 40.68");
@@ -122,7 +134,7 @@ describe("the heading that explains a column", () => {
     const section = sectionWith(quote, quote.sections[0]);
 
     // No glass means no thickness, and the thickness is the whole price.
-    expect(polishHint(section, quote)).toContain("waiting on the glass");
+    expect(polishHint(section, quote, perMm)).toContain("waiting on the glass");
   });
 
   it("still explains the rule for a section with nothing typed in it yet", () => {

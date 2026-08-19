@@ -77,7 +77,9 @@ export function newSection(inputUnit: InputUnit, product = ""): Section {
 export function newAdjustment(section: Section, label = ""): Adjustment {
   const type = chargeTypeFor(label);
   const rate =
-    type?.ratePerThicknessMm !== undefined ? polishRate(section.product) : (type?.rate ?? 0);
+    type?.ratePerThicknessMm !== undefined
+      ? polishRate(section.product, type.ratePerThicknessMm)
+      : (type?.rate ?? 0);
 
   return {
     id: id("a"),

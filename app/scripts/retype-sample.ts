@@ -29,7 +29,11 @@ const [target = "7123", url = "http://localhost:5175", outDir = "/tmp/retype"] =
 
 const sweep = target === "all";
 const wanted = sweep
-  ? [...new Set(corpus.filter((q) => q.sections.some((s) => s.lines.length > 0)).map((q) => q.proforma_no))]
+  ? [
+      ...new Set(
+        corpus.filter((q) => q.sections.some((s) => s.lines.length > 0)).map((q) => q.proforma_no),
+      ),
+    ]
   : [target];
 
 mkdirSync(outDir, { recursive: true });
@@ -132,8 +136,9 @@ async function retype(page: Page, proformaNo: string) {
     for (const [li, line] of section.lines.entries()) {
       if (li > 0) await card.getByRole("button", { name: "Add line" }).click();
       const row = card.locator("table.grid").first().locator("tbody tr").nth(li);
-      // #, shape, actual H, actual W, wastage, chargeable H, chargeable W, area,
-      // qty, rate, amount.
+      // #, shape, actual H, actual W, wastage, chargeable H, chargeable W, qty,
+      // area, rate, amount — the count before the area, since the area is worked
+      // out from it (see components/columns.tsx).
       const col = (n: number) => row.locator("td").nth(n).locator("input").first();
 
       await row
@@ -146,14 +151,14 @@ async function retype(page: Page, proformaNo: string) {
         await type(col(4), perLine[li]);
         notes.push(`S${si + 1} L${li + 1}: this row alone was cut at ${perLine[li]}`);
       }
-      await type(col(8), line.qty);
+      await type(col(7), line.qty);
       await type(col(9), line.rate);
 
       // Nothing below was typed: the row filled these in.
       const seen = `S${si + 1} L${li + 1}`;
       check(`${seen} chargeable H`, await col(5).inputValue(), line.ch);
       check(`${seen} chargeable W`, await col(6).inputValue(), line.cw);
-      check(`${seen} area`, await col(7).inputValue(), line.area);
+      check(`${seen} area`, await col(8).inputValue(), line.area);
       check(`${seen} amount`, await col(10).inputValue(), line.amount);
     }
 
@@ -170,13 +175,14 @@ async function retype(page: Page, proformaNo: string) {
         notes.push(`${extra.name} is not in the charge list, typed as an "other"`);
       }
 
-      // charge, qty, rate, amount. A charge the sheet printed without a count is
-      // typed without one, and the rate is then the whole charge.
+      // charge, qty, the empty area column, rate, amount. A charge the sheet
+      // printed without a count is typed without one, and the rate is then the
+      // whole charge.
       const col = (n: number) => row.locator("td").nth(n).locator("input.input--num").first();
       await type(col(1), extra.qty ?? 0);
-      await type(col(2), extra.qty ? extra.amount / extra.qty : extra.amount);
+      await type(col(3), extra.qty ? extra.amount / extra.qty : extra.amount);
 
-      check(`S${si + 1} ${extra.name}`, await col(3).inputValue(), extra.amount);
+      check(`S${si + 1} ${extra.name}`, await col(4).inputValue(), extra.amount);
     }
 
     const totals = card.locator(".totals");
@@ -193,7 +199,9 @@ async function retype(page: Page, proformaNo: string) {
     }
 
     if (printedRounded === undefined) {
-      notes.push(`S${si + 1}: the sheet rounds after the charges, so it prints no rounded subtotal`);
+      notes.push(
+        `S${si + 1}: the sheet rounds after the charges, so it prints no rounded subtotal`,
+      );
     } else {
       check(`S${si + 1} rounded`, ours, printedRounded);
       // Rounding a subtotal is an operator entry, not a formula: where the office
@@ -206,10 +214,17 @@ async function retype(page: Page, proformaNo: string) {
       }
     }
 
-    // A single-section quote prints its total once, as the grand total.
+    // A single-section quote prints its total once, as the grand total. Where
+    // the sheet printed no such figure there is nothing to be right or wrong
+    // about, so it is said as a note rather than counted as a miss.
     const printedTotal =
       section.post_tax_labels[0]?.amount ?? (sections.length === 1 ? parsed.grand_total : null);
-    check(`S${si + 1} section total`, await rowValue(totals, "Section total"), printedTotal ?? "—");
+
+    if (printedTotal === null) {
+      notes.push(`S${si + 1}: the sheet prints no total of its own for this section`);
+    } else {
+      check(`S${si + 1} section total`, await rowValue(totals, "Section total"), printedTotal);
+    }
   }
 
   await page.screenshot({ path: resolve(outDir, `${proformaNo}-entry.png`), fullPage: true });
@@ -230,12 +245,26 @@ async function retype(page: Page, proformaNo: string) {
   }
 
   const shown = (await page.locator(".topbar .strong.num").textContent()) ?? "";
-  check("Grand total", shown.replace(/[^0-9.]/g, ""), parsed.grand_total ?? "—");
+  if (parsed.grand_total === null) {
+    notes.push("the sheet prints no grand total");
+  } else {
+    check("Grand total", shown.replace(/[^0-9.]/g, ""), parsed.grand_total);
+  }
 
   return { checks, notes };
 }
 
 // ---- report ----
+
+/**
+ * A quote typed in inches shows its sizes in eighths — `37 1/4` — because that
+ * is how the shop floor reads a tape, while the parsed sheet holds 37.25. The
+ * two are the same measurement, so the fraction is worked out before comparing.
+ */
+function value(text: string): number {
+  const m = /^\s*(-?\d+)\s+(\d+)\/(\d+)\s*$/.exec(text);
+  return m ? Number(m[1]) + Number(m[2]) / Number(m[3]) : Number(text);
+}
 
 /**
  * The sheet prints seven significant figures where the entry grid shows two
@@ -244,7 +273,7 @@ async function retype(page: Page, proformaNo: string) {
  */
 function same(a: string, b: string) {
   if (a === b) return true;
-  const [x, y] = [Number(a), Number(b)];
+  const [x, y] = [value(a), value(b)];
   if (!isFinite(x) || !isFinite(y)) return false;
   return Math.abs(x - y) <= 0.0051 || Math.abs(x - y) <= Math.max(Math.abs(x), Math.abs(y)) * 2e-7;
 }
@@ -265,7 +294,9 @@ function reportInFull(
       `${what.padEnd(28)}${a.padStart(14)}${b.padStart(14)}  ${same(a, b) ? "" : "  <-- differs"}`,
     );
   }
-  console.log(`\n${checks.length - bad.length} of ${checks.length} cells match the printed quotation`);
+  console.log(
+    `\n${checks.length - bad.length} of ${checks.length} cells match the printed quotation`,
+  );
   for (const note of notes) console.log(`note: ${note}`);
   console.log(`screenshots: ${outDir}/${proformaNo}-entry.png and -print.png`);
 }
@@ -277,7 +308,9 @@ function report(
   notes: string[],
   total: number,
 ) {
-  console.log(`${proformaNo}  ${String(total - bad.length).padStart(3)} of ${String(total).padEnd(3)}`);
+  console.log(
+    `${proformaNo}  ${String(total - bad.length).padStart(3)} of ${String(total).padEnd(3)}`,
+  );
   for (const [what, a, b] of bad) console.log(`        ${what.padEnd(26)}${a} vs ${b} on the PDF`);
   for (const note of notes) console.log(`        note: ${note}`);
 }
@@ -298,9 +331,9 @@ async function type(locator: Locator, value: string | number) {
 async function rowValue(totals: Locator, label: string) {
   const found = await totals.evaluate(
     (el, wanted) =>
-      Array.from(el.querySelectorAll(".totals__row")).find(
-        (row) => row.querySelector(".totals__label")?.textContent?.trim() === wanted,
-      )?.querySelector(".totals__value")?.textContent ?? "",
+      Array.from(el.querySelectorAll(".totals__row"))
+        .find((row) => row.querySelector(".totals__label")?.textContent?.trim() === wanted)
+        ?.querySelector(".totals__value")?.textContent ?? "",
     label,
   );
   return found.replace(/[^0-9.]/g, "");

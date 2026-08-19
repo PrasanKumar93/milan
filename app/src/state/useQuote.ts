@@ -109,11 +109,10 @@ export function useQuote() {
           product,
           shortCode: shortCodeFor(product),
           wastageRule: wastageRuleFor(product),
-          adjustments: s.adjustments.map((a) =>
-            chargeTypeFor(a.label)?.ratePerThicknessMm === undefined
-              ? a
-              : { ...a, rate: polishRate(product) },
-          ),
+          adjustments: s.adjustments.map((a) => {
+            const perMm = chargeTypeFor(a.label)?.ratePerThicknessMm;
+            return perMm === undefined ? a : { ...a, rate: polishRate(product, perMm) };
+          }),
         }));
       },
 
@@ -161,7 +160,9 @@ export function useQuote() {
         mapSection(sectionId, (s) => {
           const type = chargeTypeFor(label);
           const rate =
-            type?.ratePerThicknessMm !== undefined ? polishRate(s.product) : type?.rate;
+            type?.ratePerThicknessMm !== undefined
+              ? polishRate(s.product, type.ratePerThicknessMm)
+              : type?.rate;
           return {
             ...s,
             adjustments: replace(s.adjustments, adjustmentId, {

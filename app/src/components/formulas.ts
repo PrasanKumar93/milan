@@ -1,6 +1,6 @@
 import Decimal from "decimal.js";
 import type { ComputedSection } from "../core/engine";
-import { POLISH_RATE_PER_MM, perimeterRft, polishRate, thicknessMm } from "../core/products";
+import { perimeterRft, polishRate, thicknessMm } from "../core/products";
 import type { InputUnit, Quote, Section } from "../core/types";
 import { MM_PER_FOOT, SQFT_PER_SQM, formatInches, toNextFoot } from "../core/units";
 
@@ -170,7 +170,7 @@ export function areaHint(computed: ComputedSection, quote: Quote): string {
  * as `H + W × 2 / 12 × thickness × qty`, in inches; this is the same thing in
  * whichever unit the quote is being typed in.
  */
-export function polishHint(computed: ComputedSection, quote: Quote): string {
+export function polishHint(computed: ComputedSection, quote: Quote, perMm: number): string {
   const show = size(quote);
   const unit = quote.inputUnit;
   const per = perFoot(unit);
@@ -184,13 +184,13 @@ export function polishHint(computed: ComputedSection, quote: Quote): string {
 
   const rule = [
     `Polish as job work is billed along the cut edge, in running feet — not by area. On glass sold from here it is already inside the glass rate.`,
-    `Rate = ₹${POLISH_RATE_PER_MM} × the thickness of the glass, per running foot.`,
+    `Rate = ₹${perMm} × the thickness of the glass, per running foot.`,
     `Running feet = ((chargeable H + chargeable W) × 2 × qty) ÷ ${per}`,
   ].join("\n");
 
   const rate =
     mm > 0
-      ? `Rate:  ₹${POLISH_RATE_PER_MM} × ${mm} mm = ₹${polishRate(computed.section.product)} per running foot`
+      ? `Rate:  ₹${perMm} × ${mm} mm = ₹${polishRate(computed.section.product, perMm)} per running foot`
       : `Rate:  waiting on the glass — the thickness is what prices it.`;
 
   const rows = computed.lines

@@ -61,8 +61,9 @@ export function ChargeTable({
               <ChargeRow
                 key={a.adjustment.id}
                 computed={a}
-                /* Polish is priced by a rule, so the row carries the rule (§3.3). */
-                rule={polishHint(computed, quote)}
+                /* Polish is priced by a rule, so the row carries the rule (§3.3),
+                   worked at the charge master's own rupees per millimetre. */
+                rule={(perMm) => polishHint(computed, quote, perMm)}
                 perimeter={perimeter}
                 /* An unnamed charge is the end of the list, not one more to add. */
                 onEnter={
@@ -110,7 +111,7 @@ function ChargeRow({
   onRemove,
 }: {
   computed: ComputedSection["adjustments"][number];
-  rule: string;
+  rule: (perMm: number) => string;
   perimeter: Decimal;
   onEnter?: (e: KeyboardEvent) => void;
   onPatch: (adjustmentId: string, patch: Partial<Adjustment>) => void;
@@ -138,7 +139,7 @@ function ChargeRow({
           {/* Polish is the one charge worked out rather than agreed, so it says
               how — the same mark the derived columns above carry (§2.8) — and
               offers the edge it is measured along as the count. */}
-          {type?.ratePerThicknessMm !== undefined && <Info hint={rule} />}
+          {type?.ratePerThicknessMm !== undefined && <Info hint={rule(type.ratePerThicknessMm)} />}
           {type?.unit === "rft" && (
             <Button
               variant="icon"
