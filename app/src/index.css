@@ -843,11 +843,9 @@ table.grid tbody tr:hover {
 /*
  * The order details and the first section are one frame: the details sit on the
  * head of the glass they were taken for, sharing the rule between them rather
- * than each drawing one with the page showing through.
+ * than each drawing one with the page showing through. The pull comes from the
+ * row naming the glass, which draws itself onto whatever is above it.
  */
-.print__meta {
-  margin-bottom: calc(var(--ink-hairline) * -1);
-}
 
 .print__meta-row {
   display: grid;
@@ -866,37 +864,11 @@ table.grid tbody tr:hover {
   border-left: var(--ink-hairline) solid var(--ink-rule);
 }
 
-.print__section {
-  margin-bottom: 10pt;
-}
-
-/* The last one runs straight into the summary, as it does on the printed page. */
-.print__section--last {
-  margin-bottom: 0;
-}
-
-/* It sits on the head of the table, which draws the rule between them. */
-.print__section-head {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  border-bottom: 0;
-  font-weight: 700;
-}
-
-.print__section-head > span {
-  padding: 3pt 5pt;
-}
-
-.print__section-head > span + span {
-  border-left: var(--ink-hairline) solid var(--ink-rule);
-}
-
 /*
- * Every block on the page stands 10pt clear of the next, and the summary is a
- * block like the rest — without this the bank details are drawn against the
- * total, which the download has never done (see the margins in `pdf.ts`).
+ * Every block on the page stands 10pt clear of the next, the last section
+ * included: it carries the quote's total, and below it come the bank details.
  */
-.print__summary {
+.print__section {
   margin-bottom: 10pt;
 }
 
@@ -1001,6 +973,15 @@ table.print-table:not(.print-table--plain) th,
 table.print-table:not(.print-table--plain) td {
   border-left: var(--ink-hairline) solid var(--ink-rule);
   border-right: var(--ink-hairline) solid var(--ink-rule);
+}
+
+/*
+ * The lines are drawn onto the row naming the glass, as the totals are drawn
+ * onto the lines: without the pull the block's rule and the grid's rule stand
+ * one under the other and read as a border twice the weight of the rest.
+ */
+table.print-table:not(.print-table--plain) {
+  margin-top: calc(var(--ink-hairline) * -1);
 }
 
 table.print-table:not(.print-table--plain) thead th {

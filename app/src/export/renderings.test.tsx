@@ -110,16 +110,15 @@ describe("the preview and the PDF", () => {
       margin?: number[];
     }>;
 
-    const grids = content
-      .map((c, i) => (c.table?.headerRows === undefined ? -1 : i))
+    // The totals sit right after each grid.
+    const joins = content
+      .map((c, i) => (c.table?.headerRows === undefined ? -1 : i + 1))
       .filter((i) => i >= 0);
-    // The totals sit right after each grid, and the summary right after the last.
-    const joins = [...grids.map((i) => i + 1), grids[grids.length - 1] + 2];
 
-    // Below the lines the rules come from the cells, so the totals and the
-    // summary are tables of their own. Each is drawn onto the one above it: a
-    // positive margin would open a gap the sheet has never had, and none at all
-    // would leave the two borders side by side as one thick line.
+    // Below the lines the rules come from the cells, so the totals are a table
+    // of their own. It is drawn onto the grid above it: a positive margin would
+    // open a gap the sheet has never had, and none at all would leave the two
+    // borders side by side as one thick line.
     for (const i of joins) expect(content[i].margin?.[1]).toBeLessThan(0);
   });
 

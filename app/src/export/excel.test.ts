@@ -292,6 +292,15 @@ describe("the printed page of the workbook", () => {
     expect(textAt(sheet, `A${gstin + 1}`)).toMatch(/^SIZE:/);
   });
 
+  // The row naming the glass is a row of the sheet, not a block of its own, so
+  // the code stands in the width of the amount column rather than near it.
+  it("puts the HSN code in the amount column", () => {
+    const title = rowOf(sheet, "A", "GSTIN :") + 1;
+
+    expect(textAt(sheet, `J${title}`)).toBe("HSNCODE 7007");
+    expect(sheet.getCell(`I${title}`).master.address).toBe(`A${title}`);
+  });
+
   it("closes the document in one frame, the blocks divided inside it", () => {
     const bank = rowOf(sheet, "A", "BANK DETAILS");
     const names = rowOf(sheet, "A", "Prepared By :");

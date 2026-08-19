@@ -17,15 +17,13 @@ import {
   bankRows,
   fileNameFor,
   headRows,
-  hsnLabel,
   letterhead,
   lineRows,
   metaRows,
-  sectionTitle,
   signatureRows,
-  summaryRows,
-  tailRows,
   termRows,
+  titleRows,
+  totalsRows,
 } from "./layout";
 import { type Marks, marks } from "./marks";
 
@@ -219,7 +217,14 @@ function centre(pen: Pen, value: string, style: Parameters<typeof text>[3] = {})
 }
 
 /** A height or a width, which is the only kind of figure the page prints in eighths. */
-const size = (cell: Cell) => /actual|chargeable/.test(cell.key ?? "");
+const dimension = (cell: Cell) => /actual|chargeable/.test(cell.key ?? "");
+
+/**
+ * A figure belonging to the quote rather than to the section it is drawn under.
+ * The summary is printed inside the last section's block, so its cells arrive
+ * with that section's scope; the grand total is nobody's section.
+ */
+const quoteWide = (key: string) => key === "grandTotal" || key.startsWith("section.");
 
 /**
  * One row of the sheet described in `layout.ts`. A figure is written as a number
@@ -236,16 +241,17 @@ function drawRow(pen: Pen, cells: SheetRow, scope: string, ruled: boolean): void
     const right = col + (cell.colSpan ?? 1) - 1;
 
     target.value = cell.value ?? cell.text;
-    target.font = cell.bold ? BOLD : FONT;
+    const font = cell.bold ? BOLD : FONT;
+    target.font = cell.size ? { ...font, size: cell.size } : font;
     // A figure standing beside a block of rows belongs on the first of them —
     // the count of pieces is read against the last line, not against the tax.
     target.alignment = {
       horizontal: cell.align ?? "left",
       vertical: cell.rowSpan ? "top" : "middle",
     };
-    if (cell.value !== undefined) target.numFmt = size(cell) ? pen.sizes : "General";
+    if (cell.value !== undefined) target.numFmt = dimension(cell) ? pen.sizes : "General";
     if (cell.highlight) target.fill = fillWith(INK.totalFill);
-    if (cell.key) pen.at.set(`${scope}${cell.key}`, address(pen.row, col));
+    if (cell.key) pen.at.set(`${quoteWide(cell.key) ? "" : scope}${cell.key}`, address(pen.row, col));
 
     if (bottom > pen.row || right > col) pen.sheet.mergeCells(pen.row, col, bottom, right);
 
@@ -512,17 +518,10 @@ export function buildWorkbook(
     at: new Map(),
     sizes: quote.inputUnit === "inch" ? FRACTIONS : "General",
   };
-  const alone = computed.sections.length === 1;
-
   letterheadBlock(pen, workbook, pictures.logo);
   metaBlock(pen, quote);
 
-  for (const [index, section] of computed.sections.entries()) {
-    sectionBlock(pen, index, section, quote, alone, index === computed.sections.length - 1);
-  }
-
-  drawRows(pen, summaryRows(computed), "");
-  pen.row += 1;
+  for (const index of computed.sections.keys()) sectionBlock(pen, index, computed);
 
   closingBlocks(pen, workbook, pictures.stamp);
 
@@ -586,25 +585,12 @@ function metaBlock(pen: Pen, quote: Quote): void {
 }
 
 /** The glass, its HSN code, the lines, and everything the lines add up to. */
-function sectionBlock(
-  pen: Pen,
-  index: number,
-  section: ComputedSection,
-  quote: Quote,
-  alone: boolean,
-  last: boolean,
-): void {
+function sectionBlock(pen: Pen, index: number, computed: ComputedQuote): void {
+  const quote = computed.quote;
+  const section = computed.sections[index];
   const scope = `s${index}.`;
-  const title = pen.row;
-  const split = COLUMNS - 3;
 
-  text(pen, 1, sectionTitle(section), { bold: true, size: 9 });
-  span(pen, 1, split);
-  text(pen, split + 1, hsnLabel, { bold: true, align: "right" });
-  span(pen, split + 1, COLUMNS);
-  frame(pen.sheet, title, title);
-  divide(pen.sheet, title, title, split);
-  pen.row += 1;
+  drawRows(pen, titleRows(section), scope);
 
   const head = headRows(quote);
   for (const row of head) {
@@ -615,11 +601,11 @@ function sectionBlock(
   }
 
   drawRows(pen, lineRows(section, quote), scope, true);
-  drawRows(pen, tailRows(section, quote, alone), scope);
+  // Under the last section this carries the quote's total as well, so the block
+  // runs unbroken from the lines to the figure the customer signs off.
+  drawRows(pen, totalsRows(computed, index), scope);
 
-  // The last section runs straight into the summary, as the sheet has the total
-  // sitting on the charge above it.
-  if (!last) pen.row += 1;
+  pen.row += 1;
 }
 
 /**

@@ -1,5 +1,4 @@
-import type { ComputedQuote, ComputedSection } from "../core/engine";
-import type { Quote } from "../core/types";
+import type { ComputedQuote } from "../core/engine";
 import { company } from "../data/masters";
 import {
   COLUMN_WIDTHS,
@@ -9,15 +8,13 @@ import {
   type SheetRow,
   bankRows,
   headRows,
-  hsnLabel,
   letterhead,
   lineRows,
   metaRows,
-  sectionTitle,
   signatureRows,
-  summaryRows,
-  tailRows,
   termRows,
+  titleRows,
+  totalsRows,
 } from "../export/layout";
 import { LOGO_URL, STAMP_URL } from "../export/marks";
 
@@ -66,19 +63,8 @@ export function PrintView({ computed }: { computed: ComputedQuote }) {
         </div>
 
         {computed.sections.map((section, i) => (
-          <PrintSection
-            key={section.section.id}
-            quote={quote}
-            computed={section}
-            alone={computed.sections.length === 1}
-            last={i === computed.sections.length - 1}
-          />
+          <PrintSection key={section.section.id} computed={computed} index={i} />
         ))}
-
-        <Sheet
-          rows={summaryRows(computed)}
-          className="print-table print-table--plain print__summary"
-        />
 
         {/*
           One frame round the three closing blocks, divided by rules and by a
@@ -154,30 +140,26 @@ function Labelled({ field }: { field: Field }) {
   );
 }
 
-function PrintSection({
-  quote,
-  computed,
-  alone,
-  last,
-}: {
-  quote: Quote;
-  computed: ComputedSection;
-  alone: boolean;
-  last: boolean;
-}) {
+function PrintSection({ computed, index }: { computed: ComputedQuote; index: number }) {
+  const quote = computed.quote;
+  const section = computed.sections[index];
+
   return (
-    <div className={`print__section${last ? " print__section--last" : ""}`}>
-      <div className="print__box print__section-head">
-        <span>{sectionTitle(computed)}</span>
-        <span>{hsnLabel}</span>
-      </div>
-      <Sheet head={headRows(quote)} rows={lineRows(computed, quote)} />
-      <Sheet rows={tailRows(computed, quote, alone)} className="print-table print-table--plain" />
+    <div className="print__section">
+      {/* Drawn in the sheet's own columns, so the HSN code stands in the width
+          of the amount column below it. */}
+      <Sheet rows={titleRows(section)} className="print-table print-table--plain" />
+      <Sheet head={headRows(quote)} rows={lineRows(section, quote)} />
+      {/* The last section carries the quote's total: one block to the bottom. */}
+      <Sheet rows={totalsRows(computed, index)} className="print-table print-table--plain" />
     </div>
   );
 }
 
 const TOTAL_WIDTH = COLUMN_WIDTHS.reduce((a, b) => a + b, 0);
+
+/** One column's share of the sheet, for anything drawn to line up with it. */
+const share = (column: number) => `${(COLUMN_WIDTHS[column] / TOTAL_WIDTH) * 100}%`;
 
 function Sheet({
   head,
@@ -191,8 +173,8 @@ function Sheet({
   return (
     <table className={className}>
       <colgroup>
-        {COLUMN_WIDTHS.map((w, i) => (
-          <col key={i} style={{ width: `${(w / TOTAL_WIDTH) * 100}%` }} />
+        {COLUMN_WIDTHS.map((_, i) => (
+          <col key={i} style={{ width: share(i) }} />
         ))}
       </colgroup>
       {head && (
@@ -218,7 +200,11 @@ function renderCell(cell: Cell, key: number, tag: "td" | "th") {
     colSpan: cell.colSpan,
     rowSpan: cell.rowSpan,
     className: `${cell.box ? "boxed" : ""}${cell.highlight ? " highlight" : ""}`.trim() || undefined,
-    style: { textAlign: cell.align ?? "left", fontWeight: cell.bold ? 600 : undefined } as const,
+    style: {
+      textAlign: cell.align ?? "left",
+      fontWeight: cell.bold ? 600 : undefined,
+      fontSize: cell.size ? `${cell.size}pt` : undefined,
+    } as const,
   };
 
   return tag === "th" ? (

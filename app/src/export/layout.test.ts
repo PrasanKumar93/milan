@@ -6,6 +6,7 @@ import { sample, toQuote } from "../test/corpus";
 import {
   type Field,
   type SheetRow,
+  COLUMNS,
   COLUMN_WIDTHS,
   INK,
   bankRows,
@@ -14,9 +15,8 @@ import {
   headRows,
   lineRows,
   metaRows,
-  summaryRows,
-  tailRows,
   termRows,
+  totalsRows,
 } from "./layout";
 import { buildDoc, printer } from "./pdf";
 
@@ -40,17 +40,16 @@ const flatten = (rows: SheetRow[]): string[] =>
 
 function documentOf(quote: Quote): string[] {
   const computed = computeQuote(quote);
-  const alone = computed.sections.length === 1;
   const out: string[] = [];
 
-  for (const section of computed.sections) {
+  for (const [index, section] of computed.sections.entries()) {
     out.push(`SIZE: ${section.section.product}`);
     out.push(...flatten(headRows(quote)));
     out.push(...flatten(lineRows(section, quote)));
-    out.push(...flatten(tailRows(section, quote, alone)));
+    // The last section's totals carry the summary, so the whole page is here.
+    out.push(...flatten(totalsRows(computed, index)));
   }
 
-  out.push(...flatten(summaryRows(computed)));
   return out;
 }
 
@@ -133,8 +132,8 @@ describe("the printed document, against PROFORMA 6359", () => {
  * them, is the thing the customer asked us to stop doing.
  */
 describe("the totals under the lines", () => {
-  const quote = toQuote(sample("7178"));
-  const rows = tailRows(computeQuote(quote).sections[0], quote);
+  const computed = computeQuote(toQuote(sample("7178")));
+  const rows = totalsRows(computed, 0);
 
   it("rules every row from the area column across", () => {
     for (const row of rows) {
@@ -151,6 +150,16 @@ describe("the totals under the lines", () => {
     // The count of pieces, which is all the sheet ever prints on that side.
     expect(beside.text).toBe("3");
     expect(rows.slice(1).every((row) => row.slice(0, 7).every((cell) => cell.skip))).toBe(true);
+  });
+
+  // A box of nothing above TOTAL AMOUNT is what a separate summary drew, and
+  // the office's sheet has the total sitting inside the block above it.
+  it("carries the quote's total in the last section's block, not a block of its own", () => {
+    const last = totalsRows(computed, computed.sections.length - 1);
+    const rowsOf = (row: (typeof last)[number]) => row.map((c) => c.text).join("");
+
+    expect(rowsOf(last[last.length - 1])).toContain("TOTAL AMOUNT");
+    expect(last[last.length - 1].slice(0, 7).every((cell) => cell.skip)).toBe(true);
   });
 });
 
@@ -212,8 +221,9 @@ describe("the PDF", () => {
 
     expect(doc.pageSize).toBe("A4");
     // The order block; a title, the lines and the totals for each of the two
-    // sections; the summary; and the one frame that closes the document.
-    expect(tables).toHaveLength(9);
+    // sections; and the one frame that closes the document. The quote's total
+    // is inside the last section's totals rather than a block of its own.
+    expect(tables).toHaveLength(8);
 
     const lines = tables[2].table as { headerRows: number; body: unknown[][] };
     expect(lines.headerRows).toBe(2);
@@ -223,17 +233,34 @@ describe("the PDF", () => {
     expect(totals.body).toHaveLength(5);
 
     // Every row of the sheet is ten cells wide, spans included, or the columns
-    // would not line up: both sections and the summary under them.
-    for (const i of [2, 3, 5, 6, 7]) {
+    // would not line up: the lines and the totals of both sections.
+    for (const i of [2, 3, 5, 6]) {
       const body = (tables[i].table as { body: unknown[][] }).body;
       expect(body.every((row) => row.length === 10)).toBe(true);
     }
   });
 
+  /*
+   * The order details and the blocks that close the page fill the width of the
+   * page. The lines are laid out in points of their own, and if those points
+   * add up to more the sheet stands out past the blocks above and below it —
+   * an edge along the side of the download, which is what was reported.
+   */
+  it("lays the lines out to the same width as the blocks above and below them", () => {
+    const A4 = 595.28;
+    const printable = A4 - 40 - 40;
+    // Two points of padding on each side of ten cells, and the rules between.
+    const room = printable - COLUMNS * 2 * 2 - COLUMNS * 0.75;
+
+    const sheet = COLUMN_WIDTHS.reduce((a, b) => a + b, 0);
+    expect(sheet).toBeLessThanOrEqual(room);
+    expect(sheet).toBeGreaterThan(room - 1);
+  });
+
   it("puts the figure the customer signs off on the sheet's yellow", () => {
     const doc = buildDoc(computeQuote(toQuote(sample("7178"))));
     const content = doc.content as unknown as Array<Record<string, unknown>>;
-    const summary = (content.filter((c) => "table" in c)[7].table as { body: TableCell[][] }).body;
+    const summary = (content.filter((c) => "table" in c)[6].table as { body: TableCell[][] }).body;
     const last = summary[summary.length - 1].filter(
       (c) => (c as { text?: string }).text,
     ) as Array<Record<string, unknown>>;

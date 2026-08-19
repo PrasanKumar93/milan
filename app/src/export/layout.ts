@@ -28,6 +28,8 @@ export interface Cell {
   box?: boolean;
   /** The figure the customer is agreeing to, on the sheet's yellow. */
   highlight?: boolean;
+  /** Type size in points, where a row is set larger than the sheet's own 8. */
+  size?: number;
   /**
    * What figure this is — `line.2.area`, `rounded`, `cgst`. The workbook writes
    * the formula for it here instead of the number, and finds the cells the
@@ -69,11 +71,16 @@ export const COLUMNS = 10;
 /**
  * Column widths in points, in the proportions the current PDFs use: the size,
  * quantity and money columns are near enough equal, and the two on the left
- * carry the serial number and the shape. The total leaves room for A4 margins,
- * cell padding and the rules between columns; the serial column is wide enough
- * to keep "SI NO" on one line.
+ * carry the serial number and the shape. The serial column is wide enough to
+ * keep "SI NO" on one line.
+ *
+ * The total is what is left of an A4 page after its margins, the padding in
+ * ten cells and the rules between them — 467 points, and not a point more. The
+ * order details and the blocks that close the page are set to the width of the
+ * page itself, so anything wider here would stand out past them at the join,
+ * which is the step the customer spotted along the edge of the download.
  */
-export const COLUMN_WIDTHS = [28, 43, 46, 46, 46, 46, 39, 55, 46, 74];
+export const COLUMN_WIDTHS = [28, 43, 46, 46, 46, 46, 39, 55, 46, 72];
 
 const SKIP: Cell = { text: "", skip: true };
 
@@ -204,7 +211,7 @@ export function lineRows(computed: ComputedSection, quote: Quote): SheetRow[] {
  * `alone` says this is the only section in the quote, which changes what the
  * sheet prints: see the section total at the bottom.
  */
-export function tailRows(computed: ComputedSection, quote: Quote, alone = false): SheetRow[] {
+function sectionTotals(computed: ComputedSection, quote: Quote, alone = false): SheetRow[] {
   const label = (text: string, withQty: boolean): Cell => ({
     text,
     align: "left",
@@ -276,11 +283,11 @@ export function tailRows(computed: ComputedSection, quote: Quote, alone = false)
     );
   }
 
-  return tailBlock(rows);
+  return rows;
 }
 
 /** Each section total again, then the figure the customer is agreeing to. */
-export function summaryRows(computed: ComputedQuote): SheetRow[] {
+function quoteTotals(computed: ComputedQuote): SheetRow[] {
   const rows =
     computed.sections.length > 1
       ? computed.sections.map((s, i) =>
@@ -298,7 +305,24 @@ export function summaryRows(computed: ComputedQuote): SheetRow[] {
     }),
   );
 
-  return tailBlock(rows);
+  return rows;
+}
+
+/**
+ * Everything printed under one section's lines. Under the last section that
+ * includes the figure the customer is agreeing to, because the sheet closes the
+ * page in one block: a rule across the empty width above TOTAL AMOUNT would
+ * make a box of nothing, which the office's own sheet has never drawn.
+ */
+export function totalsRows(computed: ComputedQuote, index: number): SheetRow[] {
+  const section = computed.sections[index];
+  const alone = computed.sections.length === 1;
+  const last = index === computed.sections.length - 1;
+
+  return tailBlock([
+    ...sectionTotals(section, computed.quote, alone),
+    ...(last ? quoteTotals(computed) : []),
+  ]);
 }
 
 export function sectionTitle(computed: ComputedSection): string {
@@ -306,6 +330,27 @@ export function sectionTitle(computed: ComputedSection): string {
 }
 
 export const hsnLabel = `HSNCODE ${HSN}`;
+
+/**
+ * The glass and its HSN code, standing on the head of its own lines. It is a
+ * row of the sheet rather than a block of its own so that the code sits in the
+ * width of the amount column below it: the same columns, drawn by the same
+ * renderer, cannot come out a few points apart.
+ */
+export function titleRows(computed: ComputedSection): SheetRow[] {
+  return [
+    row({
+      0: {
+        text: sectionTitle(computed),
+        bold: true,
+        size: 9,
+        box: true,
+        colSpan: COLUMNS - 1,
+      },
+      [COLUMNS - 1]: { text: hsnLabel, align: "right", bold: true, box: true },
+    }),
+  ];
+}
 
 /**
  * The order details are boxed as two groups: what the order is, then who it is

@@ -11,15 +11,13 @@ import {
   bankRows,
   fileNameFor,
   headRows,
-  hsnLabel,
   letterhead,
   lineRows,
   metaRows,
-  sectionTitle,
   signatureRows,
-  summaryRows,
-  tailRows,
   termRows,
+  titleRows,
+  totalsRows,
 } from "./layout";
 import { type Marks, marks } from "./marks";
 
@@ -35,6 +33,8 @@ import { type Marks, marks } from "./marks";
 /** A pixel at 96dpi, which is what the preview rules in. */
 const RULE = 0.75;
 const PADDING = 2;
+/** A block of the page is set in from its border further than a cell of the grid. */
+const BOX_PADDING = 5;
 
 type Margin = [number, number, number, number];
 
@@ -49,6 +49,7 @@ function toCell(cell: Cell): TableCell {
     text: cell.text,
     alignment: cell.align ?? "left",
     bold: cell.bold ?? false,
+    ...(cell.size ? { fontSize: cell.size } : {}),
     ...(cell.box ? { border: [true, true, true, true] } : {}),
     ...(cell.highlight ? { fillColor: INK.totalFill } : {}),
     ...(cell.colSpan ? { colSpan: cell.colSpan } : {}),
@@ -114,8 +115,8 @@ function boxLayout(divider = false, rules: number[] = []) {
     vLineColor: () => INK.rule,
     paddingTop: () => 4,
     paddingBottom: () => 4,
-    paddingLeft: () => 5,
-    paddingRight: () => 5,
+    paddingLeft: () => BOX_PADDING,
+    paddingRight: () => BOX_PADDING,
   };
 }
 
@@ -228,19 +229,10 @@ export function buildDoc(computed: ComputedQuote, pictures: Marks = {}): TDocume
   for (const [index, section] of computed.sections.entries()) {
     const head = headRows(quote);
     const lines = lineRows(section, quote);
-    const last = index === computed.sections.length - 1;
 
     content.push({
-      table: {
-        widths: ["*", "auto"],
-        body: [
-          [
-            { text: sectionTitle(section), bold: true, fontSize: 9 },
-            { text: hsnLabel, alignment: "right", bold: true },
-          ],
-        ],
-      },
-      layout: boxLayout(true),
+      table: { widths: widths(), body: toBody(titleRows(section)) },
+      layout: cellBorders,
       // The order details and the first section are one frame on the sheet: the
       // details sit on the head of the glass they were taken for. A later
       // section stands clear of the one before it, as the sheet has it.
@@ -250,13 +242,14 @@ export function buildDoc(computed: ComputedQuote, pictures: Marks = {}): TDocume
     content.push({
       table: { widths: widths(), headerRows: head.length, body: toBody([...head, ...lines]) },
       layout: gridLayout(head.length),
+      // The glass sits on the head of its own table. Without the pull the block's
+      // bottom rule and the grid's top rule are drawn one under the other, which
+      // reads on the page as a rule twice the weight of every other.
+      margin: [0, -RULE, 0, 0] as Margin,
     });
 
     content.push({
-      table: {
-        widths: widths(),
-        body: toBody(tailRows(section, quote, computed.sections.length === 1)),
-      },
+      table: { widths: widths(), body: toBody(totalsRows(computed, index)) },
       layout: cellBorders,
       /*
        * The sheet is one continuous grid: the subtotal sits on the last line
@@ -266,15 +259,9 @@ export function buildDoc(computed: ComputedQuote, pictures: Marks = {}): TDocume
        * pulled up by the width of a rule, which lands the two borders on each
        * other instead of leaving a pair.
        */
-      margin: [0, -RULE, 0, last ? 0 : 10] as Margin,
+      margin: [0, -RULE, 0, 10] as Margin,
     });
   }
-
-  content.push({
-    table: { widths: widths(), body: toBody(summaryRows(computed)) },
-    layout: cellBorders,
-    margin: [0, -RULE, 0, 10] as Margin,
-  });
 
   /*
    * The bank details, the note and the acceptance are one frame on the sheet,
