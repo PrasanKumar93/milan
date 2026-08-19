@@ -1,5 +1,5 @@
 {
-  "_note": "dev-plan §3.2. Products are built as thickness x glassType. There is no default product: a section starts with both dropdowns unchosen, so the glass on the proforma is one somebody picked. HSN is not here: every section in all 47 samples prints 7007, so it lives once in company.json as defaults.hsn. Confirmed with the customer: mirror is measured foot to foot and everything else takes the fixed allowance, whatever the samples happen to show on a one-off line. Names and rates are provisional until the customer re-verifies them.",
+  "_note": "dev-plan §3.2. Products are built as thickness x glassType. There is no default product: a section starts with both dropdowns unchosen, so the glass on the proforma is one somebody picked. HSN is not here: every section in all 48 samples prints 7007, so it lives once in company.json as defaults.hsn. Confirmed with the customer: mirror is measured foot to foot and everything else takes the fixed allowance, whatever the samples happen to show on a one-off line. One way glass is reflective and goes with the mirrors — THIRUMALESH 7733 measures all twenty-six of its pieces to the next foot, which is also the sample that put it in this list. It carries no rate: the customer gave the glass, not the price. Names and rates are provisional until the customer re-verifies them.",
   "thicknesses": ["4MM", "5MM", "6MM", "8MM", "10MM", "12MM", "4+4MM", "5+5MM", "6+6MM", "8+8MM", "10+10MM"],
   "glassTypes": [
     { "name": "CLEAR TOUGHENED GLASS", "shortCode": "CTG", "wastageRule": "fixed" },
@@ -14,6 +14,7 @@
     { "name": "COLOUR ETCHED GLASS", "shortCode": "COLOUR ETCHED", "wastageRule": "fixed" },
     { "name": "CLEAR MIRROR", "shortCode": "MIRROR", "wastageRule": "foot_to_foot" },
     { "name": "MIRROR GLASS", "shortCode": "MIRROR", "wastageRule": "foot_to_foot" },
+    { "name": "ONE WAY BLUE TOUGHENED GLASS", "shortCode": "ONE WAY", "wastageRule": "foot_to_foot" },
     { "name": "LAMINATED GLASS", "shortCode": "LAMINATED", "wastageRule": "fixed" },
     { "name": "DGU GLASS", "shortCode": "DGU", "wastageRule": "fixed" },
     { "name": "KACCHA GLASS", "shortCode": "KACCHA", "wastageRule": "fixed" }

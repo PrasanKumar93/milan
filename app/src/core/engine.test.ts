@@ -201,25 +201,25 @@ describe("what the masters say is what the app does", () => {
   });
 });
 
-describe("regression against the 47 sample quotations", () => {
+describe("regression against the 48 sample quotations", () => {
   const lines = corpus.flatMap((q) => q.sections.flatMap((s) => s.lines.map((l) => ({ s, l }))));
 
   it("reproduces every line amount as area x rate", () => {
     const good = lines.filter(({ l }) =>
       new Decimal(l.area).times(l.rate).minus(l.amount).abs().lte("0.02"),
     );
-    expect(good.length).toBe(284);
-    expect(lines.length).toBe(284);
+    expect(good.length).toBe(316);
+    expect(lines.length).toBe(316);
   });
 
-  it("reproduces 271 of 284 printed areas from the chargeable sizes", () => {
+  it("reproduces 303 of 316 printed areas from the chargeable sizes", () => {
     const good = lines.filter(({ s, l }) => {
       const calc = areaOf(inferUnit(s, l), s.out_unit, l.ch, l.cw, l.qty);
       const tol = Decimal.max("0.001", new Decimal(l.area).times("0.002"));
       return calc.minus(l.area).abs().lte(tol);
     });
     // The 13 misses are the typed-over area cells documented in dev-plan §9.
-    expect(good.length).toBe(271);
+    expect(good.length).toBe(303);
   });
 
   it("reproduces every quote total except the known operator overrides", () => {
@@ -243,6 +243,6 @@ describe("regression against the 47 sample quotations", () => {
       "BHOOTH SINGH 6613.pdf",
       "SAI GLASS 6374.pdf",
     ]);
-    expect(priced.length - failures.length).toBe(42);
+    expect(priced.length - failures.length).toBe(43);
   });
 });
