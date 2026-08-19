@@ -2,7 +2,7 @@
 
 Browser app for preparing proforma invoices and downloading them as PDF or as a working Excel sheet. No server and no database: the operator fills a form, clicks download, and the file is the record.
 
-Rules and reasoning live in [`../docs/dev-plan.md`](../docs/dev-plan.md). Section numbers referenced in code comments (§2.2, §3.1, …) point there.
+Rules and reasoning live in [`../docs/dev-plan.md`](../docs/dev-plan.md). Section numbers referenced in code comments (§2.2, §3.1, …) point there. The checks the screen makes on a quote — every "things to check" line, and the numbers behind them — are listed in [`../docs/rules.md`](../docs/rules.md).
 
 ## Running it
 
