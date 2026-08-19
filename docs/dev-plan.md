@@ -559,6 +559,8 @@ Worth raising with the team — these are real money.
 
 **SAI GLASS 6374 — GST missing from one section.** The quote has three sections. The 10 MM and 6 MM sections both carry CGST 9% + SGST 9%, but the 8 MM section jumps straight from `1564 + 120 holes = 1684` to the section total with no tax rows, and the grand total of `15943.12` accepts it. Since GST applies to the whole invoice or not at all, this is an operator omission, not a business rule — roughly **₹303 of GST was not charged** and would still be owed. Making the GST flag a quote-level setting (§2.1) makes this error structurally impossible.
 
+**THIRUMALESH 7733 — a subtotal rounded down.** The one way section subtotals to `19910.81` and the sheet writes `19910`, where rounding to the nearest gives `19911`. It is 81 paise, and it is the operator's to make: the app works out 19911, the figure is typed over, and the screen says so. Everything else on this quote — thirty-two lines across three sections, twenty-six of them measured to the next foot in inches and fractions — comes out of the app identical to the printed sheet, including both tax rows on all three sections and the grand total.
+
 **G FOCUSS 7178 — two mirror lines charged past the next foot.** A 2920 mm piece is billed at 3660, two feet over what foot to foot gives (§2.2). It reads like a deliberate charge for a whole 12 ft mirror sheet, but **the customer has confirmed it is an operator mistake: mirror always goes to the next foot and no further.** The app charges to the next foot, does not reproduce the line, and offers no way to type it — a size the rule cannot reach is not a size to make room for.
 
 None of the first three errors is possible once areas and taxes are computed rather than typed, and the fourth is now visible as a difference rather than hidden in a cell.
@@ -582,7 +584,7 @@ None of the first three errors is possible once areas and taxes are computed rat
 - **Foot to foot rounds by the overhang** — 8.2 ft becomes 9 ft, 8 ft stays 8 ft (§2.2).
 - **A sample the rule cannot reproduce is not a rule to add.** Two mirror lines were billed two feet over the next foot; the app charges to the next foot and leaves those alone, because some of the old bills are simply wrong — **confirmed by the customer as an operator mistake** (§2.2, §9).
 - **Wastage is entirely section-level**, rule and allowance together, with nothing left in quote settings (§2.2).
-- **Mirror is the only glass that starts foot to foot; everything else starts on the fixed allowance** (§2.2). Narrows the customer's first answer, on their own later word.
+- **Mirror and one way glass start foot to foot; everything else starts on the fixed allowance** (§2.2). Narrows the customer's first answer, on their own later word. One way glass was added on the evidence of THIRUMALESH 7733, where all twenty-six pieces of `5MM ONE WAY BLUE TOUGHENED GLASS` are measured to the next foot — it is a reflective glass, and it is cut the way the mirrors are. It carries no rate on the card: the customer gave the glass, not the price.
 - **HSN 7007 is one constant** in the company master, not a field on products, sections or lines (§4).
 - **Finishes and treatments are charges, not products** — a rate, counted or not, on the same row (§2.9). Polish included, at ₹1 per mm of thickness per running foot (§3.3).
 - **The proforma number is typed**, not generated.
