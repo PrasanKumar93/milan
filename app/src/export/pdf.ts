@@ -74,11 +74,13 @@ const padding = {
   paddingRight: () => PADDING,
 };
 
-/** The lines are boxed and ruled down every column, with a tinted head. */
+/**
+ * The lines are ruled every way, with a tinted head: the sheet draws a box round
+ * every cell of the grid, so one row of sizes cannot be read into the next.
+ */
 function gridLayout(headCount: number) {
   return {
-    hLineWidth: (i: number, node: { table: { body: unknown[] } }) =>
-      i === 0 || i === headCount || i === node.table.body.length ? RULE : 0,
+    hLineWidth: () => RULE,
     vLineWidth: () => RULE,
     hLineColor: () => INK.rule,
     vLineColor: () => INK.rule,

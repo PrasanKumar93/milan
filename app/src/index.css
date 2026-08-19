@@ -944,8 +944,9 @@ table.grid tbody tr:hover {
 }
 
 /*
- * The sheet rules down every column but only across at the head and the foot,
- * which is how the current PDF is drawn.
+ * The sheet rules the grid every way — down every column and across every row,
+ * as the printed original does, so one row of sizes cannot be read into the
+ * next. Below the lines the rules come from the cells instead.
  */
 table.print-table {
   width: 100%;
@@ -980,7 +981,7 @@ table.print-table:not(.print-table--plain) thead th {
   font-weight: 700;
 }
 
-table.print-table:not(.print-table--plain) tbody tr:last-child td {
+table.print-table:not(.print-table--plain) tbody td {
   border-bottom: var(--ink-hairline) solid var(--ink-rule);
 }
 

@@ -89,6 +89,21 @@ describe("the preview and the PDF", () => {
     expect(inThePdf(buildDoc(computeQuote(quote)))).toEqual(screenMarks);
   });
 
+  it("rules the grid across as well as down, the way the printed sheet does", () => {
+    const content = buildDoc(computeQuote(quote)).content as unknown as Array<{
+      table?: { headerRows?: number; body: unknown[] };
+      layout?: { hLineWidth?: (i: number, node: unknown) => number };
+    }>;
+
+    const grid = content.filter((c) => c.table?.headerRows !== undefined)[0];
+    const body = grid.table?.body ?? [];
+    const between = (grid.table?.headerRows ?? 0) + 1;
+
+    // The rule under the first line. Without it two rows of sizes run together,
+    // which is how a 2290 on one row gets read against a 340 on the next.
+    expect(grid.layout?.hLineWidth?.(between, { table: { body } })).toBeGreaterThan(0);
+  });
+
   // Two empty lists would agree with each other and prove nothing.
   it("are describing a sheet that is ruled, boxed and has its total on yellow", () => {
     const marks = onScreen(quote);
