@@ -177,6 +177,17 @@ describe("the workbook", () => {
     expect(String(cell.note)).toContain("4.305");
   });
 
+  it("says on the cell what its formula did, since the formula bar only says where", () => {
+    const sheet = sheetFor(quote());
+    const row = rowOf(sheet, "C", 2000);
+    const note = (ref: string) => String(sheet.getCell(ref).note);
+
+    // 2000 and 1000 cut at 2050 x 1050, two pieces, at 1238 the square metre.
+    expect(note(`E${row}`)).toBe("Height: actual + wastage = 2000 + 50 = 2050");
+    expect(note(`H${row}`)).toBe("Area = ((2050 ÷ 1000) × (1050 ÷ 1000)) × 2 = 4.305");
+    expect(note(`J${row}`)).toBe("Amount = area × rate = 4.305 × 1238 = 5329.59");
+  });
+
   it("caches an answer beside every formula, for viewers that never calculate", () => {
     const q = quote();
     const computed = computeQuote(q);

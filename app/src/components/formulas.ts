@@ -1,7 +1,7 @@
 import Decimal from "decimal.js";
 import type { ComputedSection } from "../core/engine";
 import { POLISH_RATE_PER_MM, perimeterRft, polishRate, thicknessMm } from "../core/products";
-import type { InputUnit, Quote } from "../core/types";
+import type { InputUnit, Quote, Section } from "../core/types";
 import { MM_PER_FOOT, SQFT_PER_SQM, formatInches, toNextFoot } from "../core/units";
 
 /**
@@ -103,31 +103,61 @@ export function chargeableHint(computed: ComputedSection, quote: Quote): string 
   );
 }
 
+/*
+ * Bracketed even where the precedence would hold without it: the reader is
+ * checking a price, not parsing an expression, and each pair of brackets is a
+ * step they can do in their head — the height in metres, the width in metres,
+ * then the two multiplied, then the count.
+ */
+const areaShape = (quote: Quote) => (h: string, w: string, qty: string) => {
+  if (quote.inputUnit === "mm") {
+    const metres = `((${h} ÷ 1000) × (${w} ÷ 1000)) × ${qty}`;
+    return quote.printUnit === "SQFT" ? `(${metres}) × ${SQFT_PER_SQM}` : metres;
+  }
+
+  const feet = `((${h} × ${w}) ÷ 144) × ${qty}`;
+  return quote.printUnit === "SQMT" ? `(${feet}) ÷ ${SQFT_PER_SQM}` : feet;
+};
+
+/**
+ * One row's own working, for whoever is looking at that row rather than at the
+ * column: the heading explains the rule with an example, and these say what
+ * happened here. The workbook writes them onto the cells, where Excel can only
+ * show `I9*K9` of its own accord.
+ */
+export function chargeableSteps(
+  l: ComputedSection["lines"][number],
+  rule: Section["wastageRule"],
+  quote: Quote,
+  side: "Height" | "Width",
+): string {
+  const show = size(quote);
+  const actual = side === "Height" ? l.line.actualH : l.line.actualW;
+  const charged = side === "Height" ? l.chargeableH.value : l.chargeableW.value;
+
+  return rule === "foot_to_foot"
+    ? `${side} up to the next foot:\n${footSteps(actual, quote.inputUnit)}`
+    : `${side}: actual + wastage = ${show(actual)} + ${show(l.wastage)} = ${show(charged)}`;
+}
+
+export function areaSteps(l: ComputedSection["lines"][number], quote: Quote): string {
+  const show = size(quote);
+  const shape = areaShape(quote);
+
+  return `Area = ${shape(show(l.chargeableH.value), show(l.chargeableW.value), String(l.line.qty))} = ${round(l.area.value, 6)}`;
+}
+
+export function amountSteps(l: ComputedSection["lines"][number]): string {
+  return `Amount = area × rate = ${round(l.area.value, 6)} × ${l.line.rate} = ${round(l.amount.value, 2)}`;
+}
+
 /** The printed area, in whichever pair of units the quote is being typed and priced in. */
 export function areaHint(computed: ComputedSection, quote: Quote): string {
-  const show = size(quote);
   const first = computed.lines[0];
 
-  /*
-   * Bracketed even where the precedence would hold without it: the reader is
-   * checking a price, not parsing an expression, and each pair of brackets is a
-   * step they can do in their head — the height in metres, the width in metres,
-   * then the two multiplied, then the count.
-   */
-  const shape = (h: string, w: string, qty: string) => {
-    if (quote.inputUnit === "mm") {
-      const metres = `((${h} ÷ 1000) × (${w} ÷ 1000)) × ${qty}`;
-      return quote.printUnit === "SQFT" ? `(${metres}) × ${SQFT_PER_SQM}` : metres;
-    }
-
-    const feet = `((${h} × ${w}) ÷ 144) × ${qty}`;
-    return quote.printUnit === "SQMT" ? `(${feet}) ÷ ${SQFT_PER_SQM}` : feet;
-  };
-
   return lines(
-    `Area = ${shape("chargeable H", "chargeable W", "qty")}, so the count is already in it.`,
-    first &&
-      `${shape(show(first.chargeableH.value), show(first.chargeableW.value), String(first.line.qty))} = ${round(first.area.value, 6)}`,
+    `Area = ${areaShape(quote)("chargeable H", "chargeable W", "qty")}, so the count is already in it.`,
+    first && areaSteps(first, quote).replace("Area = ", ""),
   );
 }
 
@@ -182,7 +212,6 @@ export function amountHint(computed: ComputedSection): string {
 
   return lines(
     "Amount = area × rate. The rate is per unit of area, and the count is inside the area.",
-    first &&
-      `${round(first.area.value, 6)} × ${first.line.rate} = ${round(first.amount.value, 2)}`,
+    first && amountSteps(first).replace("Amount = area × rate = ", ""),
   );
 }

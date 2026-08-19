@@ -1,5 +1,7 @@
 import type Decimal from "decimal.js";
 import type { Borders, Cell as XlsxCell, Fill, Workbook, Worksheet } from "exceljs";
+// The same working the screen shows under its `i` marks, written onto the cells.
+import { amountSteps, areaSteps, chargeableSteps } from "../components/formulas";
 import type { ComputedQuote, ComputedSection } from "../core/engine";
 import type { Quote, Section } from "../core/types";
 import { MM_PER_FOOT, SQFT_PER_SQM } from "../core/units";
@@ -265,12 +267,24 @@ function drawRows(pen: Pen, rows: SheetRow[], scope: string, ruled = false): voi
  * the quote reads as a page of blanks in Google Sheets, in macOS Preview and in
  * a WhatsApp preview.
  */
-function live(pen: Pen, at: string, formula: string, result: Decimal | number): void {
-  pen.sheet.getCell(at).value = {
+function live(
+  pen: Pen,
+  at: string,
+  formula: string,
+  result: Decimal | number,
+  note?: string,
+): void {
+  const cell = pen.sheet.getCell(at);
+  cell.value = {
     formula,
     result: typeof result === "number" ? result : result.toNumber(),
     date1904: false,
   };
+
+  // Excel can only ever show `I9*K9` in the formula bar, which says where the
+  // figures came from but not what was done to them. The note carries the
+  // working in the same words the screen puts under its `i` marks.
+  if (note) cell.note = note;
 }
 
 /**
@@ -284,9 +298,10 @@ function overridable(
   override: number | null,
   formula: string,
   computed: Decimal,
+  note?: string,
 ): void {
   if (override === null || computed.eq(override)) {
-    live(pen, at, formula, computed);
+    live(pen, at, formula, computed, note);
     return;
   }
 
@@ -356,6 +371,7 @@ function liveSection(pen: Pen, index: number, computed: ComputedSection, quote: 
       line.line.chargeableH,
       chargeableFormula(section, quote, actualH, working),
       line.chargeableH.computed,
+      chargeableSteps(line, section.wastageRule, quote, "Height"),
     );
     overridable(
       pen,
@@ -363,6 +379,7 @@ function liveSection(pen: Pen, index: number, computed: ComputedSection, quote: 
       line.line.chargeableW,
       chargeableFormula(section, quote, actualW, working),
       line.chargeableW.computed,
+      chargeableSteps(line, section.wastageRule, quote, "Width"),
     );
     overridable(
       pen,
@@ -370,8 +387,16 @@ function liveSection(pen: Pen, index: number, computed: ComputedSection, quote: 
       line.line.area,
       areaFormula(quote, chargeableH, chargeableW, qty),
       line.area.computed,
+      areaSteps(line, quote),
     );
-    overridable(pen, amount, line.line.amount, `${area}*${rate}`, line.amount.computed);
+    overridable(
+      pen,
+      amount,
+      line.line.amount,
+      `${area}*${rate}`,
+      line.amount.computed,
+      amountSteps(line),
+    );
   }
 
   const column = (key: string) => {
