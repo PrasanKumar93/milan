@@ -44,6 +44,35 @@ describe("inch entry", () => {
     expect(formatInches(34.625)).toBe("34 5/8");
     expect(formatInches(96)).toBe("96");
   });
+
+  /*
+   * A size is written back at whatever it was measured to. The samples never go
+   * finer than an eighth, but a sixteenth is not an eighth: rounded to one for
+   * the sake of a tidier column, the row is priced on a size the customer never
+   * gave and the sheet says so nowhere.
+   */
+  it("keeps a finer fraction rather than tidying it into an eighth", () => {
+    expect(formatInches(42.6875)).toBe("42 11/16");
+    expect(formatInches(42.0625)).toBe("42 1/16");
+    expect(formatInches(42.03125)).toBe("42 1/32");
+    expect(formatInches(0.5)).toBe("1/2");
+
+    // The smallest denominator that says it exactly: a half is a half.
+    expect(formatInches(42.5)).toBe("42 1/2");
+    expect(formatInches(42.75)).toBe("42 3/4");
+  });
+
+  // A third of an inch is no fraction of a tape. It is written as the number it
+  // is, because the row is priced on that number.
+  it("writes a size that is no fraction at all as the figure it is", () => {
+    expect(formatInches(42 + 1 / 3)).toBe("42.3333");
+  });
+
+  it("takes back every fraction it writes", () => {
+    for (const inch of [33.25, 34.625, 42.6875, 42.0625, 42.03125, 0.625, 96]) {
+      expect(parseDimension(formatInches(inch), "inch")).toBe(inch);
+    }
+  });
 });
 
 describe("area formulas (dev-plan §2.1)", () => {

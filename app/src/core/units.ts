@@ -17,9 +17,10 @@ const MM_STEP = new Decimal(5);
 const FRACTION = /^\s*(-?\d+(?:\.\d+)?)?\s*(?:(\d+)\s*\/\s*(\d+))?\s*$/;
 
 /**
- * Parse a typed dimension. Inch entry accepts eighths written as "33 1/4" or a
- * bare "5/8", since 96 of the 137 inch lines in the samples use fractions and no
- * mm line ever does.
+ * Parse a typed dimension. Inch entry accepts a fraction written as "33 1/4" or
+ * a bare "5/8", since 96 of the 137 inch lines in the samples use fractions and
+ * no mm line ever does. Any denominator is taken, at the fineness it was
+ * measured to: what is typed is what the row is priced on.
  */
 export function parseDimension(text: string, unit: InputUnit): number | null {
   const raw = String(text).trim();
@@ -42,25 +43,37 @@ export function parseDimension(text: string, unit: InputUnit): number | null {
   return whole.isNegative() ? whole.minus(frac).toNumber() : whole.plus(frac).toNumber();
 }
 
-/** Render inches back as the sheet writes them: 33.25 becomes "33 1/4". */
-export function formatInches(value: number, denominator = 8): string {
+/**
+ * How finely a tape is read: halves down to sixty-fourths. The samples never go
+ * past eighths, but a size is written back at whatever it was measured to — a
+ * sixteenth is not an eighth, and an app that quietly makes it one has changed
+ * the customer's own figure behind their back.
+ */
+const DENOMINATORS = [2, 4, 8, 16, 32, 64];
+
+/**
+ * Render inches as the sheet writes them: 33.25 becomes "33 1/4", 42.6875
+ * becomes "42 11/16". The denominator is the smallest that says the size
+ * exactly, so a half prints as a half rather than as eight sixteenths.
+ *
+ * A size that is no fraction of an inch at all — a third, or a figure carried in
+ * from an edited workbook — is written as a decimal rather than forced to the
+ * nearest anything: what is on the row must be what the row was priced on.
+ */
+export function formatInches(value: number): string {
   const d = new Decimal(value);
   const sign = d.isNegative() ? "-" : "";
   const abs = d.abs();
   const whole = abs.floor();
-  const eighths = abs.minus(whole).times(denominator).toDecimalPlaces(0, Decimal.ROUND_HALF_UP);
+  const frac = abs.minus(whole);
 
-  if (eighths.isZero()) return `${sign}${whole.toString()}`;
-  if (eighths.gte(denominator)) return `${sign}${whole.plus(1).toString()}`;
+  if (frac.isZero()) return `${sign}${whole.toString()}`;
 
-  let num = eighths.toNumber();
-  let den = denominator;
-  while (num % 2 === 0 && den % 2 === 0) {
-    num /= 2;
-    den /= 2;
-  }
+  const den = DENOMINATORS.find((n) => frac.times(n).isInteger());
+  if (den === undefined) return `${sign}${abs.toDecimalPlaces(4).toString()}`;
+
   const wholePart = whole.isZero() ? "" : `${whole.toString()} `;
-  return `${sign}${wholePart}${num}/${den}`;
+  return `${sign}${wholePart}${frac.times(den).toString()}/${den}`;
 }
 
 /**

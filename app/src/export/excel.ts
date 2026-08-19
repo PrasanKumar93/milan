@@ -86,12 +86,12 @@ interface Pen {
   row: number;
   /** `s0.line.2.area` to `H14`, so a formula can point at the cell it needs. */
   at: Map<string, string>;
-  /** How a size is shown: an inch quote prints eighths, and Excel can show them. */
+  /** How a size is shown: an inch quote prints fractions, and Excel can show them. */
   sizes: string;
 }
 
 /** `35 1/4` on the page, 35.25 to the formulas that use it. */
-const FRACTIONS = "# ?/?";
+const FRACTIONS = "# ??/??";
 
 const address = (row: number, col: number) => `${String.fromCharCode(64 + col)}${row}`;
 
@@ -216,7 +216,7 @@ function centre(pen: Pen, value: string, style: Parameters<typeof text>[3] = {})
   pen.row += 1;
 }
 
-/** A height or a width, which is the only kind of figure the page prints in eighths. */
+/** A height or a width, which is the only kind of figure the page prints as a fraction. */
 const dimension = (cell: Cell) => /actual|chargeable/.test(cell.key ?? "");
 
 /**

@@ -115,9 +115,19 @@ function LooseNumberInput({
   const [draft, setDraft] = useState<string | null>(null);
   const shown = draft ?? format(value);
 
-  // A reset or a unit switch changes the value from outside; drop the draft so
-  // the new value is visible rather than the stale text.
+  /*
+   * A reset or a unit switch changes the value from outside; drop the draft so
+   * the new value is visible rather than the stale text. A value that came back
+   * from what this box just sent up is the operator's own typing, and rewriting
+   * the box then is what a half-typed fraction cannot survive: on the way to
+   * `42 11/16` the text passes through `42 11/1`, which is a real size — forty
+   * two and eleven over one, or 53 — and the box was being retyped as `53` under
+   * their fingers, with the last key landing on the end of it as `536`.
+   */
+  const sent = useRef<number | null>(null);
+
   useEffect(() => {
+    if (sent.current === value) return;
     setDraft(null);
   }, [value]);
 
@@ -135,7 +145,10 @@ function LooseNumberInput({
         if (!accepts.test(text)) return;
         setDraft(text);
         const parsed = parse(text);
-        if (parsed !== null) onChange(parsed);
+        if (parsed !== null) {
+          sent.current = parsed;
+          onChange(parsed);
+        }
       }}
       onBlur={() => setDraft(null)}
       onFocus={(e) => e.target.select()}
@@ -190,7 +203,7 @@ export function NumberField({
 }
 
 /**
- * Dimension entry. In inch mode it accepts and prints eighths — "33 1/4" —
+ * Dimension entry. In inch mode it accepts and prints fractions — "33 1/4" —
  * because 96 of the 137 inch lines in the samples are written that way, so a
  * space and a slash are part of a number here and nowhere else.
  */

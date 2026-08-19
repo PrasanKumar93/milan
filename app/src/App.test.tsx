@@ -83,6 +83,73 @@ describe("the entry screen", () => {
     expect(firstRow()[0].value).toBe("2000");
   });
 
+  /*
+   * Inches are typed a key at a time, and every key on the way to `42 3/4` goes
+   * through the box: `42` is a size on its own, `42 ` and `42 3/` are not sizes
+   * at all. What is in the box has to survive all of that, because the operator
+   * is reading it — a box that says one size while the row is worked out on
+   * another is the one fault that cannot be seen on screen.
+   */
+  describe("a size typed as a fraction", () => {
+    const press = (input: HTMLInputElement, keys: string) => {
+      // Typed as it is on the day: the box selects its contents when it is
+      // entered, so the first key replaces them, and every key after that lands
+      // on whatever the box holds at that moment — if the app has rewritten the
+      // text, the next key goes onto the rewritten text. Leaving the field is
+      // part of typing a size, and is where the box settles on what it shows.
+      fireEvent.focus(input);
+      type(input, "");
+      for (const key of keys) type(input, input.value + key);
+      fireEvent.blur(input);
+    };
+
+    const inchQuote = () => {
+      render(<App />);
+      fireEvent.click(screen.getByText("inch"));
+      return firstRow()[0];
+    };
+
+    it("shows what was typed, and is worked out on what is shown", () => {
+      const height = inchQuote();
+      press(height, "42 3/4");
+
+      expect(firstRow()[0].value).toBe("42 3/4");
+      expect(firstRow()[3].value).toBe("44 3/4");
+    });
+
+    it("holds a half and a quarter, which the sheet writes as often as eighths", () => {
+      for (const [typed, charged] of [
+        ["44 1/2", "46 1/2"],
+        ["48 1/4", "50 1/4"],
+        ["11 7/8", "13 7/8"],
+        ["3/4", "2 3/4"],
+      ]) {
+        cleanup();
+        const height = inchQuote();
+        press(height, typed);
+
+        expect(firstRow()[0].value).toBe(typed);
+        expect(firstRow()[3].value).toBe(charged);
+      }
+    });
+
+    /*
+     * A sixteenth used to be taken in, kept, and then shown as the nearest
+     * eighth — the box said 42 3/4 while the row was priced on 42.6875. Worse,
+     * the text passed through `42 11/1` on the way, which is a real size, and
+     * the box was rewritten to 53 under the operator's fingers: what landed on
+     * the row was 536. Both are the same fault — the screen showing one size
+     * while another is being used — and neither is visible on the sheet.
+     */
+    it("keeps a sixteenth as a sixteenth, all the way through the fraction", () => {
+      const height = inchQuote();
+      press(height, "42 11/16");
+
+      expect(firstRow()[0].value).toBe("42 11/16");
+      expect(firstRow()[3].value).toBe("44 11/16");
+    });
+  });
+
   it("flags a row that was cut differently, and puts it back when asked", () => {
     fillOneLine();
     type(firstRow()[2], "30");

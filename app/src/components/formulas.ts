@@ -20,7 +20,7 @@ import { MM_PER_FOOT, SQFT_PER_SQM, formatInches, toNextFoot } from "../core/uni
 
 const round = (value: Decimal, places: number) => value.toDecimalPlaces(places).toString();
 
-/** A size the way the row shows it: eighths for an inch quote, plain millimetres otherwise. */
+/** A size the way the row shows it: fractions for an inch quote, plain millimetres otherwise. */
 const shown = (value: Decimal | number, unit: InputUnit) => {
   const n = typeof value === "number" ? value : value.toNumber();
   return unit === "inch" ? formatInches(n) : String(n);

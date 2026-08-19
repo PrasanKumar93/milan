@@ -342,8 +342,14 @@ describe("the printed page of the workbook", () => {
     expect(sheet.getCell(`J${cgst}`).numFmt).toBe("General");
   });
 
-  // The page prints 35 1/4; the formulas need 35.25. A fraction format is both.
-  it("shows an inch quote in eighths without turning the sizes into words", () => {
+  /*
+   * The page prints 35 1/4; the formulas need 35.25. A fraction format is both.
+   * Room is left for two figures on each side of the line, because a single one
+   * would round a sixteenth to the nearest eighth on the page while the cell
+   * underneath went on holding 42.6875 — a workbook that prints a size the
+   * customer never gave.
+   */
+  it("shows an inch quote in fractions without turning the sizes into words", () => {
     const q = quote();
     q.inputUnit = "inch";
     q.sections[0].lines = [{ ...q.sections[0].lines[0], actualH: 33.5, actualW: 35.25 }];
@@ -352,7 +358,7 @@ describe("the printed page of the workbook", () => {
     const line = rowOf(inches, "C", 33.5);
 
     expect(inches.getCell(`D${line}`).value).toBe(35.25);
-    expect(inches.getCell(`D${line}`).numFmt).toBe("# ?/?");
+    expect(inches.getCell(`D${line}`).numFmt).toBe("# ??/??");
     expect(inches.getCell(`I${line}`).numFmt).toBe("General");
   });
 
