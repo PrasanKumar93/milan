@@ -1,5 +1,6 @@
 import Decimal from "decimal.js";
 import type { ComputedSection } from "../core/engine";
+import { POLISH_RATE_PER_MM, perimeterRft, polishRate, thicknessMm } from "../core/products";
 import type { InputUnit, Quote } from "../core/types";
 import { MM_PER_FOOT, SQFT_PER_SQM, formatInches, toNextFoot } from "../core/units";
 
@@ -128,6 +129,51 @@ export function areaHint(computed: ComputedSection, quote: Quote): string {
     first &&
       `${shape(show(first.chargeableH.value), show(first.chargeableW.value), String(first.line.qty))} = ${round(first.area.value, 6)}`,
   );
+}
+
+/**
+ * Polish, which is the one charge with a rule behind it rather than a price.
+ *
+ * It is also the one billed in a unit that appears nowhere else on the quote —
+ * running feet of cut edge, not area — so both halves are spelled out: where the
+ * ₹10 comes from, and where the 3.73 comes from. The office's own note writes it
+ * as `H + W × 2 / 12 × thickness × qty`, in inches; this is the same thing in
+ * whichever unit the quote is being typed in.
+ */
+export function polishHint(computed: ComputedSection, quote: Quote): string {
+  const show = size(quote);
+  const unit = quote.inputUnit;
+  const per = perFoot(unit);
+  const mm = thicknessMm(computed.section.product);
+
+  const rft = (line: ComputedSection["lines"][number]) =>
+    perimeterRft(
+      [{ line: line.line, chargeableH: line.chargeableH.value, chargeableW: line.chargeableW.value }],
+      unit,
+    );
+
+  const rule = [
+    `Polish as job work is billed along the cut edge, in running feet — not by area. On glass sold from here it is already inside the glass rate.`,
+    `Rate = ₹${POLISH_RATE_PER_MM} × the thickness of the glass, per running foot.`,
+    `Running feet = ((chargeable H + chargeable W) × 2 × qty) ÷ ${per}`,
+  ].join("\n");
+
+  const rate =
+    mm > 0
+      ? `Rate:  ₹${POLISH_RATE_PER_MM} × ${mm} mm = ₹${polishRate(computed.section.product)} per running foot`
+      : `Rate:  waiting on the glass — the thickness is what prices it.`;
+
+  const rows = computed.lines
+    .filter((l) => l.chargeableH.value.gt(0) && l.chargeableW.value.gt(0))
+    .map(
+      (l, i) =>
+        `Row ${i + 1}:  ((${show(l.chargeableH.value)} + ${show(l.chargeableW.value)}) × 2 × ${l.line.qty}) ÷ ${per} = ${round(rft(l), 2)} rft`,
+    );
+
+  const total = computed.lines.reduce((sum, l) => sum.plus(rft(l)), new Decimal(0));
+  const all = rows.length > 1 ? [...rows, `Every piece:  ${round(total, 2)} rft`] : rows;
+
+  return [rule, "", rate, ...all].join("\n");
 }
 
 /** What the line is worth: the area at the rate, the count having been counted already. */

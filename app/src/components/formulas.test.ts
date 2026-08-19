@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { computeSection } from "../core/engine";
 import type { Quote, Section } from "../core/types";
 import { newLine, newQuote, newSection } from "../state/factory";
-import { amountHint, areaHint, chargeableHint, feetSpan, footStepsPair } from "./formulas";
+import { amountHint, areaHint, chargeableHint, feetSpan, footStepsPair, polishHint } from "./formulas";
 
 /**
  * The headings explain the columns the app fills in for itself, so what they say
@@ -105,6 +105,24 @@ describe("the heading that explains a column", () => {
 
     // A row half typed says what it can and stays quiet about the rest.
     expect(footStepsPair(2290, 0, "mm")).not.toContain("Width");
+  });
+
+  it("prices polish along the edge, in the running feet it is billed by", () => {
+    const quote = quoteWith();
+    const section = sectionWith(quote, newSection("mm", "10MM CLEAR TOUGHENED GLASS"));
+
+    const hint = polishHint(section, quote);
+    expect(hint).toContain("₹1 × 10 mm = ₹10 per running foot");
+    // Two pieces cut 2050 x 1050: 3100 twice round, twice over, in feet.
+    expect(hint).toContain("((2050 + 1050) × 2 × 2) ÷ 304.8 = 40.68");
+  });
+
+  it("says what polish is waiting on where the glass has not been chosen", () => {
+    const quote = quoteWith();
+    const section = sectionWith(quote, quote.sections[0]);
+
+    // No glass means no thickness, and the thickness is the whole price.
+    expect(polishHint(section, quote)).toContain("waiting on the glass");
   });
 
   it("still explains the rule for a section with nothing typed in it yet", () => {

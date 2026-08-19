@@ -331,9 +331,11 @@ Both catalogues below ship as JSON in `src/data/` and are the source for the two
 
 ### 3.1 Charge catalogue — the names, without the prices
 
-**The catalogue keeps every name and carries no rate.** A charge row arrives unnamed, uncounted and at ₹0; the name is picked off the list and the price is typed. The customer asked for the rates to go and the names to stay, which splits the two things the catalogue was doing: the names are the office's own and are worth picking rather than spelling — the samples carry `HOLE` and `HOLES`, `CUT OUT` and `CUTOUT`, `FORSTARTE` and `FROSTARTE CHARGE` — while the price is a judgement made per job, and a default price is a price nobody re-reads. Polish is the exception, and it is a rule rather than a price: ₹1 per mm of glass thickness per running foot (§3.3), filled in from the section's glass because it is a calculation, not a quote.
+**The catalogue keeps every name and carries no rate.** A charge row arrives unnamed, uncounted and at ₹0; the name is picked off the list and the price is typed. The customer asked for the rates to go and the names to stay, which splits the two things the catalogue was doing: the names are the office's own and are worth picking rather than spelling — the samples carry `HOLE` and `HOLES`, `CUT OUT` and `CUTOUT`, `FORSTARTE` and `FROSTARTE CHARGE` — while the price is a judgement made per job, and a default price is a price nobody re-reads. `POLISH (JOB WORK)` is the exception, and it is a rule rather than a price: ₹1 per mm of glass thickness per running foot (§3.3), filled in from the section's glass because it is a calculation, not a quote.
 
 The list still says **how** each charge is billed, since that is the office's own practice and not a number to negotiate: `HOLES 6 180` prints a count and `DOCUMENT CHARGE 100` does not, which is the `basis` field, and all it now decides is whether the row opens at one or at none.
+
+Opening every charge at a count of 1 was considered and dropped, on the customer's decision. The money is identical — `1 × rate` is the rate — but the count column prints whenever there is a count, so a document charge at 1 would print `DOCUMENT CHARGE 1 100` against the sheet's `DOCUMENT CHARGE 100`, and **34 of the 83 charge rows in the samples print no count at all**. Suppressing a printed 1 is not a way round it either: five rows print `L CUT OUT 1 150` with the count showing. So the flag stays, and each entry carries whichever the office actually prints — which is also why `50MM HOLE` is `flat` despite sounding countable, since none of its four samples printed a count.
 
 What each was billed at across the 47 samples is kept here as evidence rather than as a default. Restoring any of it is a `"rate"` back on a line of `chargeTypes.json`:
 
@@ -354,7 +356,7 @@ What each was billed at across the 47 samples is kept here as evidence rather th
 | SHAPE CHARGE     | never             | ₹100                  | 1         |
 | BIG CUTOUT       | never             | ₹400                  | 1         |
 | PAINT CHARGE     | never             | ₹800                  | 1         |
-| POLISH           | always            | ₹1/mm per rft         | 0 — from the customer, not the samples |
+| POLISH (JOB WORK) | always           | ₹1/mm per rft         | 0 — from the customer, not the samples |
 
 One note on that table for whoever restores a figure from it: these are what was billed, not what was quoted off a list. `HOLES` at ₹30 and `CUTOUT` at ₹100 never move across the whole corpus and would be safe defaults; `CORNER ROUND` runs from ₹50 to ₹200 and `TEMPLATE CHARGE` from ₹300 to ₹1500 on jobs weeks apart, which is the customer's point about typing the price.
 
@@ -380,9 +382,11 @@ Two things stay attached to the product: the **wastage rule** it defaults to (§
 
 **Neither dropdown starts on anything.** Both open on `— Select —`, so a section has no glass until somebody picks one. 10 MM clear toughened would be right on a good half of the quotes and was the default until the customer asked for this, and they are right: the product line is what the proforma prints as the description of what was sold, and a default that is usually correct is one nobody reads on the quote where it is not. The half-chosen state that follows is real — a thickness with no glass yet — and is treated as no glass rather than as a glass named "12MM", which is also what §7 (10) warns about once sizes are typed.
 
-### 3.3 Polish
+### 3.3 Polish (job work)
 
-**Polish is an ordinary charge, not a rule in the engine.** It sits in the catalogue as a per-unit charge billed in running feet:
+**The charge is job work, and it is named so on the list: `POLISH (JOB WORK)`.** Polish on glass the factory sells is already inside the glass rate, which is why the running-foot formula appears in the office's notes and not on a single one of the 68 sample PDFs — the whole corpus was searched, and the only polish in it is the word inside a product description on their own supplier's proforma (`12MM CLEAR POLISH` at ₹1,620/sqm, polish priced into the glass exactly as here). The charge is for the other job: the customer brings glass, the factory polishes the edge and bills the work. The name carries that distinction, since a bare `POLISH` on the list invites it onto a quote where it is being paid for twice.
+
+**It is an ordinary charge, not a rule in the engine.** It sits in the catalogue as a per-unit charge billed in running feet:
 
 ```
 rate = thickness_mm × ₹1        -- so 10 MM glass polishes at ₹10 per running foot
@@ -392,7 +396,9 @@ qty  = (H + W) × 2 ÷ 12 × pieces        -- inch input, perimeter in running f
 
 Confirmed with the customer: **₹1 per mm of thickness**, not the ₹1 raw / ₹2 toughened split v2 read into the handwritten notes.
 
-Both figures arrive filled in when polish is added to a section — the rate from the glass, the quantity from the perimeter of the pieces in that section — and both are ordinary editable fields. That is the point: the arithmetic nobody wants to do by hand is done, and a negotiated polish price is one edit rather than an argument with the software. No quote in the sample carries a polish charge, so these are defaults rather than verified figures, which is exactly the case for making them editable and leaving them in JSON.
+The rate arrives filled in from the section's glass — it is the one rate the catalogue still carries, because it is worked out rather than agreed (§3.1) — and the quantity is one click away, on a button that offers the perimeter of every piece in the section. Both are ordinary editable fields. That is the point: the arithmetic nobody wants to do by hand is done, and a negotiated polish price is one edit rather than an argument with the software. No sample carries a polish charge, for the reason above, so these are defaults rather than verified figures — which is exactly the case for making them editable and leaving them in JSON.
+
+**The row says how it was priced.** Polish is billed in a unit that appears nowhere else on the quote — running feet of cut edge, not area — so the charge row carries the same `i` mark as the worked-out columns above it (§2.8), and it reads out both halves with the section's own numbers: `₹1 × 10 mm = ₹10 per running foot`, then `((173 + 395) × 2 × 1) ÷ 304.8 = 3.73 rft` for each row, and the total where there is more than one. The sizes in it are the chargeable ones, since the polished edge is the edge of the piece that gets cut. With no glass picked yet the rate half says what it is waiting on, the thickness being the whole of the price.
 
 Frosting ₹20/sqft and design ₹40/sqft come from the same notes and work the same way — a per-unit charge with the quantity in sqft.
 
@@ -613,7 +619,7 @@ Nothing here blocks the build. **Every name, rate and default lives in JSON unde
 - **Which glasses are foot to foot:** mirror, and only mirror. Fluted, extra clear and black all start on the fixed allowance (§2.2). Implemented.
 - **HSN is a single constant**, 7007, held once in the company master (§4). Implemented.
 - **Treatments and finishes are charges, not products.** Any chargeable item takes a rate, counted or not, on the same row (§2.9). This covers frosting, acid wash, colour etched and polish, so no per-sqft basis is needed.
-- **Polish is ₹1 per mm of thickness** per running foot, filled in as an editable default (§3.3).
+- **Polish is ₹1 per mm of thickness** per running foot, filled in as an editable default (§3.3). It is job work — polish on glass sold here is inside the glass rate — so the charge is listed as `POLISH (JOB WORK)`.
 - **Proforma numbers are typed by the operator.** No auto-numbering.
 - **All catalogue values are provisional and will be confirmed with the customer later**, which is what makes JSON masters the right call rather than a compromise.
 

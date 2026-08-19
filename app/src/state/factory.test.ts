@@ -63,9 +63,10 @@ describe("new charge", () => {
 
   it("prices polish off the glass at 1 rupee per mm, and counts it", () => {
     // The one charge with a rule behind it rather than a price (§3.3).
-    expect(newAdjustment(newSection("mm", "10MM CLEAR TOUGHENED GLASS"), "POLISH").rate).toBe(10);
-    expect(newAdjustment(newSection("mm", "12MM CLEAR TOUGHENED GLASS"), "POLISH").rate).toBe(12);
-    expect(newAdjustment(newSection("mm"), "POLISH").qty).toBe(1);
+    const polish = "POLISH (JOB WORK)";
+    expect(newAdjustment(newSection("mm", "10MM CLEAR TOUGHENED GLASS"), polish).rate).toBe(10);
+    expect(newAdjustment(newSection("mm", "12MM CLEAR TOUGHENED GLASS"), polish).rate).toBe(12);
+    expect(newAdjustment(newSection("mm"), polish).qty).toBe(1);
   });
 });
 

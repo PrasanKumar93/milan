@@ -1,10 +1,11 @@
 import type Decimal from "decimal.js";
 import { useState } from "react";
 import type { ComputedSection } from "../core/engine";
-import type { Adjustment } from "../core/types";
+import type { Adjustment, Quote } from "../core/types";
 import { CUSTOM_CHARGE, chargeTypeFor, chargeTypes } from "../data/masters";
-import { Button, NumberField, Select, TextField } from "../ui/controls";
+import { Button, Info, NumberField, Select, TextField } from "../ui/controls";
 import { ChargeColumns } from "./columns";
+import { polishHint } from "./formulas";
 
 /**
  * Extra charges for a section: holes, cutouts, polish, transport and the rest.
@@ -18,12 +19,14 @@ import { ChargeColumns } from "./columns";
  */
 export function ChargeTable({
   computed,
+  quote,
   perimeter,
   onPatch,
   onSetLabel,
   onRemove,
 }: {
   computed: ComputedSection;
+  quote: Quote;
   /** Perimeter of the section in running feet — the quantity polish is billed on. */
   perimeter: Decimal;
   onPatch: (adjustmentId: string, patch: Partial<Adjustment>) => void;
@@ -51,6 +54,8 @@ export function ChargeTable({
             <ChargeRow
               key={a.adjustment.id}
               computed={a}
+              /* Polish is priced by a rule, so the row carries the rule (§3.3). */
+              rule={polishHint(computed, quote)}
               perimeter={perimeter}
               onPatch={onPatch}
               onSetLabel={onSetLabel}
@@ -76,12 +81,14 @@ const NOTHING = "";
 
 function ChargeRow({
   computed,
+  rule,
   perimeter,
   onPatch,
   onSetLabel,
   onRemove,
 }: {
   computed: ComputedSection["adjustments"][number];
+  rule: string;
   perimeter: Decimal;
   onPatch: (adjustmentId: string, patch: Partial<Adjustment>) => void;
   onSetLabel: (adjustmentId: string, label: string) => void;
@@ -105,10 +112,14 @@ function ChargeRow({
           the card and its figures at the other. */}
       <td className="charge__name">
         <div className="row row--tight">
+          {/* Polish is the one charge worked out rather than agreed, so it says
+              how — the same mark the derived columns above carry (§2.8) — and
+              offers the edge it is measured along as the count. */}
+          {type?.ratePerThicknessMm !== undefined && <Info hint={rule} />}
           {type?.unit === "rft" && (
             <Button
               variant="icon"
-              title="Perimeter of every piece in this section"
+              title="Fill the count with the polished edge of every piece in this section"
               onClick={() => onPatch(adj.id, { qty: Number(perimeter.toFixed(2)) })}
             >
               Use {perimeter.toFixed(2)} rft

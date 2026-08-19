@@ -1,5 +1,5 @@
 {
-  "_note": "dev-plan §3.1, in dropdown order. The names are the office's own, read off the 47 samples, and they are here so that a charge is picked rather than spelled — the samples carry HOLE and HOLES, CUT OUT and CUTOUT, FORSTARTE and FROSTARTE. No entry carries a rate: the customer asked for the price to be typed on the job, since the same charge was billed anywhere from Rs 50 to Rs 200 depending on the piece. What each was billed at across the samples is recorded in dev-plan §3.1 if a default is ever wanted back. POLISH is the exception, and it is a rule rather than a price: Rs 1 per mm of glass thickness per running foot, filled in from the section's glass and editable from there. basis only decides where a charge starts: per_unit charges open with a count of one, the rest with no count, the rate then being the whole charge. Every charge is taxed with the glass it belongs to.",
+  "_note": "dev-plan §3.1, in dropdown order. The names are the office's own, read off the 47 samples, and they are here so that a charge is picked rather than spelled — the samples carry HOLE and HOLES, CUT OUT and CUTOUT, FORSTARTE and FROSTARTE. No entry carries a rate: the customer asked for the price to be typed on the job, since the same charge was billed anywhere from Rs 50 to Rs 200 depending on the piece. What each was billed at across the samples is recorded in dev-plan §3.1 if a default is ever wanted back. POLISH (JOB WORK) is the exception, and it is a rule rather than a price: Rs 1 per mm of glass thickness per running foot, filled in from the section's glass and editable from there. It is named for the job it bills, since polish on glass the factory sells is already inside the glass rate — which is why no sample carries a polish line. basis only decides where a charge starts: per_unit charges open with a count of one, the rest with no count, the rate then being the whole charge. Every charge is taxed with the glass it belongs to.",
   "charges": [
     { "label": "HOLES", "basis": "per_unit" },
     { "label": "50MM HOLE", "basis": "flat" },
@@ -16,6 +16,6 @@
     { "label": "PAINT CHARGE", "basis": "flat" },
     { "label": "TRANSPORT CHARGE", "basis": "flat" },
     { "label": "DOCUMENT CHARGE", "basis": "flat" },
-    { "label": "POLISH", "basis": "per_unit", "ratePerThicknessMm": 1, "unit": "rft" }
+    { "label": "POLISH (JOB WORK)", "basis": "per_unit", "ratePerThicknessMm": 1, "unit": "rft" }
   ]
 }

@@ -149,6 +149,7 @@ export function SectionEditor({
 
         <ChargeTable
           computed={computed}
+          quote={quote}
           perimeter={perimeter}
           onPatch={onPatchCharge}
           onSetLabel={onSetChargeLabel}
