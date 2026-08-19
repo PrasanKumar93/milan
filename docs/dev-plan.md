@@ -522,11 +522,13 @@ Because the deliverable is a downloaded file, there is nothing in the browser wo
 
 ## 7. Validation — warnings only, never blocks
 
-Validation advises and never prevents — the operator is holding the phone, and the app is not. Warnings appear inline and are collected into a pre-download summary the operator can dismiss. **Each one opens with a tag** — `GST missing`, `Wastage rule`, `No rate`, `Discount` — held in a column down the left of the list, because the list is read while somebody is waiting: the tag is what has to land in a glance, and the sentence is there for the operator who then asks why. Built in `core/validate.ts`, except (1) and (4), which the engine already tracks and `OverrideSummary` lists:
+Validation advises and never prevents — the operator is holding the phone, and the app is not. Warnings appear inline and are collected into a pre-download summary the operator can dismiss. **Each one opens with a tag** — `GST missing`, `Wastage rule`, `No rate`, `Discount` — held in a column down the left of the list, because the list is read while somebody is waiting: the tag is what has to land in a glance, and the sentence is there for the operator who then asks why. Built in `core/validate.ts`, except (1) and (4), which the engine already tracks and `OverrideSummary` lists.
+
+**[rules.md](rules.md) is the reference**: every check as it stands, what trips it, and the three numbers behind the borderline ones. This section is the reasoning — why each one is worth a warning at all:
 
 1. Any value that differs from its formula — from a restored draft or an edited workbook (§2.8) — listed with the figure the formula gives.
 2. A rate that looks like a SQFT rate in a SQMT section, or vice versa. Judged against the rate card rather than a fixed threshold: five times off in either direction is a unit mistake, not a deal.
-3. A rounded subtotal more than ₹1 from the computed subtotal, shown with the difference — this is where discounts live (§2.9), so the warning names the amount rather than objecting to it.
+3. A rounded subtotal more than `ROUNDING_GAP` (₹1) from the computed subtotal, shown with the difference — this is where discounts live (§2.9), so the warning names the amount rather than objecting to it.
 4. Wastage on a line differing from the section allowance — the one per-row decision the screen still takes.
 5. A row with no rate, or no quantity. A row with no sizes typed yet is the next row, not a mistake, and is left alone.
 6. A section whose wastage rule differs from the one its glass type implies (§2.2).
