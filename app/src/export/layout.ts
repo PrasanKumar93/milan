@@ -103,13 +103,40 @@ const fig = (text: string, key: string, value: Decimal | number, bold = false): 
   value: typeof value === "number" ? value : value.toNumber(),
 });
 
+/** Where the ruling below the lines begins: the area column, just after the count. */
+const TAIL_FROM = 7;
+
 /**
- * Below the lines the sheet rules a box round each figure it prints and leaves
- * the rest of the width bare, which is what tells a charge from the empty space
- * beside it. Everything that carries text is boxed; nothing else is.
+ * Below the lines the sheet is still one grid, not a set of figures floating
+ * over the page. From the area column across, every cell is ruled — a charge, a
+ * blank, the tax, the total — so the block runs down unbroken from the last
+ * line to the bottom. The width to the left of it is a single empty box, and
+ * the count of pieces stands at that box's right edge rather than in a box of
+ * its own, which is exactly where the office's sheet prints it.
  */
-const boxed = (rows: SheetRow[]): SheetRow[] =>
-  rows.map((row) => row.map((cell) => (cell.text === "" ? cell : { ...cell, box: true })));
+function tailBlock(rows: SheetRow[]): SheetRow[] {
+  if (rows.length === 0) return rows;
+
+  const out = rows.map((row) =>
+    row.map((cell, i) => (i >= TAIL_FROM && !cell.skip ? { ...cell, box: true } : cell)),
+  );
+
+  const beside = Array.from({ length: TAIL_FROM - 1 }, () => SKIP);
+  const covered = Array.from({ length: TAIL_FROM }, () => SKIP);
+
+  // Only the first row of the tail carries anything to the left: the count.
+  const count = out[0][TAIL_FROM - 1];
+
+  return out.map((row, i) =>
+    i === 0
+      ? [
+          { ...count, align: "right" as const, colSpan: TAIL_FROM, rowSpan: out.length, box: true },
+          ...beside,
+          ...row.slice(TAIL_FROM),
+        ]
+      : [...covered, ...row.slice(TAIL_FROM)],
+  );
+}
 
 /**
  * The two-level head. "ACTAUL SIZE" is spelt correctly here — it is one of the
@@ -249,7 +276,7 @@ export function tailRows(computed: ComputedSection, quote: Quote, alone = false)
     );
   }
 
-  return boxed(rows);
+  return tailBlock(rows);
 }
 
 /** Each section total again, then the figure the customer is agreeing to. */
@@ -271,7 +298,7 @@ export function summaryRows(computed: ComputedQuote): SheetRow[] {
     }),
   );
 
-  return boxed(rows);
+  return tailBlock(rows);
 }
 
 export function sectionTitle(computed: ComputedSection): string {

@@ -126,6 +126,35 @@ describe("the printed document, against PROFORMA 6359", () => {
 });
 
 /**
+ * Below the lines the sheet is still one grid. The office's own PDFs rule every
+ * row from the area column across — a charge, a blank, the tax, the total — and
+ * leave the width beside them as a single empty box with the count of pieces at
+ * its right edge. Figures boxed one at a time, with the page showing between
+ * them, is the thing the customer asked us to stop doing.
+ */
+describe("the totals under the lines", () => {
+  const quote = toQuote(sample("7178"));
+  const rows = tailRows(computeQuote(quote).sections[0], quote);
+
+  it("rules every row from the area column across", () => {
+    for (const row of rows) {
+      for (const cell of row.slice(7)) {
+        expect(cell.skip || cell.box).toBeTruthy();
+      }
+    }
+  });
+
+  it("leaves the width beside them one box, with the count standing in it", () => {
+    const beside = rows[0][0];
+
+    expect(beside).toMatchObject({ colSpan: 7, rowSpan: rows.length, box: true, align: "right" });
+    // The count of pieces, which is all the sheet ever prints on that side.
+    expect(beside.text).toBe("3");
+    expect(rows.slice(1).every((row) => row.slice(0, 7).every((cell) => cell.skip))).toBe(true);
+  });
+});
+
+/**
  * The order block is a form: the office fills a few of its lines and writes the
  * rest in by hand. Not one of the 62 samples prints a delivery address, so the
  * line stays a blank to write on rather than being filled with something the
@@ -183,8 +212,8 @@ describe("the PDF", () => {
 
     expect(doc.pageSize).toBe("A4");
     // The order block; a title, the lines and the totals for each of the two
-    // sections; the summary; then bank and terms, the note and the acceptance.
-    expect(tables).toHaveLength(11);
+    // sections; the summary; and the one frame that closes the document.
+    expect(tables).toHaveLength(9);
 
     const lines = tables[2].table as { headerRows: number; body: unknown[][] };
     expect(lines.headerRows).toBe(2);
@@ -220,10 +249,12 @@ describe("the PDF", () => {
     });
     const content = doc.content as unknown as Array<Record<string, never>>;
     const head = content[0] as unknown as { columns: Array<{ image?: string }> };
-    const acceptance = content[content.length - 1] as unknown as {
+    const closing = content[content.length - 1] as unknown as {
       table: { body: Array<Array<{ columns: SignatureBlock[] }>> };
     };
-    const signatures = acceptance.table.body[1][0].columns;
+    // The last row of the closing frame: the four names, under the acceptance.
+    const rows = closing.table.body;
+    const signatures = rows[rows.length - 1][0].columns;
     const stamped = signatures[signatures.length - 1];
 
     expect(head.columns[0].image).toBe("data:image/png;base64,LOGO");

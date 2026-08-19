@@ -270,11 +270,42 @@ describe("the printed page of the workbook", () => {
     }
   });
 
-  it("boxes the figures under the lines and leaves the width beside them bare", () => {
-    const rounded = rowOf(sheet, "H", "HOLES");
+  it("rules the totals as one block, with the width beside them a single box", () => {
+    const holes = rowOf(sheet, "H", "HOLES");
 
-    expect(sheet.getCell(`J${rounded}`).border?.top?.style).toBe("thin");
-    expect(sheet.getCell(`B${rounded}`).border).toBeUndefined();
+    expect(sheet.getCell(`J${holes}`).border?.top?.style).toBe("thin");
+
+    // The bare width to the left of the figures is one cell over every row of
+    // the totals, not a rule under each of them: the sheet has never drawn a
+    // line across the empty half of the page.
+    const beside = sheet.getCell(`B${holes}`);
+    expect(beside.isMerged).toBe(true);
+    expect(beside.master.address).toMatch(/^A\d+$/);
+    expect(beside.border?.left?.style).toBe("thin");
+  });
+
+  it("sets the order details on the head of the first section", () => {
+    const gstin = rowOf(sheet, "A", "GSTIN :");
+
+    // No blank row between them: the details and the glass they were taken for
+    // are one frame on the sheet, as they have always been printed.
+    expect(textAt(sheet, `A${gstin + 1}`)).toMatch(/^SIZE:/);
+  });
+
+  it("closes the document in one frame, the blocks divided inside it", () => {
+    const bank = rowOf(sheet, "A", "BANK DETAILS");
+    const names = rowOf(sheet, "A", "Prepared By :");
+
+    // The border runs down the side of all of it — the bank details, the note,
+    // the acceptance and the empty page between them.
+    for (let row = bank; row <= names; row += 1) {
+      expect(sheet.getCell(`A${row}`).border?.left?.style).toBe("thin");
+      expect(sheet.getCell(`J${row}`).border?.right?.style).toBe("thin");
+    }
+
+    // And what separates one block from the next is a rule, not the page.
+    expect(sheet.getCell(`A${rowOf(sheet, "A", "NOTE :")}`).border?.top?.style).toBe("thin");
+    expect(sheet.getCell(`A${names}`).border?.bottom?.style).toBe("thin");
   });
 
   it("puts the total on the sheet's yellow", () => {

@@ -840,8 +840,13 @@ table.grid tbody tr:hover {
   border: var(--ink-hairline) solid var(--ink-rule);
 }
 
+/*
+ * The order details and the first section are one frame: the details sit on the
+ * head of the glass they were taken for, sharing the rule between them rather
+ * than each drawing one with the page showing through.
+ */
 .print__meta {
-  margin-bottom: 10pt;
+  margin-bottom: calc(var(--ink-hairline) * -1);
 }
 
 .print__meta-row {
@@ -898,11 +903,27 @@ table.grid tbody tr:hover {
 .print__cols {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  margin-bottom: 10pt;
 }
 
 .print__cols > div + div {
   border-left: var(--ink-hairline) solid var(--ink-rule);
+}
+
+/*
+ * The bank details, the note and the acceptance close the document inside one
+ * frame. What separates them is a rule and a band of empty page, both of them
+ * inside the border — the sheet has never shown the page between two blocks.
+ */
+.print__closing > * {
+  border-bottom: var(--ink-hairline) solid var(--ink-rule);
+}
+
+.print__closing > *:last-child {
+  border-bottom: 0;
+}
+
+.print__band {
+  height: 10pt;
 }
 
 /* Nothing sits against a rule: what is under a heading is inset from it. */
@@ -919,7 +940,6 @@ table.grid tbody tr:hover {
 }
 
 .print__note {
-  margin-bottom: 10pt;
   text-align: center;
   color: var(--ink-note);
 }

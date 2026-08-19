@@ -237,15 +237,21 @@ function drawRow(pen: Pen, cells: SheetRow, scope: string, ruled: boolean): void
 
     target.value = cell.value ?? cell.text;
     target.font = cell.bold ? BOLD : FONT;
-    target.alignment = { horizontal: cell.align ?? "left", vertical: "middle" };
+    // A figure standing beside a block of rows belongs on the first of them —
+    // the count of pieces is read against the last line, not against the tax.
+    target.alignment = {
+      horizontal: cell.align ?? "left",
+      vertical: cell.rowSpan ? "top" : "middle",
+    };
     if (cell.value !== undefined) target.numFmt = size(cell) ? pen.sizes : "General";
     if (cell.highlight) target.fill = fillWith(INK.totalFill);
     if (cell.key) pen.at.set(`${scope}${cell.key}`, address(pen.row, col));
 
     if (bottom > pen.row || right > col) pen.sheet.mergeCells(pen.row, col, bottom, right);
 
-    // In the grid every cell is ruled; below the lines only the figures are, and
-    // the bare width beside them is what tells a charge from the space around it.
+    // In the grid every cell is ruled; below the lines the rule is round the
+    // block. A merged block shares one style, so ruling its cells rules the
+    // block itself and leaves no lines inside it.
     if (ruled || cell.box) {
       for (let r = pen.row; r <= bottom; r += 1) {
         for (let c = col; c <= right; c += 1) pen.sheet.getCell(r, c).border = THIN;
@@ -518,9 +524,7 @@ export function buildWorkbook(
   drawRows(pen, summaryRows(computed), "");
   pen.row += 1;
 
-  bankAndTerms(pen);
-  noteBlock(pen);
-  acceptanceBlock(pen, workbook, pictures.stamp);
+  closingBlocks(pen, workbook, pictures.stamp);
 
   // Everything is on the page before any of it is made live, so a formula can
   // point at a cell that is written further down.
@@ -577,7 +581,8 @@ function metaBlock(pen: Pen, quote: Quote): void {
   frame(pen.sheet, top, pen.row - 1);
   divide(pen.sheet, top, pen.row - 1, middle);
   rule(pen.sheet, top + META_DIVIDER);
-  pen.row += 1;
+  // No blank row after it: the details and the first section are one frame, the
+  // details sitting on the head of the glass they were taken for.
 }
 
 /** The glass, its HSN code, the lines, and everything the lines add up to. */
@@ -617,6 +622,29 @@ function sectionBlock(
   if (!last) pen.row += 1;
 }
 
+/**
+ * The three blocks that close the document, inside one frame: bank details and
+ * terms, the note, the acceptance, each closed by a rule and set off by a band
+ * of empty page — the border runs down the sides through all of it.
+ */
+function closingBlocks(pen: Pen, workbook: Workbook, stamp?: string): void {
+  const top = pen.row;
+
+  bankAndTerms(pen);
+  band(pen);
+  noteBlock(pen);
+  band(pen);
+  acceptanceBlock(pen, workbook, stamp);
+
+  frame(pen.sheet, top, pen.row - 1);
+}
+
+/** Empty page between two blocks, ruled off from the one above it. */
+function band(pen: Pen): void {
+  rule(pen.sheet, pen.row);
+  pen.row += 1;
+}
+
 function bankAndTerms(pen: Pen): void {
   const top = pen.row;
   const middle = Math.ceil(COLUMNS / 2);
@@ -640,10 +668,8 @@ function bankAndTerms(pen: Pen): void {
     pen.row += 1;
   }
 
-  frame(pen.sheet, top, pen.row - 1);
   divide(pen.sheet, top, pen.row - 1, middle);
   rule(pen.sheet, top + 1);
-  pen.row += 1;
 }
 
 function noteBlock(pen: Pen): void {
@@ -652,9 +678,8 @@ function noteBlock(pen: Pen): void {
   centre(pen, "NOTE :", { bold: true, colour: INK.heading });
   for (const note of company.notes) centre(pen, note, { colour: INK.note });
 
-  frame(pen.sheet, top, pen.row - 1);
+  rule(pen.sheet, top);
   rule(pen.sheet, top + 1);
-  pen.row += 1;
 }
 
 /** The four names at the foot, with the company's stamp standing over the last. */
@@ -688,7 +713,7 @@ function acceptanceBlock(pen: Pen, workbook: Workbook, stamp?: string): void {
     });
   }
 
-  frame(pen.sheet, top, pen.row);
+  rule(pen.sheet, top);
   rule(pen.sheet, top + 1);
   pen.row += 1;
 }

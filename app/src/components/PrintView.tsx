@@ -80,52 +80,62 @@ export function PrintView({ computed }: { computed: ComputedQuote }) {
           className="print-table print-table--plain print__summary"
         />
 
-        <div className="print__box print__cols">
-          <div>
-            <div className="print__block-head">BANK DETAILS</div>
-            <div className="print__block-body">
-              {bankRows.map((line) => (
-                <div key={line.label + line.value}>
-                  <Labelled field={line} />
-                </div>
-              ))}
-            </div>
-          </div>
-          <div>
-            <div className="print__block-head">TERMS :-</div>
-            <div className="print__block-body">
-              {termRows.map((line) => (
-                <div key={line.label}>
-                  <Labelled field={line} />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div className="print__box print__note">
-          <div className="print__block-head">NOTE :</div>
-          <div className="print__block-body">
-            {company.notes.map((n) => (
-              <div key={n}>{n}</div>
-            ))}
-          </div>
-        </div>
-
-        <div className="print__box">
-          <div className="print__block-head">CUSTOMERS ACCEPTANCE</div>
-          {/* The company's stamp stands over the last of the four names. */}
-          <div className="print__sign">
-            {signatureRows.map((name, i) => (
-              <div key={name.label}>
-                {i === signatureRows.length - 1 && (
-                  <img className="print__stamp" src={STAMP_URL} alt="" />
-                )}
-                <div>
-                  <Labelled field={name} />
-                </div>
+        {/*
+          One frame round the three closing blocks, divided by rules and by a
+          band of empty page, as the sheet has always closed the document.
+        */}
+        <div className="print__box print__closing">
+          <div className="print__cols">
+            <div>
+              <div className="print__block-head">BANK DETAILS</div>
+              <div className="print__block-body">
+                {bankRows.map((line) => (
+                  <div key={line.label + line.value}>
+                    <Labelled field={line} />
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
+            <div>
+              <div className="print__block-head">TERMS :-</div>
+              <div className="print__block-body">
+                {termRows.map((line) => (
+                  <div key={line.label}>
+                    <Labelled field={line} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="print__band" />
+
+          <div className="print__note">
+            <div className="print__block-head">NOTE :</div>
+            <div className="print__block-body">
+              {company.notes.map((n) => (
+                <div key={n}>{n}</div>
+              ))}
+            </div>
+          </div>
+
+          <div className="print__band" />
+
+          <div>
+            <div className="print__block-head">CUSTOMERS ACCEPTANCE</div>
+            {/* The company's stamp stands over the last of the four names. */}
+            <div className="print__sign">
+              {signatureRows.map((name, i) => (
+                <div key={name.label}>
+                  {i === signatureRows.length - 1 && (
+                    <img className="print__stamp" src={STAMP_URL} alt="" />
+                  )}
+                  <div>
+                    <Labelled field={name} />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

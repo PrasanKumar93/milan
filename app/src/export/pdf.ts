@@ -1,4 +1,4 @@
-import type { Content, TDocumentDefinitions, TableCell } from "pdfmake/interfaces";
+import type { Content, ContentText, TDocumentDefinitions, TableCell } from "pdfmake/interfaces";
 import type { ComputedQuote } from "../core/engine";
 import { company } from "../data/masters";
 import {
@@ -119,7 +119,25 @@ function boxLayout(divider = false, rules: number[] = []) {
   };
 }
 
-const heading = (text: string, fontSize = 9): Content => ({
+/**
+ * The closing frame: every rule across it drawn, so each block inside is closed
+ * top and bottom, and the outer border carried down the sides through the empty
+ * bands between them. The rule down the middle is only ever seen beside the
+ * bank details — the blocks below it are one cell wide, and a rule is not drawn
+ * through a cell that spans.
+ */
+const framedBlocks = {
+  hLineWidth: () => RULE,
+  vLineWidth: () => RULE,
+  hLineColor: () => INK.rule,
+  vLineColor: () => INK.rule,
+  paddingTop: () => 4,
+  paddingBottom: () => 4,
+  paddingLeft: () => 5,
+  paddingRight: () => 5,
+};
+
+const heading = (text: string, fontSize = 9): ContentText => ({
   text,
   bold: true,
   fontSize,
@@ -204,7 +222,6 @@ export function buildDoc(computed: ComputedQuote, pictures: Marks = {}): TDocume
         body: metaRows(quote).map(([left, right]) => [fieldText(left), fieldText(right)]),
       },
       layout: boxLayout(true, [META_DIVIDER]),
-      margin: [0, 0, 0, 10] as Margin,
     },
   ];
 
@@ -224,7 +241,10 @@ export function buildDoc(computed: ComputedQuote, pictures: Marks = {}): TDocume
         ],
       },
       layout: boxLayout(true),
-      margin: [0, 0, 0, 0] as Margin,
+      // The order details and the first section are one frame on the sheet: the
+      // details sit on the head of the glass they were taken for. A later
+      // section stands clear of the one before it, as the sheet has it.
+      margin: [0, index === 0 ? -RULE : 0, 0, 0] as Margin,
     });
 
     content.push({
@@ -256,46 +276,37 @@ export function buildDoc(computed: ComputedQuote, pictures: Marks = {}): TDocume
     margin: [0, -RULE, 0, 10] as Margin,
   });
 
-  // The closing blocks read as one thing each, so none of them is allowed to be
-  // split by a page break.
+  /*
+   * The bank details, the note and the acceptance are one frame on the sheet,
+   * divided by rules and by a band of empty page — not three boxes with the
+   * page showing between them. They are also one thing to read, so the block is
+   * kept off a page break as a whole.
+   */
+  const wide = <T extends object>(cell: T): TableCell[] => [
+    { ...cell, colSpan: 2 } as TableCell,
+    {},
+  ];
+  const band = () => wide({ text: "" });
+
   content.push({
     table: {
       widths: ["*", "*"],
       body: [
         [heading("BANK DETAILS"), heading("TERMS :-")],
         [{ stack: bankRows.map(fieldText) }, { stack: termRows.map(fieldText) }],
+        band(),
+        wide(heading("NOTE :")),
+        wide({
+          stack: company.notes.map((n) => ({ text: n })),
+          alignment: "center",
+          color: INK.note,
+        }),
+        band(),
+        wide(heading("CUSTOMERS ACCEPTANCE")),
+        wide({ columns: signatures(stamp) }),
       ],
     },
-    layout: boxLayout(true, [1]),
-    unbreakable: true,
-    margin: [0, 0, 0, 10] as Margin,
-  });
-
-  content.push({
-    table: {
-      widths: ["*"],
-      body: [
-        [heading("NOTE :")],
-        [
-          {
-            stack: company.notes.map((n) => ({ text: n })),
-            alignment: "center",
-            color: INK.note,
-          },
-        ],
-      ],
-    },
-    layout: boxLayout(false, [1]),
-    unbreakable: true,
-    margin: [0, 0, 0, 10] as Margin,
-  });
-
-  content.push({
-    table: {
-      widths: ["*"],
-      body: [[heading("CUSTOMERS ACCEPTANCE")], [{ columns: signatures(stamp) }]],
-    },
-    layout: boxLayout(false, [1]),
+    layout: framedBlocks,
     unbreakable: true,
   });
 
