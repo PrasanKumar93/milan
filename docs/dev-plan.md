@@ -584,6 +584,7 @@ None of the first three errors is possible once areas and taxes are computed rat
 - **HSN 7007 is one constant** in the company master, not a field on products, sections or lines (§4).
 - **Finishes and treatments are charges, not products** — a rate, counted or not, on the same row (§2.9). Polish included, at ₹1 per mm of thickness per running foot (§3.3).
 - **The proforma number is typed**, not generated.
+- **`DISPATCH TO :` is one field, and the `ADDRESS :` under it is a line to write on.** Where the glass goes is typed and printed; the line below it stays blank for a delivery address written in by hand, as it has been on all 62 samples. It is not a second field and it never repeats the customer's own address — a line the office fills in with a pen is not a gap in the form (§2.10).
 - **The PDF does not change.** Same format, same content as today; all transparency is on screen (§2.10).
 - **The preview is A4 at true size**, with the PDF's margins and type, so what wraps on screen wraps on paper (§2.10).
 - **The PDF is rebuilt, not converted** — pdfmake from the shared description, because a static site cannot print HTML and a rasterised page is a picture of the numbers rather than the numbers. A test holds the two renderings to the same rules and fills (§2.10).
