@@ -7,25 +7,22 @@ await page.goto("http://localhost:5199");
 await page.evaluate(() => localStorage.clear());
 await page.reload();
 
-// The section from the screenshot: 10 MM brown, one piece 123 x 345.
 const card = page.locator("section.card").filter({ hasText: "Section 1" });
-const [thickness, glass] = await card.locator(".card__head select").all();
-await glass.selectOption("BROWN TOUGHENED GLASS");
-await thickness.selectOption("10MM");
+const grid = card.locator("table.grid").first();
 
-const line = card.locator("table.grid").first().locator("tbody tr").first();
-await line.locator("input:not([disabled])").nth(0).fill("123");
-await line.locator("input:not([disabled])").nth(1).fill("345");
-await line.locator("input:not([disabled])").nth(4).fill("1733");
+const row = grid.locator("tbody tr").last();
+await row.locator("input:not([disabled])").nth(0).fill("2000");
+await row.locator("input:not([disabled])").nth(1).fill("1000");
+await page.keyboard.press("Enter");
+
+const where = () => page.evaluate(() => document.activeElement?.tagName);
+console.log("after Enter, cursor is on:", await where());
 
 await page.getByRole("button", { name: "Add charge" }).click();
-const charges = card.locator(".grid-wrap").nth(1);
-const row = charges.locator("tbody tr").first();
-await row.locator("select").selectOption("POLISH (JOB WORK)");
-await row.getByRole("button", { name: /Use .* rft/ }).click();
+console.log("after Add charge, cursor is on:", await where());
 
-await row.locator(".info").hover();
-await page.waitForTimeout(300);
-await page.screenshot({ path: "/tmp/polish-tip.png" });
+await page.getByRole("button", { name: "Add line" }).click();
+console.log("after Add line, cursor is on:", await where());
 
+await card.screenshot({ path: "/tmp/enter-rows.png" });
 await browser.close();

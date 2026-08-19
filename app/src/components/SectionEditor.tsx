@@ -133,19 +133,16 @@ export function SectionEditor({
           </Pill>
         </div>
 
+        {/* Each table brings its own Add button, at the right under the end of
+            it, so adding a row is the same movement in either one. */}
         <LineGrid
           quote={quote}
           computed={computed}
           onPatchLine={onPatchLine}
           onResetLine={onResetLine}
           onRemoveLine={onRemoveLine}
+          onAddLine={onAddLine}
         />
-
-        {/* Both Add buttons sit at the right, under the end of the table they
-            fill, so adding a row is the same movement in either one. */}
-        <div className="row row--end">
-          <Button onClick={onAddLine}>Add line</Button>
-        </div>
 
         <ChargeTable
           computed={computed}
@@ -154,11 +151,8 @@ export function SectionEditor({
           onPatch={onPatchCharge}
           onSetLabel={onSetChargeLabel}
           onRemove={onRemoveCharge}
+          onAdd={onAddCharge}
         />
-
-        <div className="row row--end">
-          <Button onClick={onAddCharge}>Add charge</Button>
-        </div>
 
         <hr className="divider" />
 

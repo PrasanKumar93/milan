@@ -103,6 +103,54 @@ describe("the entry screen", () => {
     expect(screen.getByText("76.25")).toBeTruthy();
   });
 
+  it("starts the next line on Enter and moves to it, without stacking empty rows", () => {
+    fillOneLine();
+    const grid = document.querySelectorAll<HTMLElement>("table.grid")[0];
+    const rows = () => within(grid).getAllByRole("row").length;
+    const shape = () => within(grid).getAllByRole("combobox").at(-1) as HTMLSelectElement;
+    const before = rows();
+
+    fireEvent.keyDown(firstRow()[1], { key: "Enter" });
+    expect(rows()).toBe(before + 1);
+
+    // The cursor lands on the first field of the row, which is the one to choose.
+    expect(document.activeElement).toBe(shape());
+
+    // The new row has no size in it, so leaning on the key adds nothing more.
+    fireEvent.keyDown(firstRow()[0], { key: "Enter" });
+    fireEvent.keyDown(firstRow()[0], { key: "Enter" });
+    expect(rows()).toBe(before + 1);
+  });
+
+  it("moves to the new row from the Add button too, in either table", () => {
+    fillOneLine();
+    const grid = document.querySelectorAll<HTMLElement>("table.grid")[0];
+    const charges = document.querySelectorAll<HTMLElement>("table.grid")[1];
+
+    fireEvent.click(screen.getByText("Add line"));
+    expect(document.activeElement).toBe(within(grid).getAllByRole("combobox").at(-1));
+
+    fireEvent.click(screen.getByText("Add charge"));
+    expect(document.activeElement).toBe(within(charges).getAllByRole("combobox").at(-1));
+  });
+
+  it("starts the next charge on Enter, once the row on screen has been named", () => {
+    render(<App />);
+    fireEvent.click(screen.getByText("Add charge"));
+
+    const charges = document.querySelectorAll<HTMLElement>("table.grid")[1];
+    const rows = () => within(charges).getAllByRole("row");
+    const nameOf = (i: number) => within(rows()[i]).getByRole("combobox") as HTMLSelectElement;
+
+    fireEvent.keyDown(nameOf(1), { key: "Enter" });
+    expect(rows()).toHaveLength(2);
+
+    fireEvent.change(nameOf(1), { target: { value: "HOLES" } });
+    fireEvent.keyDown(nameOf(1), { key: "Enter" });
+    expect(rows()).toHaveLength(3);
+    expect(document.activeElement).toBe(nameOf(2));
+  });
+
   it("keeps the charges heading standing over the button that fills it", () => {
     render(<App />);
     const charges = document.querySelectorAll<HTMLElement>("table.grid")[1];

@@ -1,9 +1,11 @@
 import type Decimal from "decimal.js";
 import { useState } from "react";
+import type { KeyboardEvent } from "react";
 import type { ComputedSection } from "../core/engine";
 import type { Adjustment, Quote } from "../core/types";
 import { CUSTOM_CHARGE, chargeTypeFor, chargeTypes } from "../data/masters";
 import { Button, Info, NumberField, Select, TextField } from "../ui/controls";
+import { useAddRow } from "../ui/useAddRow";
 import { ChargeColumns } from "./columns";
 import { polishHint } from "./formulas";
 
@@ -24,6 +26,7 @@ export function ChargeTable({
   onPatch,
   onSetLabel,
   onRemove,
+  onAdd,
 }: {
   computed: ComputedSection;
   quote: Quote;
@@ -32,39 +35,57 @@ export function ChargeTable({
   onPatch: (adjustmentId: string, patch: Partial<Adjustment>) => void;
   onSetLabel: (adjustmentId: string, label: string) => void;
   onRemove: (adjustmentId: string) => void;
+  onAdd: () => void;
 }) {
+  const { body, onKeyDown, addRow } = useAddRow(onAdd);
+
   return (
-    <div className="grid-wrap">
-      <table className="grid grid--zebra">
-        <ChargeColumns />
-        <thead>
-          <tr>
-            <th className="charge__name">Charge</th>
-            <th className="num">Qty</th>
-            {/* A charge has no area; the column stands empty so that everything
+    <>
+      <div className="grid-wrap">
+        <table className="grid grid--zebra">
+          <ChargeColumns />
+          <thead>
+            <tr>
+              <th className="charge__name">Charge</th>
+              <th className="num">Qty</th>
+              {/* A charge has no area; the column stands empty so that everything
                 after it stays under the same heading as the glass above. */}
-            <th />
-            <th className="num">Rate</th>
-            <th className="num">Amount</th>
-            <th />
-          </tr>
-        </thead>
-        <tbody>
-          {computed.adjustments.map((a) => (
-            <ChargeRow
-              key={a.adjustment.id}
-              computed={a}
-              /* Polish is priced by a rule, so the row carries the rule (§3.3). */
-              rule={polishHint(computed, quote)}
-              perimeter={perimeter}
-              onPatch={onPatch}
-              onSetLabel={onSetLabel}
-              onRemove={onRemove}
-            />
-          ))}
-        </tbody>
-      </table>
-    </div>
+              <th />
+              <th className="num">Rate</th>
+              <th className="num">Amount</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody ref={body}>
+            {computed.adjustments.map((a, i) => (
+              <ChargeRow
+                key={a.adjustment.id}
+                computed={a}
+                /* Polish is priced by a rule, so the row carries the rule (§3.3). */
+                rule={polishHint(computed, quote)}
+                perimeter={perimeter}
+                /* An unnamed charge is the end of the list, not one more to add. */
+                onEnter={
+                  i === computed.adjustments.length - 1
+                    ? (e) => onKeyDown(e, a.adjustment.label === "")
+                    : undefined
+                }
+                onPatch={onPatch}
+                onSetLabel={onSetLabel}
+                onRemove={onRemove}
+              />
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Under the end of its own table, like the one over the lines, and doing
+          what Enter on the last row does: a charge row with the cursor already
+          in the name. */}
+      <div className="row row--end">
+        <Button onClick={addRow}>Add charge</Button>
+      </div>
+    </>
   );
 }
 
@@ -83,6 +104,7 @@ function ChargeRow({
   computed,
   rule,
   perimeter,
+  onEnter,
   onPatch,
   onSetLabel,
   onRemove,
@@ -90,6 +112,7 @@ function ChargeRow({
   computed: ComputedSection["adjustments"][number];
   rule: string;
   perimeter: Decimal;
+  onEnter?: (e: KeyboardEvent) => void;
   onPatch: (adjustmentId: string, patch: Partial<Adjustment>) => void;
   onSetLabel: (adjustmentId: string, label: string) => void;
   onRemove: (adjustmentId: string) => void;
@@ -106,7 +129,7 @@ function ChargeRow({
   };
 
   return (
-    <tr>
+    <tr onKeyDown={onEnter}>
       {/* The name stands at the right of its run, against the count, so the
           charge reads as one block rather than a name marooned at one end of
           the card and its figures at the other. */}

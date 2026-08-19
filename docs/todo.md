@@ -2,8 +2,6 @@
 
 - item line in table print
 
-- tab key order
-- add enter new line
 - excel formula clear in file downloaded
 
 - for mirrors foot to foot default select else fixed
