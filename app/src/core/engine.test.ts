@@ -2,7 +2,8 @@ import Decimal from "decimal.js";
 import { describe, expect, it } from "vitest";
 import { corpus, inferUnit, toQuote } from "../test/corpus";
 import { computeQuote } from "./engine";
-import { polishRate, thicknessMm, wastageRuleFor } from "./products";
+import { wastageRuleFor } from "../data/masters";
+import { polishRate, thicknessMm } from "./products";
 import { areaOf, formatInches, parseDimension, toNextFoot } from "./units";
 
 /**
@@ -81,13 +82,23 @@ describe("products", () => {
     expect(thicknessMm("SOMETHING CUSTOM")).toBe(0);
   });
 
-  it("defaults the wastage rule from the glass type", () => {
-    expect(wastageRuleFor("10MM CLEAR TOUGHENED GLASS")).toBe("fixed");
-    expect(wastageRuleFor("12MM KACCHA GLASS")).toBe("fixed");
+  /*
+   * The customer's word: mirror is measured foot to foot, and everything else
+   * takes the fixed allowance. The rule comes off the product master, so the
+   * catalogue and the app cannot say different things about the same glass —
+   * fluted and extra clear were foot to foot in an earlier answer, and a
+   * keyword list here went on warning about them long after it changed.
+   */
+  it("takes the wastage rule from the product master", () => {
     expect(wastageRuleFor("6MM CLEAR MIRROR")).toBe("foot_to_foot");
-    expect(wastageRuleFor("10MM CLEAR FLUTED TOUGHENED GLASS")).toBe("foot_to_foot");
-    expect(wastageRuleFor("8MM BLACK FLUTED TOUGHENED GLASS")).toBe("foot_to_foot");
-    expect(wastageRuleFor("8MM BLACK TOUGHENED GLASS")).toBe("fixed");
+    expect(wastageRuleFor("10MM CLEAR TOUGHENED GLASS")).toBe("fixed");
+    expect(wastageRuleFor("5MM EXTRA CLEAR TOUGHENED GLASS")).toBe("fixed");
+    expect(wastageRuleFor("8MM BLACK FLUTED TOUGHENED GLASS")).toBe("fixed");
+    expect(wastageRuleFor("12MM KACCHA GLASS")).toBe("fixed");
+
+    // A glass typed in by hand is not in the catalogue, and the allowance is
+    // what the office measures by unless somebody says otherwise.
+    expect(wastageRuleFor("22MM LAXMAN GLASS")).toBe("fixed");
   });
 
   it("prices polish at 1 rupee per mm of thickness per running foot", () => {

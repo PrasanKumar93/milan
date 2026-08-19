@@ -1,6 +1,6 @@
 import Decimal from "decimal.js";
 import { d } from "./money";
-import type { InputUnit, Line, WastageRule } from "./types";
+import type { InputUnit, Line } from "./types";
 import { MM_PER_FOOT } from "./units";
 
 /**
@@ -30,18 +30,6 @@ export function splitProduct(product: string): { thickness: string; glassType: s
 export function thicknessMm(product: string): number {
   const digits = splitProduct(product).thickness.match(/\d+/g);
   return digits ? digits.reduce((sum, x) => sum + Number(x), 0) : 0;
-}
-
-/**
- * The wastage rule follows the glass (dev-plan §2.2), so a new section starts
- * with the right one and the operator only touches it when a job is unusual.
- */
-export function wastageRuleFor(product: string): WastageRule {
-  const p = product.toUpperCase();
-  // Plain black toughened is deliberately not here: the customer named "black
-  // brown fluted", which reads as the fluted colours rather than black glass.
-  const footToFoot = ["FLUTED", "EXTRA CLEAR", "MIRROR"];
-  return footToFoot.some((k) => p.includes(k)) ? "foot_to_foot" : "fixed";
 }
 
 /** Polish is ₹1 per mm of thickness per running foot, so 10 MM glass polishes at ₹10/rft. */

@@ -49,6 +49,20 @@ export function glassTypeFor(product: string): GlassType | undefined {
   return glassTypes.filter((g) => g.name === glassType)[0];
 }
 
+/**
+ * The wastage rule follows the glass (dev-plan §2.2), so a new section starts
+ * with the right one and the operator only touches it when a job is unusual.
+ *
+ * It is read off the product master rather than guessed from the name. The
+ * catalogue is where the customer's answer lives — mirror is measured foot to
+ * foot and everything else takes the fixed allowance — and a list of keywords
+ * beside it went on calling fluted and extra clear foot to foot months after
+ * that answer changed, which is a warning against the operator's own setting.
+ */
+export function wastageRuleFor(product: string): WastageRule {
+  return glassTypeFor(product)?.wastageRule ?? "fixed";
+}
+
 /** What the summary block prints: "10MM CTG" rather than the full section title. */
 export function shortCodeFor(product: string): string {
   const { thickness, glassType } = splitProduct(product);

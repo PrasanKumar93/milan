@@ -1,7 +1,7 @@
-import { cardPrice } from "../data/masters";
+import { cardPrice, wastageRuleFor } from "../data/masters";
 import type { ComputedQuote } from "./engine";
 import { formatMoney } from "./money";
-import { splitProduct, wastageRuleFor } from "./products";
+import { splitProduct } from "./products";
 
 /**
  * Warnings, never blocks (dev-plan §7).
@@ -82,7 +82,7 @@ export function warningsFor(computed: ComputedQuote): Warning[] {
         out.push({
           sectionId: id,
           tag: "GST twice",
-          text: `${section.shortCode} is at the card's ₹${price.rate.toLocaleString("en-IN")} per ${quote.printUnit}, which already includes GST, and this quote adds GST on top. Before tax it is about ₹${formatMoney(price.rate / (1 + quote.gstPct / 50))}.`,
+          text: `${section.product} is at the card's ₹${price.rate.toLocaleString("en-IN")} per ${quote.printUnit}, which already includes GST, and this quote adds GST on top. Before tax it is about ₹${formatMoney(price.rate / (1 + quote.gstPct / 50))}.`,
         });
       }
 
@@ -90,7 +90,7 @@ export function warningsFor(computed: ComputedQuote): Warning[] {
         out.push({
           sectionId: id,
           tag: "GST missing",
-          text: `${section.shortCode} is at the card's ₹${price.rate.toLocaleString("en-IN")} per ${quote.printUnit}, which is before GST, and this quote adds none.`,
+          text: `${section.product} is at the card's ₹${price.rate.toLocaleString("en-IN")} per ${quote.printUnit}, which is before GST, and this quote adds none.`,
         });
       }
     }
@@ -99,7 +99,7 @@ export function warningsFor(computed: ComputedQuote): Warning[] {
       out.push({
         sectionId: id,
         tag: "Wastage rule",
-        text: `${section.shortCode} is usually measured ${
+        text: `${section.product} is usually measured ${
           wastageRuleFor(section.product) === "foot_to_foot" ? "foot to foot" : "on a fixed allowance"
         }, and this section is set the other way.`,
       });
@@ -140,7 +140,7 @@ export function warningsFor(computed: ComputedQuote): Warning[] {
         sectionId: id,
         // Which of the two it is, before the sentence says how much.
         tag: big ? "Discount" : "Rounding",
-        text: `${section.shortCode} is rounded ${s.discount.isPositive() ? "down" : "up"} by ₹${formatMoney(
+        text: `${section.product} is rounded ${s.discount.isPositive() ? "down" : "up"} by ₹${formatMoney(
           s.discount.abs(),
         )}, ${Math.abs(pct).toFixed(1)}% of the total${big ? " — larger than a rounding" : ""}.`,
       });

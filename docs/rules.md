@@ -84,8 +84,11 @@ changes the rule:
 - **The GST pair** reads `sqmtIncludesGst` and `sqftIncludesGst` in
   `rateCard.json`. The square-foot column is GST-inclusive and the square-metre
   column is not (§2.5), which is the whole reason those two warnings exist.
-- **`Wastage rule`** reads `wastageRuleFor`, which today says mirror is measured
-  foot to foot and every other glass on a fixed allowance (§2.2).
+- **`Wastage rule`** reads `wastageRuleFor`, which returns the `wastageRule` on
+  the glass in `products.json` — mirror foot to foot, every other glass on a
+  fixed allowance (§2.2), and a fixed allowance for a name typed in by hand.
+  Changing which glasses are measured which way is an edit to that file, and
+  nothing in the code has an opinion of its own to contradict it.
 - **`Rate unit`** and the GST pair both need the glass to be on the rate card at
   all. Mirror, fluted, kaccha and laminated are not, so they are never checked
   against a price.

@@ -120,6 +120,35 @@ describe("warnings", () => {
         q.sections[0].wastageRule = "foot_to_foot";
       }),
     );
-    expect(texts.some((t) => t.includes("usually measured on a fixed allowance"))).toBe(true);
+    expect(texts).toContain(
+      "10MM CLEAR TOUGHENED GLASS is usually measured on a fixed allowance, and this section is set the other way.",
+    );
+  });
+
+  /*
+   * Mirror is the glass measured foot to foot; everything else takes the fixed
+   * allowance. This once came from a list of words in the code, which went on
+   * calling extra clear and fluted foot to foot after the customer said
+   * otherwise — so a section set exactly as the catalogue has it was told it
+   * was set the other way.
+   */
+  it("say nothing about glass set the way the catalogue has it", () => {
+    const extraClear = quoteWith((q) => {
+      q.sections[0].product = "5MM EXTRA CLEAR TOUGHENED GLASS";
+      q.sections[0].lines[0].rate = 0;
+    });
+
+    expect(tagsFor(extraClear)).not.toContain("Wastage rule");
+    expect(tagsFor(quoteWith((q) => (q.sections[0].product = "8MM BLACK FLUTED TOUGHENED GLASS")))).not.toContain(
+      "Wastage rule",
+    );
+  });
+
+  // A warning names the glass as the section header does. The short code is an
+  // abbreviation for the printed summary, and beside a sentence it reads as a
+  // name somebody cut short.
+  it("name the glass in full", () => {
+    const texts = textsFor(quoteWith((q) => (q.gstApplicable = false)));
+    expect(texts.some((t) => t.startsWith("10MM CLEAR TOUGHENED GLASS is at the card's"))).toBe(true);
   });
 });

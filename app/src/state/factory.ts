@@ -1,6 +1,12 @@
-import { wastageRuleFor } from "../core/products";
 import type { Adjustment, InputUnit, Line, Quote, Section } from "../core/types";
-import { chargeTypeFor, company, defaultWastage, shapes, shortCodeFor } from "../data/masters";
+import {
+  chargeTypeFor,
+  company,
+  defaultWastage,
+  shapes,
+  shortCodeFor,
+  wastageRuleFor,
+} from "../data/masters";
 import { polishRate } from "../core/products";
 
 /**

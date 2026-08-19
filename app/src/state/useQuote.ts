@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { polishRate } from "../core/products";
-import { wastageRuleFor } from "../core/products";
 import type { Adjustment, InputUnit, Line, Quote, Section } from "../core/types";
-import { chargeTypeFor, shortCodeFor } from "../data/masters";
+import { chargeTypeFor, shortCodeFor, wastageRuleFor } from "../data/masters";
 import { clearDraft, isWorthRestoring, loadDraft, saveDraft } from "../storage/draft";
 import { newAdjustment, newLine, newQuote, newSection, switchInputUnit } from "./factory";
 
