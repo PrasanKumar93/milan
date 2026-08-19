@@ -886,6 +886,15 @@ table.grid tbody tr:hover {
   border-left: var(--ink-hairline) solid var(--ink-rule);
 }
 
+/*
+ * Every block on the page stands 10pt clear of the next, and the summary is a
+ * block like the rest — without this the bank details are drawn against the
+ * total, which the download has never done (see the margins in `pdf.ts`).
+ */
+.print__summary {
+  margin-bottom: 10pt;
+}
+
 .print__cols {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -992,6 +1001,16 @@ table.print-table:not(.print-table--plain) tbody td {
  */
 table.print-table--plain td.boxed {
   border: var(--ink-hairline) solid var(--ink-rule);
+}
+
+/*
+ * The sheet is one grid: the subtotal sits on the last line and the total sits
+ * on the charge above it, sharing a rule. These are separate tables only
+ * because the rules change below the lines, so each is pulled up onto the one
+ * before by the width of a rule — otherwise the join reads as a double line.
+ */
+table.print-table--plain {
+  margin-top: calc(var(--ink-hairline) * -1);
 }
 
 table.print-table--plain td.highlight {

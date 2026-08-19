@@ -48,7 +48,7 @@ export default function App() {
           onChange={setView}
           tabs={[
             { value: "entry", label: "Entry" },
-            { value: "print", label: "What prints" },
+            { value: "print", label: "Preview" },
           ]}
         />
 

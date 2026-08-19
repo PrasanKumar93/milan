@@ -67,7 +67,7 @@ A row can also say what each figure *is* — a cell carries a `key` like `line.2
 
 The two say the same thing in different vocabularies — CSS classes on one side, pdfmake's cell properties on the other — and that is where they can drift: the ruled grid once came out of the download unboxed while the preview looked right. So `renderings.test.tsx` asks each renderer to describe the sheet cell by cell — the text, whether it is ruled, whether it is filled — and requires the two descriptions to be the same list. It runs in the normal test suite and it fails on exactly that bug.
 
-The **What prints** tab is the page at true size: 210 mm wide, with the PDF's own margins and 8 pt type, so a heading that wraps on screen wraps on paper. Both renderings carry the sheet's own look — the mark from `public/logo.png`, the stamp from `public/stamp.png` over Authorised Signatory, red headings, a purple title, the note in blue, the boxed blocks and `TOTAL AMOUNT` on yellow — and the colours survive Ctrl-P as well as Download PDF. Replacing either picture is dropping a new PNG into `public/`; `export/marks.ts` fetches them once and hands pdfmake the bytes.
+The **Preview** tab is the page at true size: 210 mm wide, with the PDF's own margins and 8 pt type, so a heading that wraps on screen wraps on paper. Both renderings carry the sheet's own look — the mark from `public/logo.png`, the stamp from `public/stamp.png` over Authorised Signatory, red headings, a purple title, the note in blue, the boxed blocks and `TOTAL AMOUNT` on yellow — and the colours survive Ctrl-P as well as Download PDF. Replacing either picture is dropping a new PNG into `public/`; `export/marks.ts` fetches them once and hands pdfmake the bytes.
 
 ## Nothing is filed away
 

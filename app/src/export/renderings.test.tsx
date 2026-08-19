@@ -104,6 +104,25 @@ describe("the preview and the PDF", () => {
     expect(grid.layout?.hLineWidth?.(between, { table: { body } })).toBeGreaterThan(0);
   });
 
+  it("runs the totals onto the lines, with no white between the two", () => {
+    const content = buildDoc(computeQuote(quote)).content as unknown as Array<{
+      table?: { headerRows?: number };
+      margin?: number[];
+    }>;
+
+    const grids = content
+      .map((c, i) => (c.table?.headerRows === undefined ? -1 : i))
+      .filter((i) => i >= 0);
+    // The totals sit right after each grid, and the summary right after the last.
+    const joins = [...grids.map((i) => i + 1), grids[grids.length - 1] + 2];
+
+    // Below the lines the rules come from the cells, so the totals and the
+    // summary are tables of their own. Each is drawn onto the one above it: a
+    // positive margin would open a gap the sheet has never had, and none at all
+    // would leave the two borders side by side as one thick line.
+    for (const i of joins) expect(content[i].margin?.[1]).toBeLessThan(0);
+  });
+
   // Two empty lists would agree with each other and prove nothing.
   it("are describing a sheet that is ruled, boxed and has its total on yellow", () => {
     const marks = onScreen(quote);

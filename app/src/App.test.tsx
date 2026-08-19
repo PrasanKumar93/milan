@@ -240,7 +240,7 @@ describe("the entry screen", () => {
 
   it("keeps the working off the printed document", () => {
     fillOneLine();
-    fireEvent.click(screen.getByText("What prints"));
+    fireEvent.click(screen.getByText("Preview"));
 
     expect(screen.getByText("PROFORMA INVOICE")).toBeTruthy();
     expect(screen.getByText("BANK DETAILS")).toBeTruthy();

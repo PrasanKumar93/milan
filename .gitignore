@@ -9,3 +9,5 @@ dist/
 # the root so the app's own scripts, which are code, are kept.
 /data/
 /scripts/
+
+temp/

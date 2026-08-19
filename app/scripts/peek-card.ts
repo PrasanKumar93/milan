@@ -24,7 +24,7 @@ for (const [h, w] of sizes) {
   await page.keyboard.press("Enter");
 }
 
-await page.getByRole("tab", { name: "What prints" }).click();
+await page.getByRole("tab", { name: "Preview" }).click();
 await page.locator(".print-table").first().screenshot({ path: "/tmp/print-grid.png" });
 
 await browser.close();

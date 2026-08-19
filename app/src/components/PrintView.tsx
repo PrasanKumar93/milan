@@ -75,7 +75,10 @@ export function PrintView({ computed }: { computed: ComputedQuote }) {
           />
         ))}
 
-        <Sheet rows={summaryRows(computed)} className="print-table print-table--plain" />
+        <Sheet
+          rows={summaryRows(computed)}
+          className="print-table print-table--plain print__summary"
+        />
 
         <div className="print__box print__cols">
           <div>

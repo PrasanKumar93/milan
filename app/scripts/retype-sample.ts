@@ -213,7 +213,7 @@ async function retype(page: Page, proformaNo: string) {
   }
 
   await page.screenshot({ path: resolve(outDir, `${proformaNo}-entry.png`), fullPage: true });
-  await page.getByRole("tab", { name: "What prints" }).click();
+  await page.getByRole("tab", { name: "Preview" }).click();
   await page.screenshot({ path: resolve(outDir, `${proformaNo}-print.png`), fullPage: true });
 
   // And press the buttons an operator presses, so the files themselves are here

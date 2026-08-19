@@ -238,16 +238,22 @@ export function buildDoc(computed: ComputedQuote, pictures: Marks = {}): TDocume
         body: toBody(tailRows(section, quote, computed.sections.length === 1)),
       },
       layout: cellBorders,
-      // The last section runs straight into the summary, as the sheet has the
-      // total sitting on the charge above it.
-      margin: [0, 2, 0, last ? 0 : 10] as Margin,
+      /*
+       * The sheet is one continuous grid: the subtotal sits on the last line
+       * and the total sits on the charge above it, sharing a rule rather than
+       * standing clear of it. These are separate tables only because the rules
+       * below the lines come from the cells, so the joins are closed by hand —
+       * pulled up by the width of a rule, which lands the two borders on each
+       * other instead of leaving a pair.
+       */
+      margin: [0, -RULE, 0, last ? 0 : 10] as Margin,
     });
   }
 
   content.push({
     table: { widths: widths(), body: toBody(summaryRows(computed)) },
     layout: cellBorders,
-    margin: [0, 0, 0, 10] as Margin,
+    margin: [0, -RULE, 0, 10] as Margin,
   });
 
   // The closing blocks read as one thing each, so none of them is allowed to be
