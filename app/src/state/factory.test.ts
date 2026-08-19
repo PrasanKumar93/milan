@@ -49,20 +49,23 @@ describe("new line", () => {
 });
 
 describe("new charge", () => {
-  it("fills in the catalogue default", () => {
-    const charge = newAdjustment(newSection("mm"), "HOLES");
-    expect(charge.rate).toBe(30);
-  });
+  it("arrives unnamed, and no name carries a price", () => {
+    const charge = newAdjustment(newSection("mm"));
+    expect(charge.label).toBe("");
+    expect(charge.qty).toBe(0);
+    expect(charge.rate).toBe(0);
 
-  it("starts a counted charge at one, and one charged once at none", () => {
-    // Holes are counted; a document charge is a figure, so it has nothing to count.
+    // The catalogue says how a charge is billed, never at what (§3.1).
+    expect(newAdjustment(newSection("mm"), "HOLES").rate).toBe(0);
     expect(newAdjustment(newSection("mm"), "HOLES").qty).toBe(1);
     expect(newAdjustment(newSection("mm"), "DOCUMENT CHARGE").qty).toBe(0);
   });
 
-  it("prices polish off the glass at 1 rupee per mm", () => {
+  it("prices polish off the glass at 1 rupee per mm, and counts it", () => {
+    // The one charge with a rule behind it rather than a price (§3.3).
     expect(newAdjustment(newSection("mm", "10MM CLEAR TOUGHENED GLASS"), "POLISH").rate).toBe(10);
     expect(newAdjustment(newSection("mm", "12MM CLEAR TOUGHENED GLASS"), "POLISH").rate).toBe(12);
+    expect(newAdjustment(newSection("mm"), "POLISH").qty).toBe(1);
   });
 });
 

@@ -283,24 +283,13 @@ Adjustment {
 
 **Every adjustment prints.** v2 gave adjustments a print flag; confirmed with the team that a charge added to a quote is a charge shown on the quote, so the flag is gone and the column with it. Print flags still exist elsewhere (§2.10) — just not here.
 
-**Every adjustment is optional and nothing is pre-added.** A section starts with an empty list; the operator clicks **Add charge**, and the row arrives with the first catalogue entry selected and its rate pre-filled, and its count set to one where the catalogue says the charge is normally counted — all still editable. **12 of 47 quotes carry no adjustments at all**, so anything auto-added would be wrong more often than right.
+**Every adjustment is optional and nothing is pre-added.** A section starts with an empty list; the operator clicks **Add charge**, and the row arrives with nothing chosen and nothing charged — the catalogue names a charge but no longer prices one (§3.1). **12 of 47 quotes carry no adjustments at all**, so anything auto-added would be wrong more often than right.
 
 **The charges table keeps its heading with nothing under it, and Add charge sits below it** — the same shape as the grid and its Add line button above. An empty section then says what a charge would be made of before one exists, and the two buttons read down the card in the order the work happens: sizes, then extras.
 
-**The charge name is a dropdown over the catalogue in §3.1, with an `Others…` entry that reveals a free-text box.** v2 proposed one-click chips for the three most common charges; that was replaced because it splits the interaction in two — a chip for some charges and a dropdown for the rest — where a single Add-charge button matched to the Add-line button beside it is one thing to learn. The dropdown is also what kills the spelling drift in §8, and `Others…` means an unforeseen charge never needs a code change.
+**The charge name is a dropdown over the catalogue in §3.1, opening on `— Select —`, with an `Others…` entry that reveals a free-text box.** It is the same three states as the glass (§3.2) and for the same reason: nothing is named for the operator, the list is there so the office's own spelling is picked rather than retyped, and a charge the list has never heard of is never a blocked quote. v2 proposed one-click chips for the three most common charges; that was replaced because it splits the interaction in two — a chip for some charges and a dropdown for the rest — where a single Add-charge button matched to the Add-line button beside it is one thing to learn.
 
-Usage across the 47 quotes, which sets the order of the catalogue:
-
-| Charge | Quotes | |
-|---|---|---|
-| HOLES | 23 | 49% |
-| CUTOUT | 19 | 40% |
-| DOCUMENT CHARGE | 12 | 26% |
-| CORNER ROUND | 5 | 11% |
-| L CUTOUT · 50MM HOLE | 4 each | 9% |
-| CROSS · TEMPLATE | 3 each | 6% |
-| U CUTOUT · FROSTING | 2 each | 4% |
-| TRANSPORT · DESIGN · SHAPE · BIG CUTOUT · PAINT | 1 each | 2% |
+What the samples charged, and how often, is in the table in §3.1.
 
 Confirmed with the team that **specific customers get discounts**, which explains the one quote the engine could not reproduce (BHOOTH SINGH, `45942.623 → 44705`, a ₹1,238 reduction booked as a rounding adjustment).
 
@@ -340,35 +329,36 @@ A useful consequence: because the PDF is fixed, the four sample quotations doubl
 
 Both catalogues below ship as JSON in `src/data/` and are the source for the two dropdowns in the entry screen. **Every name and rate in them is provisional** — they are derived from the samples and the brochure, and the customer will re-verify them. Because they are JSON rather than code, correcting one is an edit and a commit, not a release.
 
-### 3.1 Charge catalogue
+### 3.1 Charge catalogue — the names, without the prices
 
-This is the exact list behind the charge dropdown, in the order it appears. Rates are defaults and are edited per quote.
+**The catalogue keeps every name and carries no rate.** A charge row arrives unnamed, uncounted and at ₹0; the name is picked off the list and the price is typed. The customer asked for the rates to go and the names to stay, which splits the two things the catalogue was doing: the names are the office's own and are worth picking rather than spelling — the samples carry `HOLE` and `HOLES`, `CUT OUT` and `CUTOUT`, `FORSTARTE` and `FROSTARTE CHARGE` — while the price is a judgement made per job, and a default price is a price nobody re-reads. Polish is the exception, and it is a rule rather than a price: ₹1 per mm of glass thickness per running foot (§3.3), filled in from the section's glass because it is a calculation, not a quote.
 
-| Charge           | Basis    | Default | Seen on |
-| ---------------- | -------- | ------- | ------- |
-| HOLES            | per unit | ₹30     | 24      |
-| 50MM HOLE        | per unit | ₹100    | 1       |
-| CUTOUT           | per unit | ₹100    | 19      |
-| L CUTOUT         | per unit | ₹150    | 4       |
-| U CUTOUT         | per unit | ₹250    | 2       |
-| BIG CUTOUT       | flat     | ₹400    | 1       |
-| CORNER ROUND     | flat     | ₹100    | 5       |
-| SHAPE CHARGE     | flat     | ₹100    | 1       |
-| CROSS CHARGE     | flat     | ₹100    | 3       |
-| TEMPLATE CHARGE  | flat     | ₹400    | 3       |
-| DESIGN CHARGE    | flat     | ₹1350   | 1       |
-| FROSTING CHARGE  | flat     | ₹610    | 2       |
-| PAINT CHARGE     | flat     | ₹800    | 1       |
-| TRANSPORT CHARGE | flat     | ₹500    | 1       |
-| DOCUMENT CHARGE  | flat     | ₹100    | 12      |
-| POLISH           | per unit | ₹1/mm per rft | 0 |
-| Others…          | flat     | —       | —       |
+The list still says **how** each charge is billed, since that is the office's own practice and not a number to negotiate: `HOLES 6 180` prints a count and `DOCUMENT CHARGE 100` does not, which is the `basis` field, and all it now decides is whether the row opens at one or at none.
 
-Polish is the one entry whose rate is computed rather than fixed, because it depends on the glass (§3.3). Any charge can be switched between per-unit and flat on the row, so a treatment priced per sqft on one job and as a lump sum on the next needs no second entry.
+What each was billed at across the 47 samples is kept here as evidence rather than as a default. Restoring any of it is a `"rate"` back on a line of `chargeTypes.json`:
 
-Where a charge appears at several rates the most recent is the default: U CUTOUT at ₹150 and ₹250, CORNER ROUND ₹50–200, TEMPLATE CHARGE ₹300 / ₹400 / ₹1500, FROSTING ₹610 / ₹2100. The rate field being editable is what makes that spread a non-problem.
+| Charge           | Counted?          | Rates billed          | In quotes |
+| ---------------- | ----------------- | --------------------- | --------- |
+| HOLES            | always            | ₹30 throughout        | 22        |
+| CUTOUT           | always            | ₹100 throughout       | 18        |
+| DOCUMENT CHARGE  | never             | ₹100 throughout       | 12        |
+| CORNER ROUND     | never             | 50 ×2, 100, 150, 200  | 5         |
+| 50MM HOLE        | never             | 100 ×3, 200           | 4         |
+| TEMPLATE CHARGE  | never             | 400, 300, 1500        | 3         |
+| L CUTOUT         | always            | ₹150 throughout       | 3         |
+| CROSS CHARGE     | never             | ₹100 throughout       | 2         |
+| U CUTOUT         | always            | 150, then 250         | 2         |
+| FROSTING CHARGE  | never             | 610, 2100             | 2         |
+| TRANSPORT CHARGE | never             | ₹500                  | 1         |
+| DESIGN CHARGE    | never             | ₹1350                 | 1         |
+| SHAPE CHARGE     | never             | ₹100                  | 1         |
+| BIG CUTOUT       | never             | ₹400                  | 1         |
+| PAINT CHARGE     | never             | ₹800                  | 1         |
+| POLISH           | always            | ₹1/mm per rft         | 0 — from the customer, not the samples |
 
-**L and U cutouts are shape cuts, not hole sizes** — the glass is cut to an L or U profile, which is slower and riskier than a plain rectangle, hence the higher rate. `BIG CUTOUT`, `CORNER ROUND` and `SHAPE CHARGE` belong to the same family and sit together in the picker.
+One note on that table for whoever restores a figure from it: these are what was billed, not what was quoted off a list. `HOLES` at ₹30 and `CUTOUT` at ₹100 never move across the whole corpus and would be safe defaults; `CORNER ROUND` runs from ₹50 to ₹200 and `TEMPLATE CHARGE` from ₹300 to ₹1500 on jobs weeks apart, which is the customer's point about typing the price.
+
+**L and U cutouts are shape cuts, not hole sizes** — the glass is cut to an L or U profile, which is slower and riskier than a plain rectangle, hence the higher rate. `BIG CUTOUT`, `CORNER ROUND` and `SHAPE CHARGE` belong to the same family.
 
 ### 3.2 Product catalogue (from the brochure)
 

@@ -111,12 +111,21 @@ describe("the entry screen", () => {
     fireEvent.click(screen.getByText("Add charge"));
     const row = within(charges).getAllByRole("row")[1];
     const cells = within(row).getAllByRole("textbox") as HTMLInputElement[];
+    const name = within(row).getByRole("combobox") as HTMLSelectElement;
 
-    // One hole at ₹30, and the ₹30 it comes to is worked out rather than typed.
-    expect(cells[0].value).toBe("1");
-    expect(cells[1].value).toBe("30");
-    expect(cells[2].value).toBe("30");
+    // Nothing chosen, nothing counted, nothing charged: the name comes off the
+    // office's list and the price is the job's (§3.1). Only the amount is
+    // worked out rather than typed.
+    expect(name.value).toBe("");
+    expect(cells.map((c) => c.value)).toEqual(["", "0", "0"]);
     expect(cells[2].disabled).toBe(true);
+
+    // Naming it says how it is billed — holes are counted — but never at what.
+    fireEvent.change(name, { target: { value: "HOLES" } });
+    const named = within(within(charges).getAllByRole("row")[1]).getAllByRole(
+      "textbox",
+    ) as HTMLInputElement[];
+    expect(named.map((c) => c.value)).toEqual(["1", "0", "0"]);
   });
 
   it("takes a glass name the catalogue has never heard of", () => {

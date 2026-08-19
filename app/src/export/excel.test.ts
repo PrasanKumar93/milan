@@ -90,9 +90,11 @@ function quote(): Quote {
     { ...newLine(toughened), actualH: 2000, actualW: 1000, qty: 2, rate: 1238 },
     { ...newLine(toughened), actualH: 1220, actualW: 610, qty: 1, rate: 1238 },
   ];
+  // Charges are typed on the job now, name and price alike (§3.1), so a quote
+  // being checked types them the way an operator does.
   toughened.adjustments = [
-    { ...newAdjustment(toughened, "HOLES"), qty: 4 },
-    newAdjustment(toughened, "DOCUMENT CHARGE"),
+    { ...newAdjustment(toughened, "HOLES"), qty: 4, rate: 30 },
+    { ...newAdjustment(toughened, "DOCUMENT CHARGE"), rate: 100 },
   ];
 
   const mirror = newSection("mm", "6MM CLEAR MIRROR");

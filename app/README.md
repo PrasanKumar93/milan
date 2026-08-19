@@ -114,3 +114,5 @@ Nothing else is chosen for the operator either. Both product dropdowns open on `
 ## Masters are provisional
 
 Everything in `src/data/` — product names, charge names, default rates — is derived from the sample quotes and the sales brochure and has not yet been confirmed by the business. Correcting one is a JSON edit and a commit, which is also the version history.
+
+`chargeTypes.json` is the one that has been through that already: it keeps all sixteen names and no longer carries a single rate. The customer read the figures taken off the samples and asked for the prices to go and the names to stay, which is the split that matters — the names are the office's own and are worth picking rather than spelling, while the price is decided per job, and `CORNER ROUND` was billed anywhere from ₹50 to ₹200. So a charge row opens on `— Select —` at ₹0. Polish is the exception, being a rule rather than a price: ₹1 per mm of glass thickness per running foot, worked out from the section's glass. What each charge was actually billed at is kept in dev-plan §3.1 for whoever wants a default back.

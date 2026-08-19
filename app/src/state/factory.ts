@@ -1,6 +1,6 @@
 import { wastageRuleFor } from "../core/products";
 import type { Adjustment, InputUnit, Line, Quote, Section } from "../core/types";
-import { chargeTypeFor, chargeTypes, company, defaultWastage, shapes, shortCodeFor } from "../data/masters";
+import { chargeTypeFor, company, defaultWastage, shapes, shortCodeFor } from "../data/masters";
 import { polishRate } from "../core/products";
 
 /**
@@ -61,13 +61,14 @@ export function newSection(inputUnit: InputUnit, product = ""): Section {
 }
 
 /**
- * Charges arrive with their catalogue defaults filled in. Polish is the one
- * whose rate depends on the glass, so it is computed from the section (§3.3).
- *
- * The catalogue also says whether a charge is normally counted, which sets the
- * count to one hole or to none at all; either way the operator can change it.
+ * A charge arrives empty — no name, no count, nothing to charge — because the
+ * customer types the charge and its price on the job (§3.1). Naming one off the
+ * catalogue fills in what the catalogue knows: polish is the one whose rate is a
+ * rule rather than a price, so it is computed from the glass (§3.3), and the
+ * catalogue also says whether a charge is normally counted, which opens the row
+ * at one rather than at none. Either way the operator can change it.
  */
-export function newAdjustment(section: Section, label = chargeTypes[0].label): Adjustment {
+export function newAdjustment(section: Section, label = ""): Adjustment {
   const type = chargeTypeFor(label);
   const rate =
     type?.ratePerThicknessMm !== undefined ? polishRate(section.product) : (type?.rate ?? 0);
