@@ -314,12 +314,12 @@ h3 {
   box-shadow: 0 1px 0 rgba(20, 23, 28, 0.03);
 }
 
-.btn:hover {
+.btn:hover:not(:disabled) {
   background: var(--surface-sunken);
   border-color: var(--text-quaternary);
 }
 
-.btn:active {
+.btn:active:not(:disabled) {
   background: #eff1f4;
   box-shadow: none;
 }
@@ -329,18 +329,26 @@ h3 {
   outline-offset: 1px;
 }
 
+/* Held while the files are being built, so a second press cannot ask for them
+   twice — it still reads as the button it was a moment ago. */
+.btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+  box-shadow: none;
+}
+
 .btn--primary {
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
 }
 
-.btn--primary:hover {
+.btn--primary:hover:not(:disabled) {
   background: #1a63d2;
   border-color: #1a63d2;
 }
 
-.btn--primary:active {
+.btn--primary:active:not(:disabled) {
   background: #1857b8;
 }
 
@@ -350,7 +358,7 @@ h3 {
   color: var(--text-secondary);
 }
 
-.btn--ghost:hover {
+.btn--ghost:hover:not(:disabled) {
   background: #eff1f4;
 }
 
@@ -358,7 +366,7 @@ h3 {
   color: var(--danger);
 }
 
-.btn--danger:hover {
+.btn--danger:hover:not(:disabled) {
   background: #fdf0ee;
   border-color: var(--danger);
 }

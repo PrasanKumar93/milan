@@ -68,14 +68,18 @@ await cardFor(2).screenshot({ path: "/tmp/units-section.png" });
 await page.getByRole("tab", { name: "Preview" }).click();
 await page.locator(".print").first().screenshot({ path: "/tmp/units-preview.png" });
 
-// The download the operator actually gets, both of them, off the same page.
-for (const [button, file] of [
-  ["Download PDF", "/tmp/units.pdf"],
-  ["Download Excel", "/tmp/units.xlsx"],
-] as const) {
-  const download = page.waitForEvent("download");
-  await page.getByRole("button", { name: button }).click();
-  await (await download).saveAs(file);
+// What the operator actually gets: one press, both files. They are collected as
+// they arrive rather than waited for one after the other, which would miss the
+// second if it landed while the first was being dealt with.
+const files: import("playwright-core").Download[] = [];
+page.on("download", (file) => files.push(file));
+
+await page.getByRole("button", { name: "Download PDF + Excel" }).click();
+await page.waitForFunction(() => !document.body.textContent?.includes("Preparing"));
+
+for (const file of files) {
+  await file.saveAs(file.suggestedFilename().endsWith(".pdf") ? "/tmp/units.pdf" : "/tmp/units.xlsx");
 }
+console.log(`one press handed over ${files.map((f) => f.suggestedFilename()).join(" and ")}`);
 
 await browser.close();

@@ -15,21 +15,29 @@ import { Button, Callout, Confirm, Tabs } from "./ui/controls";
 export default function App() {
   const q = useQuote();
   const [view, setView] = useState<"entry" | "print">("entry");
-  const [busy, setBusy] = useState<"" | "pdf" | "excel">("");
+  const [busy, setBusy] = useState(false);
   const [discarding, setDiscarding] = useState(false);
 
   const computed = useMemo(() => computeQuote(q.quote), [q.quote]);
 
-  // The quote has left the building, so the crash-recovery copy has done its job
-  // (dev-plan §5). The downloaded file is the record from here.
-  const run = async (what: "pdf" | "excel") => {
-    setBusy(what);
+  /**
+   * Both files, on one press. They are not alternatives: the PDF is what the
+   * customer is sent, and the workbook is the only way the quote can be revised
+   * later, since nothing is filed away (dev-plan §5). The office takes both of
+   * every quote, so choosing between them was a choice nobody was making.
+   *
+   * The PDF goes first — it is the one somebody is waiting on — and the
+   * crash-recovery copy is cleared once both have left, the downloaded files
+   * being the record from here.
+   */
+  const download = async () => {
+    setBusy(true);
     try {
-      if (what === "pdf") await downloadPdf(computed);
-      else await downloadExcel(computed);
+      await downloadPdf(computed);
+      await downloadExcel(computed);
       q.forget();
     } finally {
-      setBusy("");
+      setBusy(false);
     }
   };
 
@@ -67,14 +75,16 @@ export default function App() {
           New quote
         </Button>
 
+        {/* Named for both files rather than just "Download": the operator is
+            owed the two they are about to be handed, and the browser will ask
+            once whether this site may save more than one file at a time. */}
         <Button
-          onClick={() => run("excel")}
-          title="The quote with its formulas, to reopen and revise later"
+          variant="primary"
+          onClick={download}
+          disabled={busy}
+          title="The proforma to send, and the workbook to revise it in later"
         >
-          {busy === "excel" ? "Preparing…" : "Download Excel"}
-        </Button>
-        <Button variant="primary" onClick={() => run("pdf")}>
-          {busy === "pdf" ? "Preparing…" : "Download PDF"}
+          {busy ? "Preparing…" : "Download PDF + Excel"}
         </Button>
       </header>
 

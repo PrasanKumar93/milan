@@ -472,7 +472,7 @@ Shapes observed: `BLOCK` (167), `DRW` (92), `TEMPLATE` (21), `MIRROR` (3). Produ
 
 Decided: **React + Vite + TypeScript**, deployed to **GitHub Pages**. No server, no database.
 
-The product in one sentence: **the operator fills a form in the browser and clicks Download PDF or Download Excel.**
+The product in one sentence: **the operator fills a form in the browser and clicks Download PDF + Excel.**
 
 - **Decimal.js** for all money and area math.
 - **Masters as JSON files** in `src/data/`: company, products, rate cards, charge types, shapes, terms. Editing a rate becomes a commit, which gives free version history.
@@ -494,6 +494,8 @@ If revisions later turn out to matter more than the samples suggest, the smalles
 **Download PDF** via **pdfmake** — one click, controlled filename (`PROFORMA-7178.pdf`, or `PROFORMA.pdf` while the number is still blank, and the workbook takes the same name), vector text. The layout is a fixed bordered grid that maps cleanly onto pdfmake's table model. Keep `window.print()` as a secondary Print button; avoid `html2canvas` + `jsPDF`, which produces blurry raster output.
 
 **Download Excel** via **ExcelJS**, not SheetJS — SheetJS's free build cannot write cell styling, so borders and merged cells would be lost. ExcelJS handles merged cells, borders, column widths, number formats and live formulas.
+
+**One button, both files.** The two started as two buttons and were made one. They are not alternatives: the PDF is what the customer is sent, and the workbook is the only way the quote can be changed afterwards, so the office takes both of every quote — the choice was one nobody was making, and one press is one fewer thing to forget half of. The PDF is written first, being the file somebody is waiting on, both take the one name, and the draft is cleared once both have left. The cost is that a browser asks once whether the site may save more than one file at a time; it is a single Allow, remembered for good, and it is worth less than a job going out with no revisable copy.
 
 **The workbook carries live formulas.** An earlier draft of this plan argued for a values-only export, on the grounds that the PDF is the customer's document and a formula-bound sheet would create a second source of truth. That was decided the other way, and for a good reason: **nothing is filed away, so the workbook is the only way an old quote can be changed.** Re-keying a thirty-line quote to correct one size is the cost the values-only export would have imposed, every time. The three objections are answered rather than ignored:
 

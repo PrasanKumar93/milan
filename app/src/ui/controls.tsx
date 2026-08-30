@@ -321,11 +321,14 @@ export function Button({
   onClick,
   variant = "default",
   title,
+  disabled = false,
 }: {
   children: ReactNode;
   onClick: () => void;
   variant?: "default" | "primary" | "ghost" | "danger" | "icon";
   title?: string;
+  /** For work already under way — a second press would only start it again. */
+  disabled?: boolean;
 }) {
   return (
     <button
@@ -333,6 +336,7 @@ export function Button({
       className={variant === "default" ? "btn" : `btn btn--${variant}`}
       onClick={onClick}
       title={title}
+      disabled={disabled}
     >
       {children}
     </button>

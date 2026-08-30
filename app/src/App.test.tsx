@@ -1,7 +1,9 @@
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 import { CUSTOM_PRODUCT } from "./data/masters";
+import { downloadExcel } from "./export/excel";
+import { downloadPdf } from "./export/pdf";
 
 /**
  * A quote typed the way an operator types one, checked end to end: the engine
@@ -11,6 +13,16 @@ import { CUSTOM_PRODUCT } from "./data/masters";
 
 afterEach(cleanup);
 beforeEach(() => localStorage.clear());
+
+/**
+ * The exporters, stood in for. Building a PDF or a workbook is slow, and both
+ * are tested where they are written; here they only have to be reached.
+ */
+vi.mock("./export/pdf", () => ({ downloadPdf: vi.fn() }));
+vi.mock("./export/excel", () => ({ downloadExcel: vi.fn() }));
+
+const pdf = vi.mocked(downloadPdf);
+const excel = vi.mocked(downloadExcel);
 
 /**
  * The entry grid in column order: H, W, wastage, chargeable H, chargeable W,
@@ -355,6 +367,42 @@ describe("the entry screen", () => {
     fireEvent.click(screen.getByText("New quote"));
     fireEvent.click(screen.getByText("Yes, start fresh"));
     expect(firstRow()[0].value).toBe("0");
+  });
+
+  /*
+   * The two files are not alternatives — the PDF is sent and the workbook is
+   * the only way to revise the quote afterwards (dev-plan §5) — so the office
+   * takes both of every quote, and choosing between them was a choice nobody
+   * was making.
+   *
+   * Both exporters are stood in for here: this is about the button handing over
+   * both files and then clearing the draft, and what those files contain is
+   * proved by `excel.test.ts`, `layout.test.ts` and the retype sweep, which
+   * downloads them from a real browser.
+   */
+  it("hands over both files from one press, and then forgets the draft", async () => {
+    const handed: string[] = [];
+    pdf.mockImplementation(async () => void handed.push("pdf"));
+    excel.mockImplementation(async () => void handed.push("excel"));
+
+    fillOneLine();
+    type(screen.getByPlaceholderText("M/S ..."), "G FOCUSS INTERIORS");
+    await new Promise((r) => setTimeout(r, 500));
+    expect(localStorage.length).toBe(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Download PDF + Excel" }));
+
+    // The proforma first: it is the one somebody is waiting on.
+    await waitFor(() => expect(handed).toEqual(["pdf", "excel"]));
+    // The quote has left the building, so the crash-recovery copy is done.
+    await waitFor(() => expect(localStorage.length).toBe(0));
+  });
+
+  it("offers one download rather than a choice of two", () => {
+    render(<App />);
+
+    expect(screen.queryByRole("button", { name: "Download PDF" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Download Excel" })).toBeNull();
   });
 
   it("keeps the working off the printed document", () => {

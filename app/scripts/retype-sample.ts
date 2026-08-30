@@ -234,13 +234,16 @@ async function retype(page: Page, proformaNo: string) {
   await page.getByRole("tab", { name: "Preview" }).click();
   await page.screenshot({ path: resolve(outDir, `${proformaNo}-print.png`), fullPage: true });
 
-  // And press the buttons an operator presses, so the files themselves are here
-  // to be opened rather than only the screen they were made from.
-  for (const button of ["Download PDF", "Download Excel"]) {
-    const [download] = await Promise.all([
-      page.waitForEvent("download"),
-      page.getByRole("button", { name: button }).click(),
-    ]);
+  // And press the button an operator presses, so the files themselves are here
+  // to be opened rather than only the screen they were made from. One press
+  // hands over both, so both are waited for.
+  const downloads = page.waitForEvent("download").then(async (first) => [
+    first,
+    await page.waitForEvent("download"),
+  ]);
+  await page.getByRole("button", { name: "Download PDF + Excel" }).click();
+
+  for (const download of await downloads) {
     // Saved under the name the browser was offered, so the name the office ends
     // up filing the job under is visible here too.
     await download.saveAs(resolve(outDir, download.suggestedFilename()));

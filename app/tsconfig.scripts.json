@@ -1,0 +1,14 @@
+{
+  /* The tools in `scripts/` run through vite-node, so they resolve imports the
+     way the app does — no file extensions, JSON imported as a module — while
+     being Node programs that also drive a browser, hence Node types and the DOM
+     lib for what runs inside `page.evaluate`. Without a project of their own the
+     editor reads them with no types at all, and `tsc -b` skipped them entirely. */
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.scripts.tsbuildinfo",
+    "types": ["node", "vite/client"]
+  },
+  "include": ["scripts"],
+  "exclude": []
+}
