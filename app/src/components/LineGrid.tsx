@@ -1,6 +1,6 @@
 import type Decimal from "decimal.js";
 import type { ComputedLine, ComputedSection } from "../core/engine";
-import type { Line, Quote } from "../core/types";
+import type { Line } from "../core/types";
 import { formatInches } from "../core/units";
 import { shapes } from "../data/masters";
 import { Button, DimensionField, Info, NumberField, OverrideDot, Select } from "../ui/controls";
@@ -37,14 +37,12 @@ function isOverridden(l: ComputedLine): boolean {
 }
 
 export function LineGrid({
-  quote,
   computed,
   onPatchLine,
   onResetLine,
   onRemoveLine,
   onAddLine,
 }: {
-  quote: Quote;
   computed: ComputedSection;
   onPatchLine: (lineId: string, patch: Partial<Line>) => void;
   onResetLine: (lineId: string) => void;
@@ -52,7 +50,7 @@ export function LineGrid({
   onAddLine: () => void;
 }) {
   const { section } = computed;
-  const unit = quote.inputUnit;
+  const unit = section.inputUnit;
   const footToFoot = section.wastageRule === "foot_to_foot";
   const showSize = (v: Decimal) => (unit === "inch" ? formatInches(v.toNumber()) : v.toString());
   const { body, onKeyDown, addRow } = useAddRow(onAddLine);
@@ -76,7 +74,7 @@ export function LineGrid({
               </th>
               {/* The three columns the app fills in for itself say so, and say how. */}
               <th className="grid__group" colSpan={2}>
-                Chargeable size ({unit}) <Info hint={chargeableHint(computed, quote)} />
+                Chargeable size ({unit}) <Info hint={chargeableHint(computed)} />
               </th>
               {/* The count is read before the areas because it is inside both. */}
               <th rowSpan={2} className="num">
@@ -86,10 +84,10 @@ export function LineGrid({
                 by side, the gap between them is the wastage, which is the
                 number the shop floor wanted to be able to see. */}
               <th rowSpan={2} className="num">
-                Area ({quote.printUnit}) <Info hint={actualAreaHint(computed, quote)} />
+                Area ({section.printUnit}) <Info hint={actualAreaHint(computed)} />
               </th>
               <th rowSpan={2} className="num">
-                CArea (C{quote.printUnit}) <Info hint={areaHint(computed, quote)} />
+                CArea (C{section.printUnit}) <Info hint={areaHint(computed)} />
               </th>
               <th rowSpan={2} className="num">
                 Rate

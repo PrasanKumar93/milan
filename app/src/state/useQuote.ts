@@ -1,9 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { polishRate } from "../core/products";
-import type { Adjustment, InputUnit, Line, Quote, Section } from "../core/types";
+import type { Adjustment, InputUnit, Line, PrintUnit, Quote, Section } from "../core/types";
 import { chargeTypeFor, shortCodeFor, wastageRuleFor } from "../data/masters";
 import { clearDraft, isWorthRestoring, loadDraft, saveDraft } from "../storage/draft";
-import { newAdjustment, newLine, newQuote, newSection, switchInputUnit } from "./factory";
+import {
+  newAdjustment,
+  newLine,
+  newQuote,
+  newSection,
+  settingsOf,
+  switchInputUnit,
+} from "./factory";
 
 /**
  * The single place the quote is edited.
@@ -66,8 +73,8 @@ export function useQuote() {
         setQuote((q) => ({ ...q, ...patch }));
       },
 
-      setInputUnit(unit: InputUnit) {
-        setQuote((q) => (q.inputUnit === unit ? q : switchInputUnit(q, unit)));
+      setInputUnit(sectionId: string, unit: InputUnit) {
+        mapSection(sectionId, (s) => (s.inputUnit === unit ? s : switchInputUnit(s, unit)));
       },
 
       /**
@@ -75,14 +82,18 @@ export function useQuote() {
        * left exactly as they are. Every one of them was typed by someone who had
        * read the card figure beside the glass, so rewriting them would be the app
        * overruling a price; the §7 warning says a square-metre rate is now in a
-       * square-foot quote, and the operator decides what it should be.
+       * square-foot section, and the operator decides what it should be.
        */
-      setPrintUnit(printUnit: Quote["printUnit"]) {
-        setQuote((q) => (q.printUnit === printUnit ? q : { ...q, printUnit }));
+      setPrintUnit(sectionId: string, printUnit: PrintUnit) {
+        mapSection(sectionId, (s) => (s.printUnit === printUnit ? s : { ...s, printUnit }));
       },
 
+      /** A new section carries down the units and tax of the one above it (§2.1). */
       addSection() {
-        setQuote((q) => ({ ...q, sections: [...q.sections, newSection(q.inputUnit)] }));
+        setQuote((q) => ({
+          ...q,
+          sections: [...q.sections, newSection(settingsOf(q.sections[q.sections.length - 1]))],
+        }));
       },
 
       removeSection(sectionId: string) {

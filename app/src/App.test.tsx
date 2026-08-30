@@ -72,6 +72,53 @@ describe("the entry screen", () => {
     expect(firstRow()[2].value).toBe("2135");
   });
 
+  /*
+   * An order can run a millimetre shopfront and an inch mirror on the same
+   * page, so the units and the tax are set on the section rather than on the
+   * quote. A new section starts where the one above it is, because that is the
+   * ordinary case, and moves from there.
+   */
+  describe("the settings on a section", () => {
+    const card = (n: number) =>
+      within(screen.getByText(`Section ${n}`).closest("section") as HTMLElement);
+
+    const pressed = (n: number, name: string) =>
+      card(n).getByRole("button", { name }).getAttribute("aria-pressed");
+
+    it("carries down to the section added under it", () => {
+      render(<App />);
+      fireEvent.click(card(1).getByRole("button", { name: "inch" }));
+      fireEvent.click(card(1).getByRole("button", { name: "SQFT" }));
+      fireEvent.click(card(1).getByRole("button", { name: "Not applied" }));
+      fireEvent.click(screen.getByText("Add section"));
+
+      expect(pressed(2, "inch")).toBe("true");
+      expect(pressed(2, "SQFT")).toBe("true");
+      expect(pressed(2, "Not applied")).toBe("true");
+    });
+
+    it("moves one section without moving the one beside it", () => {
+      render(<App />);
+      fireEvent.click(screen.getByText("Add section"));
+      fireEvent.click(card(2).getByRole("button", { name: "inch" }));
+
+      expect(pressed(1, "mm")).toBe("true");
+      expect(pressed(2, "inch")).toBe("true");
+
+      // Each section is headed in its own unit, and its allowance is refilled
+      // in that unit: 50 mm on the first, 2 inches on the second.
+      expect(card(1).getAllByText(/Actual size \(mm\)/).length).toBe(1);
+      expect(card(2).getAllByText(/Actual size \(inch\)/).length).toBe(1);
+      expect(card(2).getByTitle(/Added to both sides/).getAttribute("value")).toBe("2");
+    });
+
+    it("leaves nothing about the calculation on the quote header", () => {
+      render(<App />);
+      expect(screen.queryByText("Sizes entered in")).toBeNull();
+      expect(screen.queryByText("Area printed in")).toBeNull();
+    });
+  });
+
   it("works out the cut size, the area and the amount, and lets none of them be typed", () => {
     fillOneLine();
     const cells = firstRow();

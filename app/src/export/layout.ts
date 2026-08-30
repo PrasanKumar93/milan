@@ -1,7 +1,7 @@
 import type Decimal from "decimal.js";
 import type { ComputedQuote, ComputedSection } from "../core/engine";
 import { formatArea, formatSheet } from "../core/money";
-import type { Quote } from "../core/types";
+import type { Quote, SectionSettings } from "../core/types";
 import { formatInches } from "../core/units";
 import { HSN, company } from "../data/masters";
 
@@ -154,8 +154,8 @@ function tailBlock(rows: SheetRow[]): SheetRow[] {
  * The two-level head. "ACTAUL SIZE" is spelt correctly here — it is one of the
  * typos listed in dev-plan §8, and a heading is the safest place to fix one.
  */
-export function headRows(quote: Quote): SheetRow[] {
-  const unit = quote.inputUnit.toUpperCase();
+export function headRows(section: SectionSettings): SheetRow[] {
+  const unit = section.inputUnit.toUpperCase();
   const head = (text: string, extra: Partial<Cell> = {}): Cell => ({
     text,
     align: "center",
@@ -174,8 +174,8 @@ export function headRows(quote: Quote): SheetRow[] {
       4: head(`CHARGEABLE (${unit})`, { colSpan: 2 }),
       6: head("QTY", { rowSpan: 2 }),
       // The measured area, then the chargeable one the amount is worked out on.
-      7: head(quote.printUnit, { rowSpan: 2 }),
-      8: head(`C${quote.printUnit}`, { rowSpan: 2 }),
+      7: head(section.printUnit, { rowSpan: 2 }),
+      8: head(`C${section.printUnit}`, { rowSpan: 2 }),
       9: head("RATE", { rowSpan: 2 }),
       10: head("AMOUNT", { rowSpan: 2 }),
     }),
@@ -195,8 +195,9 @@ export function headRows(quote: Quote): SheetRow[] {
   ];
 }
 
-export function lineRows(computed: ComputedSection, quote: Quote): SheetRow[] {
-  const size = (v: number) => (quote.inputUnit === "inch" ? formatInches(v) : formatSheet(v));
+export function lineRows(computed: ComputedSection): SheetRow[] {
+  const inches = computed.section.inputUnit === "inch";
+  const size = (v: number) => (inches ? formatInches(v) : formatSheet(v));
 
   return computed.lines.map((l, i) =>
     row({
@@ -224,7 +225,9 @@ export function lineRows(computed: ComputedSection, quote: Quote): SheetRow[] {
  * `alone` says this is the only section in the quote, which changes what the
  * sheet prints: see the section total at the bottom.
  */
-function sectionTotals(computed: ComputedSection, quote: Quote, alone = false): SheetRow[] {
+function sectionTotals(computed: ComputedSection, alone = false): SheetRow[] {
+  const section = computed.section;
+
   // A label below the lines runs from the first area column to the one before
   // the figure it belongs to — as far as the count where there is a count, and
   // across the rate column where there is not.
@@ -269,11 +272,11 @@ function sectionTotals(computed: ComputedSection, quote: Quote, alone = false): 
 
   // The taxable base only earns a line of its own where there is tax to work out
   // on it; without GST the charges simply run into the total.
-  if (quote.gstApplicable && computed.adjustments.length > 0) {
+  if (section.gstApplicable && computed.adjustments.length > 0) {
     rows.push(row({ 10: fig(formatSheet(computed.taxableBase), "taxable", computed.taxableBase) }));
   }
 
-  if (quote.gstApplicable) {
+  if (section.gstApplicable) {
     for (const [name, value] of [
       ["CGST", computed.cgst],
       ["SGST", computed.sgst],
@@ -284,7 +287,7 @@ function sectionTotals(computed: ComputedSection, quote: Quote, alone = false): 
           7: label(name, true),
           // A rate, not a figure: the workbook writes it as a fraction shown as
           // a percentage, so the tax cell beside it can multiply by it.
-          9: fig(`${formatSheet(quote.gstPct)}%`, `${tax}.pct`, quote.gstPct / 100),
+          9: fig(`${formatSheet(section.gstPct)}%`, `${tax}.pct`, section.gstPct / 100),
           10: fig(formatSheet(value), tax, value),
         }),
       );
@@ -341,10 +344,7 @@ export function totalsRows(computed: ComputedQuote, index: number): SheetRow[] {
   const alone = computed.sections.length === 1;
   const last = index === computed.sections.length - 1;
 
-  return tailBlock([
-    ...sectionTotals(section, computed.quote, alone),
-    ...(last ? quoteTotals(computed) : []),
-  ]);
+  return tailBlock([...sectionTotals(section, alone), ...(last ? quoteTotals(computed) : [])]);
 }
 
 export function sectionTitle(computed: ComputedSection): string {

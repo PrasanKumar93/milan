@@ -1,6 +1,6 @@
 import Decimal from "decimal.js";
 import { describe, expect, it } from "vitest";
-import { corpus, inferUnit, toQuote } from "../test/corpus";
+import { corpus, inferUnit, sample, toQuote } from "../test/corpus";
 import { computeQuote } from "./engine";
 import {
   chargeTypes,
@@ -93,7 +93,7 @@ describe("area formulas (dev-plan §2.1)", () => {
  */
 describe("the measured area beside the chargeable one", () => {
   const sized = (rule: "fixed" | "foot_to_foot", h: number, w: number, qty = 1) => {
-    const section = { ...newSection("mm", "10MM CLEAR TOUGHENED GLASS"), wastageRule: rule };
+    const section = { ...newSection({}, "10MM CLEAR TOUGHENED GLASS"), wastageRule: rule };
     const quote = {
       ...newQuote(),
       sections: [
@@ -236,15 +236,15 @@ describe("what the masters say is what the app does", () => {
   });
 
   it("starts a new quote on the company's own defaults", () => {
-    const q = newQuote();
+    const [section] = newQuote().sections;
 
-    expect(q.gstPct).toBe(company.defaults.gstPct);
-    expect(newSection("mm").wastage).toBe(company.defaults.wastageMm);
-    expect(newSection("inch").wastage).toBe(company.defaults.wastageInch);
+    expect(section.gstPct).toBe(company.defaults.gstPct);
+    expect(newSection().wastage).toBe(company.defaults.wastageMm);
+    expect(newSection({ inputUnit: "inch" }).wastage).toBe(company.defaults.wastageInch);
   });
 
   it("opens a charge on the count and the rate the charge master gives it", () => {
-    const section = newSection("mm", "10MM CLEAR TOUGHENED GLASS");
+    const section = newSection({}, "10MM CLEAR TOUGHENED GLASS");
 
     for (const type of chargeTypes) {
       const a = newAdjustment(section, type.label);
@@ -291,14 +291,23 @@ describe("regression against the 48 sample quotations", () => {
     // a 1 rupee operator override (§2.3).
     // BHOOTH SINGH: a 1,238 discount booked as a round-off, which is now
     // recorded by overriding the rounded subtotal (§2.9).
-    // SAI GLASS: one section is missing its GST rows. The engine deliberately
-    // will not reproduce that — GST is a quote-level flag precisely so the
-    // omission becomes impossible (§9).
-    expect(failures.sort()).toEqual([
-      "ASHRAF KOLAR 7161 (1).pdf",
-      "BHOOTH SINGH 6613.pdf",
-      "SAI GLASS 6374.pdf",
-    ]);
-    expect(priced.length - failures.length).toBe(43);
+    expect(failures.sort()).toEqual(["ASHRAF KOLAR 7161 (1).pdf", "BHOOTH SINGH 6613.pdf"]);
+    expect(priced.length - failures.length).toBe(44);
+  });
+
+  /*
+   * SAI GLASS 6374 taxes two of its three sections and leaves the third — 1,564
+   * of glass and 120 of holes, printed as 1,684 and carried into the grand
+   * total untaxed. While GST was one switch for the whole quote the engine
+   * could not produce that page at all, and the sample sat on the list above as
+   * a bill the app would not reproduce. With the switch on the section it is
+   * simply what the operator set, which is the case for having it there.
+   */
+  it("reproduces the sample that taxes one section and not the next", () => {
+    const sai = toQuote(sample("6374"));
+    const taxed = sai.sections.map((s) => s.gstApplicable);
+
+    expect(taxed).toEqual([true, true, false]);
+    expect(computeQuote(sai).grandTotal.toNumber()).toBeCloseTo(15943.12, 2);
   });
 });

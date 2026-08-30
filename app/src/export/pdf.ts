@@ -227,8 +227,10 @@ export function buildDoc(computed: ComputedQuote, pictures: Marks = {}): TDocume
   ];
 
   for (const [index, section] of computed.sections.entries()) {
-    const head = headRows(quote);
-    const lines = lineRows(section, quote);
+    // Headed in the section's own units: one may be in inches and the next in
+    // millimetres, and the head is where the page says which (§2.1).
+    const head = headRows(section.section);
+    const lines = lineRows(section);
 
     content.push({
       table: { widths: widths(), body: toBody(titleRows(section)) },

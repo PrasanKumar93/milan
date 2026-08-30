@@ -36,13 +36,12 @@ const RATE_FACTOR = 5;
 const ON_THE_CARD = 0.02;
 
 export function warningsFor(computed: ComputedQuote): Warning[] {
-  const quote = computed.quote;
   const out: Warning[] = [];
 
   for (const [n, s] of computed.sections.entries()) {
     const section = s.section;
     const id = section.id;
-    const price = cardPrice(section.product, quote.printUnit);
+    const price = cardPrice(section.product, section.printUnit);
     const card = price?.rate;
     const started = s.lines.some((l) => l.line.actualH > 0 || l.line.actualW > 0);
 
@@ -78,19 +77,19 @@ export function warningsFor(computed: ComputedQuote): Warning[] {
           (l.line.actualH > 0 || l.line.actualW > 0),
       );
 
-      if (onTheCard && price.includesGst && quote.gstApplicable) {
+      if (onTheCard && price.includesGst && section.gstApplicable) {
         out.push({
           sectionId: id,
           tag: "GST twice",
-          text: `${section.product} is at the card's ₹${price.rate.toLocaleString("en-IN")} per ${quote.printUnit}, which already includes GST, and this quote adds GST on top. Before tax it is about ₹${formatMoney(price.rate / (1 + quote.gstPct / 50))}.`,
+          text: `${section.product} is at the card's ₹${price.rate.toLocaleString("en-IN")} per ${section.printUnit}, which already includes GST, and this section adds GST on top. Before tax it is about ₹${formatMoney(price.rate / (1 + section.gstPct / 50))}.`,
         });
       }
 
-      if (onTheCard && !price.includesGst && !quote.gstApplicable) {
+      if (onTheCard && !price.includesGst && !section.gstApplicable) {
         out.push({
           sectionId: id,
           tag: "GST missing",
-          text: `${section.product} is at the card's ₹${price.rate.toLocaleString("en-IN")} per ${quote.printUnit}, which is before GST, and this quote adds none.`,
+          text: `${section.product} is at the card's ₹${price.rate.toLocaleString("en-IN")} per ${section.printUnit}, which is before GST, and this section adds none.`,
         });
       }
     }
@@ -117,7 +116,7 @@ export function warningsFor(computed: ComputedQuote): Warning[] {
           sectionId: id,
           lineId: line.id,
           tag: "Rate unit",
-          text: `Row ${i + 1} is at ₹${formatMoney(line.rate)} per ${quote.printUnit} where the rate card says ₹${formatMoney(card)}. Check the unit.`,
+          text: `Row ${i + 1} is at ₹${formatMoney(line.rate)} per ${section.printUnit} where the rate card says ₹${formatMoney(card)}. Check the unit.`,
         });
       }
 

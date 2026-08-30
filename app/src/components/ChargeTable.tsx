@@ -2,7 +2,7 @@ import type Decimal from "decimal.js";
 import { useState } from "react";
 import type { KeyboardEvent } from "react";
 import type { ComputedSection } from "../core/engine";
-import type { Adjustment, Quote } from "../core/types";
+import type { Adjustment } from "../core/types";
 import { CUSTOM_CHARGE, chargeTypeFor, chargeTypes } from "../data/masters";
 import { Button, Info, NumberField, Select, TextField } from "../ui/controls";
 import { useAddRow } from "../ui/useAddRow";
@@ -21,7 +21,6 @@ import { polishHint } from "./formulas";
  */
 export function ChargeTable({
   computed,
-  quote,
   perimeter,
   onPatch,
   onSetLabel,
@@ -29,7 +28,6 @@ export function ChargeTable({
   onAdd,
 }: {
   computed: ComputedSection;
-  quote: Quote;
   /** Perimeter of the section in running feet — the quantity polish is billed on. */
   perimeter: Decimal;
   onPatch: (adjustmentId: string, patch: Partial<Adjustment>) => void;
@@ -63,7 +61,7 @@ export function ChargeTable({
                 computed={a}
                 /* Polish is priced by a rule, so the row carries the rule (§3.3),
                    worked at the charge master's own rupees per millimetre. */
-                rule={(perMm) => polishHint(computed, quote, perMm)}
+                rule={(perMm) => polishHint(computed, perMm)}
                 perimeter={perimeter}
                 /* An unnamed charge is the end of the list, not one more to add. */
                 onEnter={

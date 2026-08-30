@@ -588,11 +588,25 @@ h3 {
   width: 100%;
 }
 
-.settings {
-  display: flex;
-  align-items: flex-end;
-  gap: 14px 36px;
-  flex-wrap: wrap;
+/* How a section calculates: unit in, unit out, tax and wastage, on one line
+   above the glass it applies to. Set on a band of its own so the line reads as
+   settings rather than as another row of the table under it, and divided rather
+   than spaced, so four settings do not read as one row of twelve buttons. */
+.settings-line {
+  gap: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-sunken);
+}
+
+/* Air on either side of a rule, without putting it between every button. */
+.settings-line .divider--v {
+  margin: 0 10px;
+}
+
+.settings-line .field__label {
+  margin-right: 2px;
 }
 
 /* ---------- entry grid ---------- */

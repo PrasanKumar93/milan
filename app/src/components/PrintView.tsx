@@ -141,7 +141,6 @@ function Labelled({ field }: { field: Field }) {
 }
 
 function PrintSection({ computed, index }: { computed: ComputedQuote; index: number }) {
-  const quote = computed.quote;
   const section = computed.sections[index];
 
   return (
@@ -149,7 +148,8 @@ function PrintSection({ computed, index }: { computed: ComputedQuote; index: num
       {/* Drawn in the sheet's own columns, so the HSN code stands in the width
           of the amount column below it. */}
       <Sheet rows={titleRows(section)} className="print-table print-table--plain" />
-      <Sheet head={headRows(quote)} rows={lineRows(section, quote)} />
+      {/* Each section is headed in its own units: the head says which. */}
+      <Sheet head={headRows(section.section)} rows={lineRows(section)} />
       {/* The last section carries the quote's total: one block to the bottom. */}
       <Sheet rows={totalsRows(computed, index)} className="print-table print-table--plain" />
     </div>

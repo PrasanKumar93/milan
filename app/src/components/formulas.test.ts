@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { computeSection } from "../core/engine";
-import type { Quote, Section } from "../core/types";
+import type { Section } from "../core/types";
 import { chargeTypes } from "../data/masters";
-import { newLine, newQuote, newSection } from "../state/factory";
+import { newLine, newSection } from "../state/factory";
 import {
   amountHint,
   areaHint,
@@ -15,40 +15,35 @@ import {
 /**
  * The headings explain the columns the app fills in for itself, so what they say
  * has to be what the engine actually did — including for a section on foot to
- * foot, or a quote typed in inches and priced by the square foot.
+ * foot, or one typed in inches and priced by the square foot.
  */
-
-function quoteWith(patch: Partial<Quote> = {}): Quote {
-  return { ...newQuote("7200"), ...patch };
-}
 
 /** What the charge master asks per millimetre of glass, as the app reads it. */
 const perMm = chargeTypes.filter((c) => c.ratePerThicknessMm !== undefined)[0]
   .ratePerThicknessMm as number;
 
-function sectionWith(quote: Quote, section: Section) {
+/** A section with one row in it, the row the headings work through. */
+function sectionWith(section: Section) {
   section.lines = [{ ...newLine(section), actualH: 2000, actualW: 1000, qty: 2, rate: 1238 }];
-  return computeSection(section, quote);
+  return computeSection(section);
 }
+
+const plain = () => sectionWith(newSection());
 
 describe("the heading that explains a column", () => {
   it("works the first row through the allowance", () => {
-    const quote = quoteWith();
-    const section = sectionWith(quote, quote.sections[0]);
+    const hint = chargeableHint(plain());
 
-    const hint = chargeableHint(section, quote);
     expect(hint).toContain("actual + wastage");
     expect(hint).toContain("2000 + 50 = 2050");
     expect(hint).toContain("1000 + 50 = 1050");
   });
 
   it("walks through the feet where the section is measured that way", () => {
-    const quote = quoteWith();
-    const mirror = newSection("mm", "6MM CLEAR MIRROR");
-    const section = sectionWith(quote, mirror);
+    const section = sectionWith(newSection({}, "6MM CLEAR MIRROR"));
 
     // 2000 mm is six and a half feet, so it is cut and charged at seven.
-    const hint = chargeableHint(section, quote);
+    const hint = chargeableHint(section);
     expect(hint).toContain("Height 2000:\n2000 ÷ 304.8 = 6.56 ft");
     expect(hint).toContain("up to the next foot = 7 ft");
     expect(hint).toContain("7 × 304.8 = 2133.6");
@@ -63,37 +58,35 @@ describe("the heading that explains a column", () => {
   });
 
   it("says nothing about a fifth of a millimetre where the foot lands on one", () => {
-    const quote = quoteWith({ inputUnit: "inch" });
-    const section = sectionWith(quote, newSection("inch", "6MM CLEAR MIRROR"));
+    const inches = newSection({ inputUnit: "inch" }, "6MM CLEAR MIRROR");
+    const section = sectionWith(inches);
 
     // A foot is twelve inches exactly, so the last step of the mm case is absent.
-    const hint = chargeableHint(section, quote);
+    const hint = chargeableHint(section);
     expect(hint).toContain("÷ 12 =");
     expect(hint).not.toContain("5 mm");
   });
 
   it("says how the area is arrived at, a bracket to a step", () => {
-    const quote = quoteWith();
-    const section = sectionWith(quote, quote.sections[0]);
-
     // 2.05 x 1.05 metres, two pieces.
-    expect(areaHint(section, quote)).toContain("((2050 ÷ 1000) × (1050 ÷ 1000)) × 2 = 4.305");
+    expect(areaHint(plain())).toContain("((2050 ÷ 1000) × (1050 ÷ 1000)) × 2 = 4.305");
   });
 
-  it("takes the printed unit into account too", () => {
-    const quote = quoteWith({ inputUnit: "inch", printUnit: "SQFT" });
-    const section = sectionWith(quote, quote.sections[0]);
+  /*
+   * Both units are the section's own, so a section in inches priced by the
+   * square foot explains itself that way even where the section above it is in
+   * millimetres and square metres.
+   */
+  it("takes the section's own units into account too", () => {
+    const section = sectionWith(newSection({ inputUnit: "inch", printUnit: "SQFT" }));
 
-    const hint = areaHint(section, quote);
+    const hint = areaHint(section);
     expect(hint).toContain("((chargeable H × chargeable W) ÷ 144) × qty");
     expect(hint).not.toContain("10.764");
   });
 
   it("multiplies the area by the rate, and shows the row's own money", () => {
-    const quote = quoteWith();
-    const section = sectionWith(quote, quote.sections[0]);
-
-    expect(amountHint(section)).toContain("4.305 × 1238 = 5329.59");
+    expect(amountHint(plain())).toContain("4.305 × 1238 = 5329.59");
   });
 
   it("reads a row's own sizes in feet, for the column that used to say only the rule", () => {
@@ -118,30 +111,25 @@ describe("the heading that explains a column", () => {
   });
 
   it("prices polish along the edge, in the running feet it is billed by", () => {
-    const quote = quoteWith();
-    const section = sectionWith(quote, newSection("mm", "10MM CLEAR TOUGHENED GLASS"));
+    const section = sectionWith(newSection({}, "10MM CLEAR TOUGHENED GLASS"));
 
     // The rupees per millimetre come from the charge master, so the hint says
     // whatever that file says rather than a figure of its own.
-    const hint = polishHint(section, quote, perMm);
+    const hint = polishHint(section, perMm);
     expect(hint).toContain("₹1 × 10 mm = ₹10 per running foot");
     // Two pieces cut 2050 x 1050: 3100 twice round, twice over, in feet.
     expect(hint).toContain("((2050 + 1050) × 2 × 2) ÷ 304.8 = 40.68");
   });
 
   it("says what polish is waiting on where the glass has not been chosen", () => {
-    const quote = quoteWith();
-    const section = sectionWith(quote, quote.sections[0]);
-
     // No glass means no thickness, and the thickness is the whole price.
-    expect(polishHint(section, quote, perMm)).toContain("waiting on the glass");
+    expect(polishHint(plain(), perMm)).toContain("waiting on the glass");
   });
 
   it("still explains the rule for a section with nothing typed in it yet", () => {
-    const quote = quoteWith();
-    const empty = computeSection({ ...quote.sections[0], lines: [] }, quote);
+    const empty = computeSection({ ...newSection(), lines: [] });
 
-    for (const hint of [chargeableHint(empty, quote), areaHint(empty, quote), amountHint(empty)]) {
+    for (const hint of [chargeableHint(empty), areaHint(empty), amountHint(empty)]) {
       expect(hint).not.toContain("Row 1");
       expect(hint.length).toBeGreaterThan(20);
     }

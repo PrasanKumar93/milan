@@ -20,8 +20,8 @@ listed separately at the end.
 | Tag | Fires when |
 | --- | ---------- |
 | `No glass` | A section has sizes typed in it but no glass chosen |
-| `GST twice` | A row sits on the card price, that price already includes GST, and the quote adds GST on top |
-| `GST missing` | A row sits on the card price, that price is before GST, and the quote adds none |
+| `GST twice` | A row sits on the card price, that price already includes GST, and its section adds GST on top |
+| `GST missing` | A row sits on the card price, that price is before GST, and its section adds none |
 | `Wastage rule` | The section's wastage rule is not the one its glass normally uses |
 | `No rate` | A row with a size has no rate |
 | `Rate unit` | A row's rate is more than five times off the card, which reads as the wrong unit |
@@ -33,6 +33,13 @@ listed separately at the end.
 rather than a mistake, and is skipped by every row check; a section nobody has
 started is not asked which glass it is. This is why the count climbs as a quote
 is typed and settles when it is complete.
+
+**Every check reads the section it is checking.** The printed unit and the GST
+switch belong to the section (dev-plan §2.1), so a quote pricing its glass by
+the square metre and its mirror by the square foot is read as two different card
+columns — and only one of those columns has the tax in it already. The two GST
+warnings are all that stands behind a bill that taxes one section and not the
+next, which the samples show happening (§9): the app will print it, and says so.
 
 ---
 

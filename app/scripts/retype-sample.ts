@@ -80,31 +80,30 @@ async function retype(page: Page, proformaNo: string) {
   await type(page.getByLabel("Proforma no"), parsed.proforma_no);
   await type(page.getByPlaceholder("dd/mm/yyyy"), parsed.date);
   await type(page.getByPlaceholder("M/S ..."), parsed.customer);
-  const inputUnit = inferUnit(sections[0], sections[0].lines[0]);
-
-  // The printed unit is taken from the figures rather than from the column
-  // heading, because one sample heads the column SQMT over square feet.
-  const first = sections[0].lines[0];
-  const gapIn = (unit: PrintUnit) =>
-    areaOf(inputUnit, unit, first.ch, first.cw, first.qty).minus(first.area).abs();
-  const printUnit: PrintUnit = gapIn("SQFT").lte(gapIn("SQMT")) ? "SQFT" : "SQMT";
-  if (printUnit !== sections[0].out_unit) {
-    notes.push(
-      `the sheet heads that column ${sections[0].out_unit}, but the figures are ${printUnit}`,
-    );
-  }
-
-  await page.getByRole("button", { name: inputUnit, exact: true }).click();
-  await page.getByRole("button", { name: printUnit, exact: true }).click();
-
-  const gst = parsed.sections.find((s) => s.gst_pct !== null)?.gst_pct ?? null;
-  await page
-    .getByRole("button", { name: gst === null ? "Not applied" : "Applied", exact: true })
-    .click();
 
   for (const [si, section] of sections.entries()) {
     if (si > 0) await page.getByRole("button", { name: "Add section" }).click();
     const card = page.locator("section.card").filter({ hasText: `Section ${si + 1}` });
+
+    // Units and tax are the section's own, so they are read off this section
+    // and set on its own line (§2.1).
+    const inputUnit = inferUnit(section, section.lines[0]);
+
+    // The printed unit is taken from the figures rather than from the column
+    // heading, because one sample heads the column SQMT over square feet.
+    const first = section.lines[0];
+    const gapIn = (unit: PrintUnit) =>
+      areaOf(inputUnit, unit, first.ch, first.cw, first.qty).minus(first.area).abs();
+    const printUnit: PrintUnit = gapIn("SQFT").lte(gapIn("SQMT")) ? "SQFT" : "SQMT";
+    if (printUnit !== section.out_unit) {
+      notes.push(`S${si + 1}: the sheet heads that column ${section.out_unit}, but the figures are ${printUnit}`);
+    }
+
+    await card.getByRole("button", { name: inputUnit, exact: true }).click();
+    await card.getByRole("button", { name: printUnit, exact: true }).click();
+    await card
+      .getByRole("button", { name: section.cgst === null ? "Not applied" : "Applied", exact: true })
+      .click();
 
     // Some sheets name the glass with a typo — "TOUGEHENED" — which is the whole
     // reason the dropdown exists. Type those in as an "other" and carry on.
@@ -129,7 +128,9 @@ async function retype(page: Page, proformaNo: string) {
       await card.getByRole("button", { name: "Foot to foot" }).click();
       notes.push(`S${si + 1}: sizes go up to the next foot rather than a fixed allowance`);
     } else if (allowance !== 50) {
-      await type(card.locator("input.input--num").first(), allowance);
+      // Named rather than counted: the settings line ahead of it has a number
+      // box of its own, and "the first box in the card" is now the GST rate.
+      await type(card.locator('input[title^="Added to both sides"]'), allowance);
       notes.push(`S${si + 1}: cut at ${allowance} ${inputUnit}, not the standard 50`);
     }
 

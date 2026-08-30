@@ -84,25 +84,17 @@ function roundedFrom(section: ParsedSection, lineSum: Decimal): number | null {
 }
 
 /**
- * Which unit the whole quote was typed in. A quote is measured in one unit or
- * the other and never in both (dev-plan §2.1), so the sheet's own lines are put
- * through each formula and the unit that explains the most of them wins.
+ * Which unit a section was measured in. The parsed samples carry no unit of
+ * their own — it is only ever implied by the sizes and the area printed beside
+ * them — so each line is put through both formulas and the unit that explains
+ * most of the section wins.
  *
- * The parsed samples carry no unit of their own: it is only ever implied by the
- * sizes and the area printed beside them.
+ * Read per section because that is where the setting lives (dev-plan §2.1). No
+ * sample mixes them within one quote, but nothing about the sheet stopped one.
  */
-function inputUnitOf(parsed: ParsedQuote): InputUnit {
-  let inches = 0;
-  let all = 0;
-
-  for (const section of parsed.sections) {
-    for (const line of section.lines) {
-      all += 1;
-      if (inferUnit(section, line) === "inch") inches += 1;
-    }
-  }
-
-  return all > 0 && inches * 2 > all ? "inch" : "mm";
+function inputUnitOf(section: ParsedSection): InputUnit {
+  const inches = section.lines.filter((line) => inferUnit(section, line) === "inch").length;
+  return inches * 2 > section.lines.length ? "inch" : "mm";
 }
 
 /**
@@ -145,6 +137,12 @@ export function toQuote(parsed: ParsedQuote): Quote {
 
       return {
         id: String(si),
+        inputUnit: inputUnitOf(s),
+        printUnit: s.out_unit,
+        // A section that printed CGST charged it; one sample taxes two of its
+        // sections and not the third, and the model now says so.
+        gstApplicable: s.cgst !== null,
+        gstPct: s.gst_pct ?? 9,
         product: s.product,
         // The section prints its own short code first, above any carried down
         // from the sections before it.
@@ -156,8 +154,6 @@ export function toQuote(parsed: ParsedQuote): Quote {
         rounded: roundedFrom(s, lineSum),
       };
     });
-
-  const gstSections = parsed.sections.filter((s) => s.cgst !== null);
 
   return {
     proformaNo: parsed.proforma_no,
@@ -171,10 +167,6 @@ export function toQuote(parsed: ParsedQuote): Quote {
     docNo: "",
     orderNo: "",
     dispatchTo: "",
-    inputUnit: inputUnitOf(parsed),
-    printUnit: parsed.sections[0]?.out_unit ?? "SQMT",
-    gstApplicable: gstSections.length > 0,
-    gstPct: gstSections[0]?.gst_pct ?? 9,
     sections,
   };
 }

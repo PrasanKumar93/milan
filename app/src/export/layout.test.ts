@@ -48,8 +48,8 @@ function documentOf(quote: Quote): string[] {
 
   for (const [index, section] of computed.sections.entries()) {
     out.push(`SIZE: ${section.section.product}`);
-    out.push(...flatten(headRows(quote)));
-    out.push(...flatten(lineRows(section, quote)));
+    out.push(...flatten(headRows(section.section)));
+    out.push(...flatten(lineRows(section)));
     // The last section's totals carry the summary, so the whole page is here.
     out.push(...flatten(totalsRows(computed, index)));
   }
@@ -104,9 +104,28 @@ describe("the printed document, against PROFORMA 7178", () => {
   it("heads both pairs of sizes with the unit they were taken in", () => {
     expect(documentOf(quote)[1]).toContain("ACTUAL SIZE (MM) CHARGEABLE (MM)");
 
-    const inches = documentOf({ ...quote, inputUnit: "inch" })[1];
+    const sections = quote.sections.map((s) => ({ ...s, inputUnit: "inch" as const }));
+    const inches = documentOf({ ...quote, sections })[1];
 
     expect(inches).toContain("ACTUAL SIZE (INCH) CHARGEABLE (INCH)");
+  });
+
+  /*
+   * Each section is headed in its own units, because each section is measured
+   * and priced in its own units (§2.1). A single head over a page that changes
+   * unit half way down would be wrong on one half of it.
+   */
+  it("heads a section in inches beneath a section in millimetres", () => {
+    const [first] = quote.sections;
+    const inches = { ...first, id: "inches", inputUnit: "inch" as const, printUnit: "SQFT" as const };
+    const heads = documentOf({ ...quote, sections: [first, inches] }).filter((line) =>
+      line.startsWith("SI NO"),
+    );
+
+    expect(heads).toEqual([
+      "SI NO SHAPE ACTUAL SIZE (MM) CHARGEABLE (MM) QTY SQMT CSQMT RATE AMOUNT",
+      "SI NO SHAPE ACTUAL SIZE (INCH) CHARGEABLE (INCH) QTY SQFT CSQFT RATE AMOUNT",
+    ]);
   });
 
   it("puts the working nowhere on it", () => {

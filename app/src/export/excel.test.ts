@@ -86,7 +86,7 @@ function quote(): Quote {
   const q = newQuote("7200");
   q.customerName = "G FOCUSS INTERIORS";
 
-  const toughened = newSection("mm", "10MM CLEAR TOUGHENED GLASS");
+  const toughened = newSection({}, "10MM CLEAR TOUGHENED GLASS");
   toughened.lines = [
     { ...newLine(toughened), actualH: 2000, actualW: 1000, qty: 2, rate: 1238 },
     { ...newLine(toughened), actualH: 1220, actualW: 610, qty: 1, rate: 1238 },
@@ -98,7 +98,7 @@ function quote(): Quote {
     { ...newAdjustment(toughened, "DOCUMENT CHARGE"), rate: 100 },
   ];
 
-  const mirror = newSection("mm", "6MM CLEAR MIRROR");
+  const mirror = newSection({}, "6MM CLEAR MIRROR");
   mirror.lines = [{ ...newLine(mirror), actualH: 2290, actualW: 340, qty: 1, rate: 1323 }];
   q.sections = [toughened, mirror];
 
@@ -356,10 +356,13 @@ describe("the printed page of the workbook", () => {
    * underneath went on holding 42.6875 — a workbook that prints a size the
    * customer never gave.
    */
-  it("shows an inch quote in fractions without turning the sizes into words", () => {
+  it("shows an inch section in fractions without turning the sizes into words", () => {
     const q = quote();
-    q.inputUnit = "inch";
-    q.sections[0].lines = [{ ...q.sections[0].lines[0], actualH: 33.5, actualW: 35.25 }];
+    q.sections[0] = {
+      ...q.sections[0],
+      inputUnit: "inch",
+      lines: [{ ...q.sections[0].lines[0], actualH: 33.5, actualW: 35.25 }],
+    };
 
     const inches = sheetFor(q);
     const line = rowOf(inches, "C", 33.5);
@@ -371,6 +374,37 @@ describe("the printed page of the workbook", () => {
     for (const column of ["H", "I", "J"]) {
       expect(inches.getCell(`${column}${line}`).numFmt).toBe("General");
     }
+
+    // And the mirror below it is still in millimetres: the format follows the
+    // section, so one page can hold both (§2.1).
+    const mm = rowOf(inches, "C", 2290);
+    expect(inches.getCell(`C${mm}`).numFmt).toBe("General");
+  });
+
+  /*
+   * A quote can be measured and priced two ways at once, and every formula the
+   * workbook writes depends on which: the foot the sizes round up to, and the
+   * divisor the area comes out of. They are written per section or a revised
+   * quote recalculates into nonsense the moment somebody edits a size.
+   */
+  it("writes each section's formulas in that section's own units", () => {
+    const q = quote();
+    q.sections[1] = { ...q.sections[1], inputUnit: "inch", printUnit: "SQFT" };
+
+    const mixed = sheetFor(q);
+    const formulaAt = (at: string) => (mixed.getCell(at).value as { formula: string }).formula;
+    const metres = rowOf(mixed, "C", 2000);
+    const feet = rowOf(mixed, "C", 2290);
+
+    // The millimetre section takes its fixed allowance from the hidden column;
+    // the inch mirror beside it goes up to a whole foot, and twelve inches is a
+    // foot exactly, so there is none of the 5 mm rounding the other unit needs.
+    expect(formulaAt(`E${metres}`)).toBe(`IF(C${metres}=0,0,C${metres}+L${metres})`);
+    expect(formulaAt(`E${feet}`)).toBe(`IF(C${feet}=0,0,CEILING(C${feet}/12,1)*12)`);
+
+    // Square metres off the millimetres, square feet off the inches.
+    expect(formulaAt(`I${metres}`)).toBe(`E${metres}/1000*F${metres}/1000*G${metres}`);
+    expect(formulaAt(`I${feet}`)).toBe(`E${feet}*F${feet}/144*G${feet}`);
   });
 
   it("keeps the allowance and the charge rate off the page but within reach", () => {

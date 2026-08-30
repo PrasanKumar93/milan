@@ -40,7 +40,7 @@ function withOverride(computed: Decimal, override: number | null): Computed {
 
 export interface ComputedLine {
   line: Line;
-  /** Allowance in force on this line: the quote default unless the line overrides it. */
+  /** Allowance in force on this line: the section default unless the line overrides it. */
   wastage: Decimal;
   wastageOverridden: boolean;
   chargeableH: Computed;
@@ -118,23 +118,23 @@ export function chargeableOf(
   return d(actual).plus(wastage);
 }
 
-export function computeLine(line: Line, quote: Quote, section: Section): ComputedLine {
+export function computeLine(line: Line, section: Section): ComputedLine {
   const rule = section.wastageRule;
   const wastage = d(line.wastage ?? section.wastage);
 
   const chargeableH = withOverride(
-    chargeableOf(line.actualH, rule, wastage, quote.inputUnit),
+    chargeableOf(line.actualH, rule, wastage, section.inputUnit),
     line.chargeableH,
   );
   const chargeableW = withOverride(
-    chargeableOf(line.actualW, rule, wastage, quote.inputUnit),
+    chargeableOf(line.actualW, rule, wastage, section.inputUnit),
     line.chargeableW,
   );
 
   const area = withOverride(
     areaOf(
-      quote.inputUnit,
-      quote.printUnit,
+      section.inputUnit,
+      section.printUnit,
       chargeableH.value.toNumber(),
       chargeableW.value.toNumber(),
       line.qty,
@@ -143,8 +143,8 @@ export function computeLine(line: Line, quote: Quote, section: Section): Compute
   );
 
   const actualArea = areaOf(
-    quote.inputUnit,
-    quote.printUnit,
+    section.inputUnit,
+    section.printUnit,
     line.actualH,
     line.actualW,
     line.qty,
@@ -174,8 +174,8 @@ export function computeAdjustment(adjustment: Adjustment): ComputedAdjustment {
   return { adjustment, amount: withOverride(base, adjustment.amount) };
 }
 
-export function computeSection(section: Section, quote: Quote): ComputedSection {
-  const lines = section.lines.map((line) => computeLine(line, quote, section));
+export function computeSection(section: Section): ComputedSection {
+  const lines = section.lines.map((line) => computeLine(line, section));
   const adjustments = section.adjustments.map(computeAdjustment);
 
   const zero = new Decimal(0);
@@ -187,12 +187,13 @@ export function computeSection(section: Section, quote: Quote): ComputedSection 
   const rounded = withOverride(toRupees(subtotal), section.rounded);
   const discount = subtotal.minus(rounded.value);
 
-  // Every charge is taxed with the glass it belongs to: GST is a decision for
-  // the whole quote, and all 47 samples charge it on the extras too (§2.1).
+  // Every charge is taxed with the glass it belongs to, at that glass's own
+  // rate: all 47 samples charge the tax on the extras as well as the lines,
+  // and one of them taxes two sections of a quote and not the third (§2.1).
   const charges = adjustments.reduce((sum, a) => sum.plus(a.amount.value), zero);
   const taxableBase = rounded.value.plus(charges);
-  const gst = quote.gstApplicable
-    ? toPaise(taxableBase.times(quote.gstPct).div(100))
+  const gst = section.gstApplicable
+    ? toPaise(taxableBase.times(section.gstPct).div(100))
     : zero;
 
   return {
@@ -216,7 +217,7 @@ export function computeSection(section: Section, quote: Quote): ComputedSection 
 }
 
 export function computeQuote(quote: Quote): ComputedQuote {
-  const sections = quote.sections.map((section) => computeSection(section, quote));
+  const sections = quote.sections.map(computeSection);
   const grandTotal = sections.reduce((sum, s) => sum.plus(s.total), new Decimal(0));
   return { quote, sections, grandTotal, overrides: collectOverrides(sections) };
 }

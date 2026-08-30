@@ -1,23 +1,21 @@
-import type { InputUnit, PrintUnit, Quote } from "../core/types";
-import { Field, NumberField, Pill, TextField } from "../ui/controls";
+import type { Quote } from "../core/types";
+import { Field, TextField } from "../ui/controls";
 
 /**
- * Everything printed above the first section: who the quote is for and the three
- * settings that change how the whole quote calculates. Wastage is not among them;
- * it belongs to a section, and is set there (dev-plan §2.2). The proforma number and
- * the date are plain text on purpose — the numbering follows the sheet the office
- * already keeps, and nothing here invents one (dev-plan §5).
+ * Everything printed above the first section: who the quote is for, and nothing
+ * about how it calculates. The units, the tax and the wastage all follow the
+ * glass, so they are set on the section (dev-plan §2.1, §2.2) — a quote can run
+ * millimetres on one section and inches on the next.
+ *
+ * The proforma number and the date are plain text on purpose: the numbering
+ * follows the sheet the office already keeps, and nothing here invents one (§5).
  */
 export function QuoteHeader({
   quote,
   onChange,
-  onInputUnit,
-  onPrintUnit,
 }: {
   quote: Quote;
   onChange: (patch: Partial<Quote>) => void;
-  onInputUnit: (unit: InputUnit) => void;
-  onPrintUnit: (unit: PrintUnit) => void;
 }) {
   return (
     <section className="card">
@@ -86,55 +84,6 @@ export function QuoteHeader({
             <Field label="Dispatch to">
               <TextField value={quote.dispatchTo} onChange={(v) => onChange({ dispatchTo: v })} />
             </Field>
-          </div>
-        </div>
-
-        <hr className="divider" />
-
-        <div className="settings">
-          <div className="stack">
-            <span className="field__label">Sizes entered in</span>
-            <div className="row row--tight">
-              <Pill active={quote.inputUnit === "mm"} onClick={() => onInputUnit("mm")}>
-                mm
-              </Pill>
-              <Pill active={quote.inputUnit === "inch"} onClick={() => onInputUnit("inch")}>
-                inch
-              </Pill>
-            </div>
-          </div>
-
-          <div className="stack">
-            <span className="field__label">Area printed in</span>
-            <div className="row row--tight">
-              <Pill active={quote.printUnit === "SQFT"} onClick={() => onPrintUnit("SQFT")}>
-                SQFT
-              </Pill>
-              <Pill active={quote.printUnit === "SQMT"} onClick={() => onPrintUnit("SQMT")}>
-                SQMT
-              </Pill>
-            </div>
-          </div>
-
-          <div className="stack">
-            <span className="field__label">GST</span>
-            <div className="row row--tight">
-              {/* Not applied first, so that "Applied" sits beside the rate it governs. */}
-              <Pill active={!quote.gstApplicable} onClick={() => onChange({ gstApplicable: false })}>
-                Not applied
-              </Pill>
-              <Pill active={quote.gstApplicable} onClick={() => onChange({ gstApplicable: true })}>
-                Applied
-              </Pill>
-              <NumberField
-                value={quote.gstPct}
-                onChange={(v) => onChange({ gstPct: v })}
-                width={56}
-                disabled={!quote.gstApplicable}
-                title="CGST and SGST each at this rate"
-              />
-              <span className="muted small">% CGST + same SGST</span>
-            </div>
           </div>
         </div>
       </div>

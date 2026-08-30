@@ -10,7 +10,7 @@ function quoteWith(edit: (q: Quote) => void): Quote {
   const q = newQuote("7178");
   // A new section starts with no glass on it, so a quote being checked has to
   // pick one the way an operator does.
-  const s = newSection("mm", "10MM CLEAR TOUGHENED GLASS");
+  const s = newSection({}, "10MM CLEAR TOUGHENED GLASS");
   s.lines = [{ ...newLine(s), actualH: 2000, actualW: 1000, rate: 1238 }];
   q.sections = [s];
   edit(q);
@@ -32,13 +32,15 @@ describe("warnings", () => {
     expect(
       tagsFor(
         quoteWith((q) => {
-          q.printUnit = "SQFT";
+          q.sections[0].printUnit = "SQFT";
           q.sections[0].lines[0].rate = 135;
         }),
       ),
     ).toContain("GST twice");
 
-    expect(tagsFor(quoteWith((q) => (q.gstApplicable = false)))).toContain("GST missing");
+    expect(tagsFor(quoteWith((q) => (q.sections[0].gstApplicable = false)))).toContain(
+      "GST missing",
+    );
     expect(tagsFor(quoteWith((q) => (q.sections[0].lines[0].rate = 0)))).toContain("No rate");
     expect(tagsFor(quoteWith((q) => (q.sections[0].rounded = 2000)))).toContain("Discount");
   });
@@ -76,7 +78,7 @@ describe("warnings", () => {
   it("catch a card price that already includes GST being taxed again", () => {
     const texts = textsFor(
       quoteWith((q) => {
-        q.printUnit = "SQFT";
+        q.sections[0].printUnit = "SQFT";
         q.sections[0].lines[0].rate = 135;
       }),
     );
@@ -86,21 +88,45 @@ describe("warnings", () => {
     expect(texts.some((t) => t.includes("114.41"))).toBe(true);
   });
 
-  it("catch a pre-tax card price on a quote that adds no tax", () => {
-    const texts = textsFor(quoteWith((q) => (q.gstApplicable = false)));
-    expect(texts.some((t) => t.includes("before GST, and this quote adds none"))).toBe(true);
+  it("catch a pre-tax card price on a section that adds no tax", () => {
+    const texts = textsFor(quoteWith((q) => (q.sections[0].gstApplicable = false)));
+    expect(texts.some((t) => t.includes("before GST, and this section adds none"))).toBe(true);
   });
 
   it("say nothing where the operator has priced it themselves", () => {
     // 114 is the square-foot rate with the tax taken out — a deliberate figure.
     const texts = textsFor(
       quoteWith((q) => {
-        q.printUnit = "SQFT";
+        q.sections[0].printUnit = "SQFT";
         q.sections[0].lines[0].rate = 114;
       }),
     );
 
     expect(texts.some((t) => t.includes("GST"))).toBe(false);
+  });
+
+  /*
+   * The settings are the section's own, so a mistake in one is reported against
+   * that one. A quote that prices its glass in square feet and its mirror in
+   * square metres is two different card columns, and only one of them has the
+   * tax already in it.
+   */
+  it("read each section on its own settings", () => {
+    const q = quoteWith((s) => {
+      const [metres] = s.sections;
+      // The card's square-foot column, which has the tax in it already.
+      const feet = newSection({ printUnit: "SQFT" }, "12MM CLEAR TOUGHENED GLASS");
+      feet.lines = [{ ...newLine(feet), actualH: 1000, actualW: 500, rate: 155 }];
+      s.sections = [metres, feet];
+    });
+
+    const tagged = warningsFor(computeQuote(q)).filter((w) => w.tag === "GST twice");
+
+    // The square-foot section is the one taxed twice; the square-metre section
+    // beside it is on a pre-tax price and is right to be taxed.
+    expect(tagged).toHaveLength(1);
+    expect(tagged[0].sectionId).toBe(q.sections[1].id);
+    expect(tagged[0].text).toContain("per SQFT");
   });
 
   it("name a discount rather than object to it", () => {
@@ -148,7 +174,7 @@ describe("warnings", () => {
   // abbreviation for the printed summary, and beside a sentence it reads as a
   // name somebody cut short.
   it("name the glass in full", () => {
-    const texts = textsFor(quoteWith((q) => (q.gstApplicable = false)));
+    const texts = textsFor(quoteWith((q) => (q.sections[0].gstApplicable = false)));
     expect(texts.some((t) => t.startsWith("10MM CLEAR TOUGHENED GLASS is at the card's"))).toBe(true);
   });
 });

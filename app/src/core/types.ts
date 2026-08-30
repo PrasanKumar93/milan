@@ -47,11 +47,29 @@ export interface Adjustment {
 }
 
 /**
+ * How a section calculates, as against what is in it.
+ *
+ * These follow the glass, not the quote. A shopfront is measured in millimetres
+ * and a mirror in inches on the same order, and the two columns of the rate card
+ * are priced in different units with different tax in them (§2.5), so a quote
+ * that fixed one unit for every section forced the operator to convert by hand.
+ * A new section starts on the settings of the one above it, which is the usual
+ * case, and changes from there (dev-plan §2.1).
+ */
+export interface SectionSettings {
+  inputUnit: InputUnit;
+  printUnit: PrintUnit;
+  gstApplicable: boolean;
+  /** CGST and SGST each charge this rate. */
+  gstPct: number;
+}
+
+/**
  * Wastage is entirely a section-level decision: the rule follows the glass, and
  * the allowance is set beside it so there is one place to look rather than two
  * (dev-plan §2.2).
  */
-export interface Section {
+export interface Section extends SectionSettings {
   id: string;
   /** Printed section title, e.g. "10MM CLEAR TOUGHENED GLASS". */
   product: string;
@@ -79,11 +97,6 @@ export interface Quote {
   docNo: string;
   orderNo: string;
   dispatchTo: string;
-  /** Set once per quote and inherited by every line — verified across all 47 samples (§2.1). */
-  inputUnit: InputUnit;
-  printUnit: PrintUnit;
-  gstApplicable: boolean;
-  /** CGST and SGST each charge this rate. */
-  gstPct: number;
+  /** Units and tax are not here: they belong to the section (see `SectionSettings`). */
   sections: Section[];
 }

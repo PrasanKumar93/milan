@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { ComputedSection } from "../core/engine";
 import { formatArea, formatMoney } from "../core/money";
-import type { Quote, Section } from "../core/types";
+import type { Section } from "../core/types";
 import { NumberField, OverrideDot } from "../ui/controls";
 
 /**
@@ -10,23 +10,22 @@ import { NumberField, OverrideDot } from "../ui/controls";
  * lower round figure, so that is exactly how it is recorded (dev-plan §2.9).
  */
 export function SectionTotals({
-  quote,
   computed,
   onPatchSection,
 }: {
-  quote: Quote;
   computed: ComputedSection;
   onPatchSection: (patch: Partial<Section>) => void;
 }) {
   const c = computed;
+  const section = c.section;
   const charges = c.charges;
 
   return (
     // Striped for the same reason the charges are: label at one end, figure at
     // the other, and nothing in between to follow.
     <div className="totals totals--zebra">
-      <Row label={`Area (${quote.printUnit})`} value={formatArea(c.totalActualArea)} />
-      <Row label={`CArea (C${quote.printUnit})`} value={formatArea(c.totalArea)} />
+      <Row label={`Area (${section.printUnit})`} value={formatArea(c.totalActualArea)} />
+      <Row label={`CArea (C${section.printUnit})`} value={formatArea(c.totalArea)} />
       {/* What the allowance added, in glass. It is the reason the shop floor
           asked for the measured area beside the chargeable one at all. */}
       {c.totalArea.gt(c.totalActualArea) && (
@@ -71,10 +70,10 @@ export function SectionTotals({
 
       {!charges.isZero() && <Row label="Charges" value={formatMoney(charges)} />}
 
-      {quote.gstApplicable && (
+      {section.gstApplicable && (
         <>
-          <Row label={`CGST ${quote.gstPct}%`} value={formatMoney(c.cgst)} muted />
-          <Row label={`SGST ${quote.gstPct}%`} value={formatMoney(c.sgst)} muted />
+          <Row label={`CGST ${section.gstPct}%`} value={formatMoney(c.cgst)} muted />
+          <Row label={`SGST ${section.gstPct}%`} value={formatMoney(c.sgst)} muted />
         </>
       )}
 

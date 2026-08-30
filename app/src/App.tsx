@@ -137,22 +137,18 @@ export default function App() {
             </>
           ) : (
             <>
-              <QuoteHeader
-                quote={q.quote}
-                onChange={q.patchQuote}
-                onInputUnit={q.setInputUnit}
-                onPrintUnit={q.setPrintUnit}
-              />
+              <QuoteHeader quote={q.quote} onChange={q.patchQuote} />
 
               {computed.sections.map((section, i) => (
                 <SectionEditor
                   key={section.section.id}
                   index={i}
-                  quote={q.quote}
                   computed={section}
                   canRemove={computed.sections.length > 1}
                   onSetProduct={(product) => q.setProduct(section.section.id, product)}
                   onPatchSection={(patch) => q.patchSection(section.section.id, patch)}
+                  onSetInputUnit={(unit) => q.setInputUnit(section.section.id, unit)}
+                  onSetPrintUnit={(unit) => q.setPrintUnit(section.section.id, unit)}
                   onPatchLine={(lineId, patch) => q.patchLine(section.section.id, lineId, patch)}
                   onResetLine={(lineId) => q.resetLine(section.section.id, lineId)}
                   onRemoveLine={(lineId) => q.removeLine(section.section.id, lineId)}

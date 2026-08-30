@@ -1,4 +1,11 @@
-import type { Adjustment, InputUnit, Line, Quote, Section } from "../core/types";
+import type {
+  Adjustment,
+  InputUnit,
+  Line,
+  Quote,
+  Section,
+  SectionSettings,
+} from "../core/types";
 import {
   chargeTypeFor,
   company,
@@ -46,19 +53,44 @@ export function newLine(section: Section): Line {
   };
 }
 
+/** How the first section of a quote calculates, before anyone changes it. */
+export const DEFAULT_SETTINGS: SectionSettings = {
+  inputUnit: "mm",
+  printUnit: "SQMT",
+  gstApplicable: true,
+  gstPct: company.defaults.gstPct,
+};
+
+/** The settings a new section starts on: the ones already in use above it. */
+export function settingsOf(section: SectionSettings): SectionSettings {
+  return {
+    inputUnit: section.inputUnit,
+    printUnit: section.printUnit,
+    gstApplicable: section.gstApplicable,
+    gstPct: section.gstPct,
+  };
+}
+
 /**
  * A section starts with no glass chosen. There is a most common glass, and
  * filling it in would save a click on many quotes — but it is the line the
  * proforma prints as the description of what was sold, and a default that is
  * right most of the time is one nobody reads the rest of the time.
+ *
+ * It does start on the settings of the section above it: an order measured in
+ * inches is measured in inches throughout far more often than not, and copying
+ * them down is a default that shows on the section's own line, where the next
+ * thing the operator does is read it.
  */
-export function newSection(inputUnit: InputUnit, product = ""): Section {
+export function newSection(settings: Partial<SectionSettings> = {}, product = ""): Section {
+  const inherited = { ...DEFAULT_SETTINGS, ...settings };
   const section: Section = {
     id: id("s"),
+    ...inherited,
     product,
     shortCode: shortCodeFor(product),
     wastageRule: wastageRuleFor(product),
-    wastage: defaultWastage(inputUnit),
+    wastage: defaultWastage(inherited.inputUnit),
     lines: [],
     adjustments: [],
     rounded: null,
@@ -91,7 +123,6 @@ export function newAdjustment(section: Section, label = ""): Adjustment {
 }
 
 export function newQuote(proformaNo = ""): Quote {
-  const inputUnit: InputUnit = "mm";
   return {
     proformaNo,
     date: today(),
@@ -104,28 +135,27 @@ export function newQuote(proformaNo = ""): Quote {
     docNo: "",
     orderNo: "",
     dispatchTo: "",
-    inputUnit,
-    printUnit: "SQMT",
-    gstApplicable: true,
-    gstPct: company.defaults.gstPct,
-    sections: [newSection(inputUnit)],
+    sections: [newSection()],
   };
 }
 
 /**
- * Switching the quote's unit refills every allowance with the standard for that
- * unit and clears chargeable overrides, since a size typed in millimetres means
- * nothing once the quote is in inches.
+ * Switching a section's unit refills its allowance with the standard for that
+ * unit and clears the chargeable overrides on its rows, since a size typed in
+ * millimetres means nothing once the section is in inches. The sizes themselves
+ * are left alone: they are what somebody measured, and only they know whether
+ * the tape was metric.
  */
-export function switchInputUnit(quote: Quote, inputUnit: InputUnit): Quote {
-  const wastage = defaultWastage(inputUnit);
+export function switchInputUnit(section: Section, inputUnit: InputUnit): Section {
   return {
-    ...quote,
+    ...section,
     inputUnit,
-    sections: quote.sections.map((s) => ({
-      ...s,
-      wastage,
-      lines: s.lines.map((l) => ({ ...l, wastage: null, chargeableH: null, chargeableW: null })),
+    wastage: defaultWastage(inputUnit),
+    lines: section.lines.map((l) => ({
+      ...l,
+      wastage: null,
+      chargeableH: null,
+      chargeableW: null,
     })),
   };
 }

@@ -1,7 +1,7 @@
 import Decimal from "decimal.js";
 import type { ComputedSection } from "../core/engine";
 import { perimeterRft, polishRate, thicknessMm } from "../core/products";
-import type { InputUnit, Quote, Section } from "../core/types";
+import type { InputUnit, Section, SectionSettings } from "../core/types";
 import { MM_PER_FOOT, SQFT_PER_SQM, formatInches, toNextFoot } from "../core/units";
 
 /**
@@ -14,8 +14,8 @@ import { MM_PER_FOOT, SQFT_PER_SQM, formatInches, toNextFoot } from "../core/uni
  * far quicker than one with letters.
  *
  * The rule is not restated here: every explanation is built from the same
- * section and quote the engine calculated from, so a quote in inches or a
- * section on foot to foot explains itself accordingly.
+ * section the engine calculated from, so a section in inches or one on foot to
+ * foot explains itself accordingly.
  */
 
 const round = (value: Decimal, places: number) => value.toDecimalPlaces(places).toString();
@@ -26,7 +26,8 @@ const shown = (value: Decimal | number, unit: InputUnit) => {
   return unit === "inch" ? formatInches(n) : String(n);
 };
 
-const size = (quote: Quote) => (value: Decimal | number) => shown(value, quote.inputUnit);
+const size = (section: SectionSettings) => (value: Decimal | number) =>
+  shown(value, section.inputUnit);
 
 const lines = (rule: string, example?: string) =>
   example ? `${rule}\n\nRow 1:  ${example}` : rule;
@@ -84,10 +85,10 @@ export function footStepsPair(actualH: number, actualW: number, unit: InputUnit)
 }
 
 /** Actual plus the allowance, or up to the next foot — whichever this section is on. */
-export function chargeableHint(computed: ComputedSection, quote: Quote): string {
-  const show = size(quote);
+export function chargeableHint(computed: ComputedSection): string {
+  const show = size(computed.section);
   const first = computed.lines[0];
-  const unit = quote.inputUnit;
+  const unit = computed.section.inputUnit;
 
   if (computed.section.wastageRule === "foot_to_foot") {
     const rule = `Chargeable = the size taken up to the next whole foot (${perFoot(unit)} ${unit}). Only an overhang moves it up: a size already on a foot is left where it is.`;
@@ -109,14 +110,14 @@ export function chargeableHint(computed: ComputedSection, quote: Quote): string 
  * step they can do in their head — the height in metres, the width in metres,
  * then the two multiplied, then the count.
  */
-const areaShape = (quote: Quote) => (h: string, w: string, qty: string) => {
-  if (quote.inputUnit === "mm") {
+const areaShape = (section: SectionSettings) => (h: string, w: string, qty: string) => {
+  if (section.inputUnit === "mm") {
     const metres = `((${h} ÷ 1000) × (${w} ÷ 1000)) × ${qty}`;
-    return quote.printUnit === "SQFT" ? `(${metres}) × ${SQFT_PER_SQM}` : metres;
+    return section.printUnit === "SQFT" ? `(${metres}) × ${SQFT_PER_SQM}` : metres;
   }
 
   const feet = `((${h} × ${w}) ÷ 144) × ${qty}`;
-  return quote.printUnit === "SQMT" ? `(${feet}) ÷ ${SQFT_PER_SQM}` : feet;
+  return section.printUnit === "SQMT" ? `(${feet}) ÷ ${SQFT_PER_SQM}` : feet;
 };
 
 /**
@@ -127,30 +128,32 @@ const areaShape = (quote: Quote) => (h: string, w: string, qty: string) => {
  */
 export function chargeableSteps(
   l: ComputedSection["lines"][number],
-  rule: Section["wastageRule"],
-  quote: Quote,
+  section: Section,
   side: "Height" | "Width",
 ): string {
-  const show = size(quote);
+  const show = size(section);
   const actual = side === "Height" ? l.line.actualH : l.line.actualW;
   const charged = side === "Height" ? l.chargeableH.value : l.chargeableW.value;
 
-  return rule === "foot_to_foot"
-    ? `${side} up to the next foot:\n${footSteps(actual, quote.inputUnit)}`
+  return section.wastageRule === "foot_to_foot"
+    ? `${side} up to the next foot:\n${footSteps(actual, section.inputUnit)}`
     : `${side}: actual + wastage = ${show(actual)} + ${show(l.wastage)} = ${show(charged)}`;
 }
 
-export function areaSteps(l: ComputedSection["lines"][number], quote: Quote): string {
-  const show = size(quote);
-  const shape = areaShape(quote);
+export function areaSteps(l: ComputedSection["lines"][number], section: SectionSettings): string {
+  const show = size(section);
+  const shape = areaShape(section);
 
   return `CArea = ${shape(show(l.chargeableH.value), show(l.chargeableW.value), String(l.line.qty))} = ${round(l.area.value, 6)}`;
 }
 
 /** The same sum on the measured sizes: the glass as it is cut, not as it is billed. */
-export function actualAreaSteps(l: ComputedSection["lines"][number], quote: Quote): string {
-  const show = size(quote);
-  const shape = areaShape(quote);
+export function actualAreaSteps(
+  l: ComputedSection["lines"][number],
+  section: SectionSettings,
+): string {
+  const show = size(section);
+  const shape = areaShape(section);
 
   return `Area = ${shape(show(l.line.actualH), show(l.line.actualW), String(l.line.qty))} = ${round(l.actualArea, 6)}`;
 }
@@ -159,13 +162,14 @@ export function amountSteps(l: ComputedSection["lines"][number]): string {
   return `Amount = CArea × rate = ${round(l.area.value, 6)} × ${l.line.rate} = ${round(l.amount.value, 2)}`;
 }
 
-/** The area the line is priced on, in whichever units the quote is typed and priced in. */
-export function areaHint(computed: ComputedSection, quote: Quote): string {
+/** The area the line is priced on, in whichever units the section is typed and priced in. */
+export function areaHint(computed: ComputedSection): string {
+  const section = computed.section;
   const first = computed.lines[0];
 
   return lines(
-    `CArea is the chargeable area — the one the amount is worked out on.\n\nCArea = ${areaShape(quote)("chargeable H", "chargeable W", "qty")}, so the count is already in it.`,
-    first && areaSteps(first, quote).replace("CArea = ", ""),
+    `CArea is the chargeable area — the one the amount is worked out on.\n\nCArea = ${areaShape(section)("chargeable H", "chargeable W", "qty")}, so the count is already in it.`,
+    first && areaSteps(first, section).replace("CArea = ", ""),
   );
 }
 
@@ -174,16 +178,17 @@ export function areaHint(computed: ComputedSection, quote: Quote): string {
  * was cut beside what is being charged, and the gap between the two columns is
  * the wastage the allowance added.
  */
-export function actualAreaHint(computed: ComputedSection, quote: Quote): string {
+export function actualAreaHint(computed: ComputedSection): string {
+  const section = computed.section;
   const first = computed.lines[0];
   const waste =
     computed.totalActualArea.gt(0) && computed.totalArea.gt(computed.totalActualArea)
-      ? `\n\nThis section: ${round(computed.totalActualArea, 4)} measured against ${round(computed.totalArea, 4)} charged — ${round(computed.totalArea.minus(computed.totalActualArea), 4)} ${quote.printUnit} of wastage.`
+      ? `\n\nThis section: ${round(computed.totalActualArea, 4)} measured against ${round(computed.totalArea, 4)} charged — ${round(computed.totalArea.minus(computed.totalActualArea), 4)} ${section.printUnit} of wastage.`
       : "";
 
   return `${lines(
-    `Area is the glass as measured, before any allowance. Nothing is priced on it: CArea beside it is what the amount uses, and the difference between them is the wastage.\n\nArea = ${areaShape(quote)("actual H", "actual W", "qty")}`,
-    first && actualAreaSteps(first, quote).replace("Area = ", ""),
+    `Area is the glass as measured, before any allowance. Nothing is priced on it: CArea beside it is what the amount uses, and the difference between them is the wastage.\n\nArea = ${areaShape(section)("actual H", "actual W", "qty")}`,
+    first && actualAreaSteps(first, section).replace("Area = ", ""),
   )}${waste}`;
 }
 
@@ -194,11 +199,11 @@ export function actualAreaHint(computed: ComputedSection, quote: Quote): string 
  * running feet of cut edge, not area — so both halves are spelled out: where the
  * ₹10 comes from, and where the 3.73 comes from. The office's own note writes it
  * as `H + W × 2 / 12 × thickness × qty`, in inches; this is the same thing in
- * whichever unit the quote is being typed in.
+ * whichever unit the section is being typed in.
  */
-export function polishHint(computed: ComputedSection, quote: Quote, perMm: number): string {
-  const show = size(quote);
-  const unit = quote.inputUnit;
+export function polishHint(computed: ComputedSection, perMm: number): string {
+  const show = size(computed.section);
+  const unit = computed.section.inputUnit;
   const per = perFoot(unit);
   const mm = thicknessMm(computed.section.product);
 

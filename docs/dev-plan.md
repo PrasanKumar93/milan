@@ -14,7 +14,7 @@ Verification harness lives in `scripts/` (`parse.py` → `analyze.py` / `checks.
 | Printed area = formula(chargeable size, qty) | **271 / 284** (13 exceptions, all explained below) |
 | Whole quote reproduced end-to-end            | **42 / 45** (3 exceptions, listed below)           |
 
-The three quotes the engine does not reproduce are all deliberate. ASHRAF KOLAR 7161 carried `1350.5557` down as `1350`, a ₹1 operator override. BHOOTH SINGH 6613 absorbed a ₹1,238 discount into its rounded subtotal (§2.9). SAI GLASS 6374 is missing GST on one of its three sections, and the app will not reproduce that because GST is a quote-level flag precisely so the omission becomes impossible (§9). The Python harness scores 43/45 because it applies GST per section and so faithfully reproduces the error; the TypeScript engine scores 42 and is the more correct of the two.
+The two quotes the engine does not reproduce are both deliberate. ASHRAF KOLAR 7161 carried `1350.5557` down as `1350`, a ₹1 operator override. BHOOTH SINGH 6613 absorbed a ₹1,238 discount into its rounded subtotal (§2.9). SAI GLASS 6374 was a third until GST moved onto the section (§2.1): it taxes two of its three sections and leaves the last, and the engine now reproduces that page as typed. **44 of the 45 priced samples come out to the rupee.**
 
 ---
 
@@ -62,17 +62,25 @@ These are exactly the four formulas in the handwritten note. The conversion fact
 
 Input unit is inferred from magnitude (2-digit = inches, 3–4-digit = mm) and confirmed by notation: **fractions only ever appear on inch inputs** (96 of 137 inch lines use them, no mm line ever does). Inch entry must accept eighths — `33 1/4`, `34 5/8`, `38 3/8`, `52 7/8` all occur.
 
-**All three settings are quote-level, not per-section or per-line.** Verified across all 47 quotes:
+**All three settings are per-section, and never per-line.** What the samples show:
 
 | Setting | Uniform within a quote |
 |---|---|
 | Input unit (mm / inch) | **47 / 47** |
 | Printed unit (SQFT / SQMT) | **47 / 47** |
-| GST applicable | 46 / 47 (the exception is an error, §9) |
+| GST applicable | 46 / 47 |
 
-Not a single quote mixes millimetres and inches, and none mixes SQFT and SQMT — including the nine multi-section quotes. So the operator picks input unit, printed unit and GST **once per quote**, and every section and line follows. That is a real simplification for the entry screen: three toggles in the quote header, nothing per row.
+Not one sample mixes millimetres and inches, and none mixes SQFT and SQMT — including the ten multi-section quotes. They were quote-level settings for exactly that reason, and the business then asked for them per section: **a section is one glass, and the unit follows the glass.** A shopfront is measured in millimetres off a steel tape and a mirror in inches, on the same order; the two columns of the rate card are priced in different units with different tax in them (§2.5). A quote that fixed one unit for every section left the operator converting the other one by hand, which is the arithmetic the app exists to remove.
+
+The 47/47 above is what the samples happen to contain, not a rule they were keeping. Per section is a superset: a quote that does not mix units is one whose sections all say the same thing, and a new section starts on the settings of the one above it, so the uniform case still costs nothing to type. The evidence bears on how it defaults, not on where it lives.
+
+GST went with them, and the sample that argued for it is the one that was written off as an error. SAI GLASS 6374 taxes two sections and leaves the third (§9): while GST was one switch for the whole quote the engine could not produce that page at all. It now reproduces, which is a bill the app can print rather than a bill it refuses — and 6374 came off the list of samples the engine will not reproduce. The safeguard is a warning, not a locked switch (§7).
 
 The three are still independent of each other — all four unit combinations occur (21 quotes inch→SQFT, 13 mm→SQMT, 8 mm→SQFT, 5 inch→SQMT), and SQMT quotes appear both with and without GST. Do not couple them.
+
+On screen they sit on one line at the head of the section, ahead of the wastage that was already there: `Sizes in · Area in · GST · Wastage`, divided rather than spaced, so four settings do not read as one row of twelve buttons. Nothing about how a quote calculates is left in the quote header.
+
+Switching a section's input unit refills that section's allowance with the standard for the new unit and clears the chargeable overrides on its rows — a size typed in millimetres means nothing once the section is in inches. It leaves the typed sizes alone, and it leaves every other section alone.
 
 ### 2.2 Chargeable size (wastage allowance)
 
@@ -521,7 +529,7 @@ Because the deliverable is a downloaded file, there is nothing in the browser wo
 
 **Phase 5 — Download Excel. Done.** `app/src/export/excel.ts` writes the quote as a working sheet: the same page as the PDF — drawn from the same `layout.ts` rows, down to the colours, the boxed figures, the mark and the stamp — with live formulas behind every derived figure, the wastage allowance and charge rates in hidden columns, and A4 print setup so it prints as the proforma. `excel.test.ts` recalculates the workbook the way Excel would and checks it lands on the same totals as the engine — including after a size is changed, which is the whole point of the export — and then checks the page it draws, because the workbook is the one renderer nobody looks at until weeks later. `npm run sample:pdf 7178 out/` writes both files for putting side by side.
 
-**Phase 5a — Retyping the samples through the screen. Done.** The tests prove the arithmetic; they do not prove the screen is wired to it. `npm run retype -- 6363` drives the running app in Chrome, types a sample's sizes, rates and charges the way an operator would, and compares every cell the app filled in for itself — chargeable sizes, areas, amounts, charge amounts, totals, GST and the grand total — against the figures on the original PDF, then screenshots both tabs and downloads the PDF and the workbook. Swept across every sample, **1,387 of 1,442 printed figures come out of the app identical**. The 55 that do not are the quotes already written up in §9 and nothing else: eleven ±₹1 rounded subtotals an operator typed by hand (§2.3), the eleven typed-over areas on SHYAM LAL JI 7154, the missing GST section on SAI GLASS 6374, and the handful of lines charged past or under their own rule — G FOCUSS 7178, AD GLASS 7176, SVM GLASS 7120 — each of which the app declines to reproduce for a reason it can state. It is also how the three printing habits in §2.10 were found.
+**Phase 5a — Retyping the samples through the screen. Done.** The tests prove the arithmetic; they do not prove the screen is wired to it. `npm run retype -- 6363` drives the running app in Chrome, types a sample's sizes, rates and charges the way an operator would, and compares every cell the app filled in for itself — chargeable sizes, areas, amounts, charge amounts, totals, GST and the grand total — against the figures on the original PDF, then screenshots both tabs and downloads the PDF and the workbook. Swept across every sample, **1,389 of 1,442 printed figures come out of the app identical**. The 53 that do not are the quotes already written up in §9 and nothing else: eleven ±₹1 rounded subtotals an operator typed by hand (§2.3), the eleven typed-over areas on SHYAM LAL JI 7154, and the handful of lines charged past or under their own rule — G FOCUSS 7178, AD GLASS 7176, SVM GLASS 7120 — each of which the app declines to reproduce for a reason it can state. SAI GLASS 6374 was among them until GST moved onto the section (§2.1); all 39 of its figures now match, untaxed third section included. It is also how the three printing habits in §2.10 were found.
 
 The sweep is the check on the *screen*. The check on the *masters* is a set of tests that read `products.json`, `chargeTypes.json`, `rateCard.json` and `company.json` and ask the app what it thinks: every glass measured the way its catalogue entry says, every glass named the way its `shortCode` says, every card price one the dropdowns can actually produce, every charge opening on the count and rate the charge master gives it, and a new quote on the company's own defaults. Code that quietly holds a second opinion is the one failure the arithmetic tests cannot see — the app goes on being self-consistent while it stops doing what the file says — and it has happened twice: a keyword list went on calling extra clear foot to foot for weeks after the customer said only mirror is, and polish was priced by a constant in `core/` while `chargeTypes.json` carried a rupees-per-millimetre figure nobody read.
 
@@ -568,7 +576,9 @@ Worth raising with the team — these are real money.
 
 **RAJU 6363.** The column header reads SQMT but the values are SQFT (mm input converted with ×10.764) and the rate is the ₹135 SQFT rate. The money is right; only the header is wrong.
 
-**SAI GLASS 6374 — GST missing from one section.** The quote has three sections. The 10 MM and 6 MM sections both carry CGST 9% + SGST 9%, but the 8 MM section jumps straight from `1564 + 120 holes = 1684` to the section total with no tax rows, and the grand total of `15943.12` accepts it. Since GST applies to the whole invoice or not at all, this is an operator omission, not a business rule — roughly **₹303 of GST was not charged** and would still be owed. Making the GST flag a quote-level setting (§2.1) makes this error structurally impossible.
+**SAI GLASS 6374 — one section untaxed.** The quote has three sections. The 10 MM and 6 MM sections both carry CGST 9% + SGST 9%, but the 8 MM section jumps straight from `1564 + 120 holes = 1684` to the section total with no tax rows, and the grand total of `15943.12` accepts it. Roughly **₹303 of GST was not charged** on it.
+
+This was read as an operator omission and the GST flag was made quote-level so it could not happen again. The business has since asked for GST per section (§2.1), which makes it typeable once more: the switch stands on the section's own settings line, and 6374 now reproduces exactly as printed. The check moved from the model to §7, where a section priced off the card at a rate that already has GST in it — or one before tax with none added — is named on the warning list. A switch nobody can reach also prints a bill nobody asked for; a warning leaves the operator to decide and shows what they decided.
 
 **THIRUMALESH 7733 — a subtotal rounded down.** The one way section subtotals to `19910.81` and the sheet writes `19910`, where rounding to the nearest gives `19911`. It is 81 paise, and it is the operator's to make: the app works out 19911, the figure is typed over, and the screen says so. Everything else on this quote — thirty-two lines across three sections, twenty-six of them measured to the next foot in inches and fractions — comes out of the app identical to the printed sheet, including both tax rows on all three sections and the grand total.
 
@@ -606,7 +616,7 @@ None of the first three errors is possible once areas and taxes are computed rat
 - **The document keeps the sheet's own look** — letterhead mark, the stamp over Authorised Signatory, red headings, purple title, blue note, boxed blocks and `TOTAL AMOUNT` on yellow — described once in `layout.ts` for both renderings, and printed in colour (§2.10).
 - **A quote of one section says each figure once** — no subtotal row over a single line, no taxable base without GST, no section total and no summary block (§2.10).
 - **Rounding a subtotal is the operator's, not the app's.** The office rounds up on some sheets and down on others (4 up, 5 down, 39 that cannot tell them apart), so the app rounds to the nearest rupee, shows the exact figure beside it, and lets the field be typed over (§2.3, §2.9).
-- **Standard fixed wastage is 50 mm / 2 in; 30 mm is a per-customer concession.** Editable at quote and line level.
+- **Standard fixed wastage is 50 mm / 2 in; 30 mm is a per-customer concession.** Editable at section and line level.
 - **Wastage is one number for both sides** — never deliberately different per dimension (§2.2).
 - **Kaccha (raw) glass carries wastage too**, same as toughened.
 - **Discounts do not print** — recorded by overriding the rounded subtotal, visible on screen with the computed figure beside it (§2.9).
@@ -618,7 +628,7 @@ None of the first three errors is possible once areas and taxes are computed rat
 - **PDF is the deliverable; the Excel workbook is the working copy** and carries live formulas, because it is the only way to revise an old quote when nothing is filed away (§5).
 - Extra charge rates: fixed defaults, editable per quote.
 - Unit inference: 2-digit = inches, 3–4-digit = mm.
-- **Input unit, printed unit and GST are set once per quote** — verified uniform across all 47 samples (§2.1).
+- **Input unit, printed unit and GST are set on the section**, beside its wastage, and a new section starts on the settings of the one above it. The 47 samples are each uniform throughout, but a section is one glass and the unit follows the glass (§2.1).
 - **Wastage is decided by the biller per section**, default 50 mm / 2 in. No customer-level table.
 - **Jobwork is out of scope** — always separate hand work.
 - **No IGST** — CGST + SGST only. Keep the field but hide it until a non-Karnataka customer appears.

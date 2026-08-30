@@ -3,7 +3,7 @@ import type { Borders, Cell as XlsxCell, Fill, Workbook, Worksheet } from "excel
 // The same working the screen shows under its `i` marks, written onto the cells.
 import { actualAreaSteps, amountSteps, areaSteps, chargeableSteps } from "../components/formulas";
 import type { ComputedQuote, ComputedSection } from "../core/engine";
-import type { Quote, Section } from "../core/types";
+import type { Quote, Section, SectionSettings } from "../core/types";
 import { MM_PER_FOOT, SQFT_PER_SQM } from "../core/units";
 import { company } from "../data/masters";
 import {
@@ -331,31 +331,31 @@ function overridable(
  * plus the wastage cell; foot to foot it is the next whole foot, and in
  * millimetres the next whole 5 mm above that (dev-plan §2.2).
  */
-function chargeableFormula(section: Section, quote: Quote, actual: string, wastage: string): string {
+function chargeableFormula(section: Section, actual: string, wastage: string): string {
   if (section.wastageRule === "fixed") return `IF(${actual}=0,0,${actual}+${wastage})`;
 
-  const perFoot = quote.inputUnit === "mm" ? MM_PER_FOOT.toString() : "12";
+  const perFoot = section.inputUnit === "mm" ? MM_PER_FOOT.toString() : "12";
   const feet = `CEILING(${actual}/${perFoot},1)*${perFoot}`;
-  return quote.inputUnit === "mm"
+  return section.inputUnit === "mm"
     ? `IF(${actual}=0,0,CEILING(${feet},5))`
     : `IF(${actual}=0,0,${feet})`;
 }
 
-/** Printed area from the chargeable sizes, for whichever pair of units the quote uses (§2.1). */
-function areaFormula(quote: Quote, h: string, w: string, qty: string): string {
+/** Printed area from the chargeable sizes, for whichever pair of units the section uses (§2.1). */
+function areaFormula(section: SectionSettings, h: string, w: string, qty: string): string {
   const sqft = SQFT_PER_SQM.toString();
 
-  if (quote.inputUnit === "mm") {
+  if (section.inputUnit === "mm") {
     const sqm = `${h}/1000*${w}/1000*${qty}`;
-    return quote.printUnit === "SQFT" ? `${sqm}*${sqft}` : sqm;
+    return section.printUnit === "SQFT" ? `${sqm}*${sqft}` : sqm;
   }
 
   const sqftArea = `${h}*${w}/144*${qty}`;
-  return quote.printUnit === "SQFT" ? sqftArea : `${sqftArea}/${sqft}`;
+  return section.printUnit === "SQFT" ? sqftArea : `${sqftArea}/${sqft}`;
 }
 
 /** Every printed figure of one section, made live. Returns what its total is worth. */
-function liveSection(pen: Pen, index: number, computed: ComputedSection, quote: Quote): string {
+function liveSection(pen: Pen, index: number, computed: ComputedSection): string {
   const scope = `s${index}.`;
   const at = (key: string): string | undefined => pen.at.get(`${scope}${key}`);
   const rowOf = (ref: string) => Number(ref.slice(1));
@@ -396,34 +396,34 @@ function liveSection(pen: Pen, index: number, computed: ComputedSection, quote: 
       pen,
       chargeableH,
       line.line.chargeableH,
-      chargeableFormula(section, quote, actualH, working),
+      chargeableFormula(section, actualH, working),
       line.chargeableH.computed,
-      chargeableSteps(line, section.wastageRule, quote, "Height"),
+      chargeableSteps(line, section, "Height"),
     );
     overridable(
       pen,
       chargeableW,
       line.line.chargeableW,
-      chargeableFormula(section, quote, actualW, working),
+      chargeableFormula(section, actualW, working),
       line.chargeableW.computed,
-      chargeableSteps(line, section.wastageRule, quote, "Width"),
+      chargeableSteps(line, section, "Width"),
     );
     // The measured area prices nothing, so there is nothing to type over: it
     // follows the sizes above it wherever they are edited.
     live(
       pen,
       actualArea,
-      areaFormula(quote, actualH, actualW, qty),
+      areaFormula(section, actualH, actualW, qty),
       line.actualArea,
-      actualAreaSteps(line, quote),
+      actualAreaSteps(line, section),
     );
     overridable(
       pen,
       area,
       line.line.area,
-      areaFormula(quote, chargeableH, chargeableW, qty),
+      areaFormula(section, chargeableH, chargeableW, qty),
       line.area.computed,
-      areaSteps(line, quote),
+      areaSteps(line, section),
     );
     overridable(
       pen,
@@ -537,12 +537,9 @@ export function buildWorkbook(
     { width: 9, hidden: true },
   ];
 
-  const pen: Pen = {
-    sheet,
-    row: 1,
-    at: new Map(),
-    sizes: quote.inputUnit === "inch" ? FRACTIONS : "General",
-  };
+  // Set again for each section as it is drawn: one may be in inches and the
+  // next in millimetres, and only the inch one wants fractions.
+  const pen: Pen = { sheet, row: 1, at: new Map(), sizes: "General" };
   letterheadBlock(pen, workbook, pictures.logo);
   metaBlock(pen, quote);
 
@@ -553,7 +550,7 @@ export function buildWorkbook(
   // Everything is on the page before any of it is made live, so a formula can
   // point at a cell that is written further down.
   const totals = computed.sections.map((section, index) => {
-    const total = liveSection(pen, index, section, quote);
+    const total = liveSection(pen, index, section);
 
     // Where the sheet repeats each section total above the grand total, that
     // repetition is the cell the grand total adds up.
@@ -611,13 +608,15 @@ function metaBlock(pen: Pen, quote: Quote): void {
 
 /** The glass, its HSN code, the lines, and everything the lines add up to. */
 function sectionBlock(pen: Pen, index: number, computed: ComputedQuote): void {
-  const quote = computed.quote;
   const section = computed.sections[index];
   const scope = `s${index}.`;
 
+  // The sizes in this section are shown the way this section was measured.
+  pen.sizes = section.section.inputUnit === "inch" ? FRACTIONS : "General";
+
   drawRows(pen, titleRows(section), scope);
 
-  const head = headRows(quote);
+  const head = headRows(section.section);
   for (const row of head) {
     drawRow(pen, row, scope, true);
     for (let col = 1; col <= COLUMNS; col += 1) {
@@ -625,7 +624,7 @@ function sectionBlock(pen: Pen, index: number, computed: ComputedQuote): void {
     }
   }
 
-  drawRows(pen, lineRows(section, quote), scope, true);
+  drawRows(pen, lineRows(section), scope, true);
   // Under the last section this carries the quote's total as well, so the block
   // runs unbroken from the lines to the figure the customer signs off.
   drawRows(pen, totalsRows(computed, index), scope);
