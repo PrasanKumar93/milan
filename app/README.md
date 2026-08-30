@@ -55,7 +55,10 @@ src/export/
   pdf.ts         that layout through pdfmake
   excel.ts       the same page as a working sheet, with the formulas left in
   marks.ts       the letterhead mark and the stamp, as bytes
+scripts/         the tools above — sample:pdf, retype, and one-off browser peeks
 ```
+
+The four `tsconfig.*.json` files are one per kind of code, because each is compiled with different globals: the app has the DOM, the tests add Vitest, `vite.config.ts` is Node, and `scripts/` is Node driving a browser, so it needs both. They are listed as references in `tsconfig.json` and `npm run build` checks all four. A file in a folder no project includes is a file the editor reads without types and the build never looks at, which is what `scripts/` was.
 
 ## One document, three renderings
 
