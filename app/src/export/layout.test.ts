@@ -63,7 +63,7 @@ describe("the printed document, against PROFORMA 7178", () => {
   it("reproduces every printed line", () => {
     expect(documentOf(quote)).toEqual([
       "SIZE: 6MM CLEAR MIRROR",
-      "SI NO SHAPE ACTUAL SIZE CHARGEABLE QTY SQMT CSQMT RATE AMOUNT",
+      "SI NO SHAPE ACTUAL SIZE (MM) CHARGEABLE (MM) QTY SQMT CSQMT RATE AMOUNT",
       "HEIGHT WIDTH HEIGHT WIDTH",
       // 2.29 × 0.34 = 0.7786 measured, against 2.44 × 0.61 = 1.4884 charged.
       "1 MIRROR 2290 340 2440 610 1 0.7786 1.4884 1323 1969.153",
@@ -76,7 +76,7 @@ describe("the printed document, against PROFORMA 7178", () => {
       "6MM MIRROR 12779.4",
 
       "SIZE: 10MM CLEAR TOUGEHENED GLASS",
-      "SI NO SHAPE ACTUAL SIZE CHARGEABLE QTY SQMT CSQMT RATE AMOUNT",
+      "SI NO SHAPE ACTUAL SIZE (MM) CHARGEABLE (MM) QTY SQMT CSQMT RATE AMOUNT",
       "HEIGHT WIDTH HEIGHT WIDTH",
       // Six pieces of 0.23 × 0.838: 0.19274 each, 1.15644 in all.
       "1 BLOCK 230 838 280 888 6 1.15644 1.49184 1232 1837.947",
@@ -99,6 +99,16 @@ describe("the printed document, against PROFORMA 7178", () => {
     ]);
   });
 
+  // A column of bare numbers is read as millimetres by anyone who was not on
+  // the job, and half these quotes are measured in inches.
+  it("heads both pairs of sizes with the unit they were taken in", () => {
+    expect(documentOf(quote)[1]).toContain("ACTUAL SIZE (MM) CHARGEABLE (MM)");
+
+    const inches = documentOf({ ...quote, inputUnit: "inch" })[1];
+
+    expect(inches).toContain("ACTUAL SIZE (INCH) CHARGEABLE (INCH)");
+  });
+
   it("puts the working nowhere on it", () => {
     const text = documentOf(quote).join("\n");
     for (const word of ["Wastage", "Rounded", "Total —", "Taxable", "override"]) {
@@ -116,7 +126,7 @@ describe("the printed document, against PROFORMA 6359", () => {
   it("says each figure once and no more", () => {
     expect(documentOf(toQuote(sample("6359")))).toEqual([
       "SIZE: 12MM CLEAR TOUGHENED GLASS",
-      "SI NO SHAPE ACTUAL SIZE CHARGEABLE QTY SQFT CSQFT RATE AMOUNT",
+      "SI NO SHAPE ACTUAL SIZE (MM) CHARGEABLE (MM) QTY SQFT CSQFT RATE AMOUNT",
       "HEIGHT WIDTH HEIGHT WIDTH",
       // 3.555 × 0.81 = 2.87955 sqm, at 10.764 sqft to the metre = 30.99548.
       "1 DRW 3555 810 3605 860 1 30.99548 33.37163 155 5172.603",

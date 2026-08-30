@@ -155,6 +155,7 @@ function tailBlock(rows: SheetRow[]): SheetRow[] {
  * typos listed in dev-plan §8, and a heading is the safest place to fix one.
  */
 export function headRows(quote: Quote): SheetRow[] {
+  const unit = quote.inputUnit.toUpperCase();
   const head = (text: string, extra: Partial<Cell> = {}): Cell => ({
     text,
     align: "center",
@@ -166,8 +167,11 @@ export function headRows(quote: Quote): SheetRow[] {
     row({
       0: head("SI NO", { rowSpan: 2 }),
       1: head("SHAPE", { rowSpan: 2 }),
-      2: head("ACTUAL SIZE", { colSpan: 2 }),
-      4: head("CHARGEABLE", { colSpan: 2 }),
+      // The unit the sizes were taken in, over both pairs: a sheet of bare
+      // numbers is read as millimetres by anyone who does not know the job,
+      // and half these quotes are measured in inches.
+      2: head(`ACTUAL SIZE (${unit})`, { colSpan: 2 }),
+      4: head(`CHARGEABLE (${unit})`, { colSpan: 2 }),
       6: head("QTY", { rowSpan: 2 }),
       // The measured area, then the chargeable one the amount is worked out on.
       7: head(quote.printUnit, { rowSpan: 2 }),
