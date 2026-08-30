@@ -30,10 +30,7 @@ const doc = buildDoc(computeQuote(quote), pictures);
 
 // The node build reads fonts off disk rather than out of a virtual file system.
 const fonts = resolve("node_modules/pdfmake/fonts/Roboto");
-const pdfMake = (await import("pdfmake/js/index.js")).default as {
-  addFonts: (f: unknown) => void;
-  createPdf: (d: unknown) => { getBuffer: () => Promise<Buffer> };
-};
+const pdfMake = (await import("pdfmake/js/index.js")).default;
 pdfMake.addFonts({
   Roboto: {
     normal: `${fonts}/Roboto-Regular.ttf`,
