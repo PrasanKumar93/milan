@@ -12,7 +12,10 @@ import { CUSTOM_PRODUCT } from "./data/masters";
 afterEach(cleanup);
 beforeEach(() => localStorage.clear());
 
-/** The entry grid in column order: H, W, wastage, chargeable H, chargeable W, qty, area, rate, amount. */
+/**
+ * The entry grid in column order: H, W, wastage, chargeable H, chargeable W,
+ * qty, area as measured, chargeable area, rate, amount.
+ */
 function firstRow() {
   // The first grid on screen is the lines; the one after it holds the charges.
   const grid = document.querySelectorAll<HTMLElement>("table.grid")[0];
@@ -30,26 +33,28 @@ function fillOneLine() {
   const [h, w] = firstRow();
   type(h, "2000");
   type(w, "1000");
-  type(firstRow()[7], "500");
+  type(firstRow()[8], "500");
 }
 
 describe("the entry screen", () => {
   it("starts on one section with one empty row", () => {
     render(<App />);
     expect(screen.getByText("Section 1")).toBeTruthy();
-    expect(firstRow()).toHaveLength(9);
+    expect(firstRow()).toHaveLength(10);
   });
 
   it("fills in the chargeable size, the area and the amount as sizes are typed", () => {
     fillOneLine();
     const cells = firstRow();
 
-    // 50 mm on each side, then 2.05 x 1.05 SQMT at ₹500.
+    // 50 mm on each side, then 2.05 x 1.05 SQMT at ₹500. The glass measures
+    // 2 x 1, so the row also shows the 0.1525 the allowance costs in glass.
     expect(cells[2].value).toBe("50");
     expect(cells[3].value).toBe("2050");
     expect(cells[4].value).toBe("1050");
-    expect(cells[6].value).toBe("2.1525");
-    expect(cells[8].value).toBe("1076.25");
+    expect(cells[6].value).toBe("2");
+    expect(cells[7].value).toBe("2.1525");
+    expect(cells[9].value).toBe("1076.25");
   });
 
   it("adds GST to the rounded subtotal and shows the total in the toolbar", () => {
@@ -70,7 +75,7 @@ describe("the entry screen", () => {
   it("works out the cut size, the area and the amount, and lets none of them be typed", () => {
     fillOneLine();
     const cells = firstRow();
-    for (const i of [3, 4, 6, 8]) expect(cells[i].disabled).toBe(true);
+    for (const i of [3, 4, 6, 7, 9]) expect(cells[i].disabled).toBe(true);
 
     // The way to cut a row differently is the allowance it was cut by.
     type(cells[2], "30");

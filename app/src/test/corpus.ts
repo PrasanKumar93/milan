@@ -84,6 +84,28 @@ function roundedFrom(section: ParsedSection, lineSum: Decimal): number | null {
 }
 
 /**
+ * Which unit the whole quote was typed in. A quote is measured in one unit or
+ * the other and never in both (dev-plan §2.1), so the sheet's own lines are put
+ * through each formula and the unit that explains the most of them wins.
+ *
+ * The parsed samples carry no unit of their own: it is only ever implied by the
+ * sizes and the area printed beside them.
+ */
+function inputUnitOf(parsed: ParsedQuote): InputUnit {
+  let inches = 0;
+  let all = 0;
+
+  for (const section of parsed.sections) {
+    for (const line of section.lines) {
+      all += 1;
+      if (inferUnit(section, line) === "inch") inches += 1;
+    }
+  }
+
+  return all > 0 && inches * 2 > all ? "inch" : "mm";
+}
+
+/**
  * Line areas and chargeable sizes are carried over as overrides, so this
  * exercises the totalling, tax and rounding logic in isolation; the size and
  * area formulas are tested directly.
@@ -149,7 +171,7 @@ export function toQuote(parsed: ParsedQuote): Quote {
     docNo: "",
     orderNo: "",
     dispatchTo: "",
-    inputUnit: "mm",
+    inputUnit: inputUnitOf(parsed),
     printUnit: parsed.sections[0]?.out_unit ?? "SQMT",
     gstApplicable: gstSections.length > 0,
     gstPct: gstSections[0]?.gst_pct ?? 9,

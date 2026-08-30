@@ -28,6 +28,10 @@ import { buildDoc, printer } from "./pdf";
  * way turns "does the export match the sample" into an equality, so a change to
  * a number format or a column order fails here rather than in front of a
  * customer.
+ *
+ * The one column the office's sheet has never had is the measured area, added at
+ * the customer's asking so the shop floor can read the wastage off the row. Its
+ * figures are worked by hand in the comments beside them.
  */
 
 const flatten = (rows: SheetRow[]): string[] =>
@@ -59,26 +63,28 @@ describe("the printed document, against PROFORMA 7178", () => {
   it("reproduces every printed line", () => {
     expect(documentOf(quote)).toEqual([
       "SIZE: 6MM CLEAR MIRROR",
-      "SI NO SHAPE ACTUAL SIZE CHARGEABLE QTY SQMT RATE AMOUNT",
+      "SI NO SHAPE ACTUAL SIZE CHARGEABLE QTY SQMT CSQMT RATE AMOUNT",
       "HEIGHT WIDTH HEIGHT WIDTH",
-      "1 MIRROR 2290 340 2440 610 1 1.4884 1323 1969.153",
-      "2 MIRROR 2917 628 3660 915 1 3.3489 1323 4430.595",
-      "3 MIRROR 2920 630 3660 915 1 3.3489 1323 4430.595",
-      "3 8.1862 10830.34",
+      // 2.29 × 0.34 = 0.7786 measured, against 2.44 × 0.61 = 1.4884 charged.
+      "1 MIRROR 2290 340 2440 610 1 0.7786 1.4884 1323 1969.153",
+      "2 MIRROR 2917 628 3660 915 1 1.831876 3.3489 1323 4430.595",
+      "3 MIRROR 2920 630 3660 915 1 1.8396 3.3489 1323 4430.595",
+      "3 4.450076 8.1862 10830.34",
       "10830",
       "CGST 9% 974.7",
       "SGST 9% 974.7",
       "6MM MIRROR 12779.4",
 
       "SIZE: 10MM CLEAR TOUGEHENED GLASS",
-      "SI NO SHAPE ACTUAL SIZE CHARGEABLE QTY SQMT RATE AMOUNT",
+      "SI NO SHAPE ACTUAL SIZE CHARGEABLE QTY SQMT CSQMT RATE AMOUNT",
       "HEIGHT WIDTH HEIGHT WIDTH",
-      "1 BLOCK 230 838 280 888 6 1.49184 1232 1837.947",
-      "2 BLOCK 195 633 245 683 8 1.33868 1232 1649.254",
-      "3 BLOCK 340 1004 390 1054 8 3.28848 1232 4051.407",
-      "4 BLOCK 380 908 430 958 4 1.64776 1232 2030.04",
-      "5 DRW 2922 832 2972 882 1 2.621304 1232 3229.447",
-      "27 10.38806 12798.09",
+      // Six pieces of 0.23 × 0.838: 0.19274 each, 1.15644 in all.
+      "1 BLOCK 230 838 280 888 6 1.15644 1.49184 1232 1837.947",
+      "2 BLOCK 195 633 245 683 8 0.98748 1.33868 1232 1649.254",
+      "3 BLOCK 340 1004 390 1054 8 2.73088 3.28848 1232 4051.407",
+      "4 BLOCK 380 908 430 958 4 1.38016 1.64776 1232 2030.04",
+      "5 DRW 2922 832 2972 882 1 2.431104 2.621304 1232 3229.447",
+      "27 8.686064 10.38806 12798.09",
       "12798",
       "U CUTOUT 1 250",
       "DOCUMENT CHARGE 100",
@@ -110,9 +116,10 @@ describe("the printed document, against PROFORMA 6359", () => {
   it("says each figure once and no more", () => {
     expect(documentOf(toQuote(sample("6359")))).toEqual([
       "SIZE: 12MM CLEAR TOUGHENED GLASS",
-      "SI NO SHAPE ACTUAL SIZE CHARGEABLE QTY SQFT RATE AMOUNT",
+      "SI NO SHAPE ACTUAL SIZE CHARGEABLE QTY SQFT CSQFT RATE AMOUNT",
       "HEIGHT WIDTH HEIGHT WIDTH",
-      "1 DRW 3555 810 3605 860 1 33.37163 155 5172.603",
+      // 3.555 × 0.81 = 2.87955 sqm, at 10.764 sqft to the metre = 30.99548.
+      "1 DRW 3555 810 3605 860 1 30.99548 33.37163 155 5172.603",
       // No qty/area/subtotal row: adding up one line would only repeat it.
       "5173",
       "CROSS CHARGE 100",
@@ -232,11 +239,11 @@ describe("the PDF", () => {
     const totals = tables[3].table as { body: unknown[][] };
     expect(totals.body).toHaveLength(5);
 
-    // Every row of the sheet is ten cells wide, spans included, or the columns
-    // would not line up: the lines and the totals of both sections.
+    // Every row of the sheet is eleven cells wide, spans included, or the
+    // columns would not line up: the lines and the totals of both sections.
     for (const i of [2, 3, 5, 6]) {
       const body = (tables[i].table as { body: unknown[][] }).body;
-      expect(body.every((row) => row.length === 10)).toBe(true);
+      expect(body.every((row) => row.length === COLUMNS)).toBe(true);
     }
   });
 
@@ -249,7 +256,7 @@ describe("the PDF", () => {
   it("lays the lines out to the same width as the blocks above and below them", () => {
     const A4 = 595.28;
     const printable = A4 - 40 - 40;
-    // Two points of padding on each side of ten cells, and the rules between.
+    // Two points of padding on each side of every cell, and the rules between.
     const room = printable - COLUMNS * 2 * 2 - COLUMNS * 0.75;
 
     const sheet = COLUMN_WIDTHS.reduce((a, b) => a + b, 0);

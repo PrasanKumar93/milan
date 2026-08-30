@@ -137,8 +137,8 @@ async function retype(page: Page, proformaNo: string) {
       if (li > 0) await card.getByRole("button", { name: "Add line" }).click();
       const row = card.locator("table.grid").first().locator("tbody tr").nth(li);
       // #, shape, actual H, actual W, wastage, chargeable H, chargeable W, qty,
-      // area, rate, amount — the count before the area, since the area is worked
-      // out from it (see components/columns.tsx).
+      // area as measured, chargeable area, rate, amount — the count before both
+      // areas, since each is worked out from it (see components/columns.tsx).
       const col = (n: number) => row.locator("td").nth(n).locator("input").first();
 
       await row
@@ -152,14 +152,16 @@ async function retype(page: Page, proformaNo: string) {
         notes.push(`S${si + 1} L${li + 1}: this row alone was cut at ${perLine[li]}`);
       }
       await type(col(7), line.qty);
-      await type(col(9), line.rate);
+      await type(col(10), line.rate);
 
-      // Nothing below was typed: the row filled these in.
+      // Nothing below was typed: the row filled these in. The area compared is
+      // the chargeable one — the sheet has never printed the measured area, so
+      // there is nothing on the PDF to hold the new column against.
       const seen = `S${si + 1} L${li + 1}`;
       check(`${seen} chargeable H`, await col(5).inputValue(), line.ch);
       check(`${seen} chargeable W`, await col(6).inputValue(), line.cw);
-      check(`${seen} area`, await col(8).inputValue(), line.area);
-      check(`${seen} amount`, await col(10).inputValue(), line.amount);
+      check(`${seen} area`, await col(9).inputValue(), line.area);
+      check(`${seen} amount`, await col(11).inputValue(), line.amount);
     }
 
     for (const [ei, extra] of section.extras.entries()) {

@@ -60,13 +60,18 @@ export const INK = {
 export type SheetRow = Cell[];
 
 /**
- * SI NO, SHAPE, actual H and W, chargeable H and W, QTY, area, RATE, AMOUNT.
+ * SI NO, SHAPE, actual H and W, chargeable H and W, QTY, area, chargeable area,
+ * RATE, AMOUNT.
  *
- * The count before the area, as the office's sheet has always had it and as the
- * entry grid has it: the area is the chargeable size times the count, so the
- * count is read on the way to it rather than after it.
+ * The count before either area, as the office's sheet has always had it and as
+ * the entry grid has it: an area is a size times the count, so the count is read
+ * on the way to it rather than after it.
+ *
+ * The two areas stand together: the glass as measured, then the glass as billed.
+ * Only the second prices anything — the first is there because the shop floor
+ * reads the pair of them as the wastage, and asked to have it on the sheet.
  */
-export const COLUMNS = 10;
+export const COLUMNS = 11;
 
 /**
  * Column widths in points, in the proportions the current PDFs use: the size,
@@ -75,12 +80,12 @@ export const COLUMNS = 10;
  * keep "SI NO" on one line.
  *
  * The total is what is left of an A4 page after its margins, the padding in
- * ten cells and the rules between them — 467 points, and not a point more. The
- * order details and the blocks that close the page are set to the width of the
- * page itself, so anything wider here would stand out past them at the join,
+ * eleven cells and the rules between them — 463 points, and not a point more.
+ * The order details and the blocks that close the page are set to the width of
+ * the page itself, so anything wider here would stand out past them at the join,
  * which is the step the customer spotted along the edge of the download.
  */
-export const COLUMN_WIDTHS = [28, 43, 46, 46, 46, 46, 39, 55, 46, 72];
+export const COLUMN_WIDTHS = [28, 39, 41, 41, 41, 41, 31, 50, 50, 41, 60];
 
 const SKIP: Cell = { text: "", skip: true };
 
@@ -110,7 +115,7 @@ const fig = (text: string, key: string, value: Decimal | number, bold = false): 
   value: typeof value === "number" ? value : value.toNumber(),
 });
 
-/** Where the ruling below the lines begins: the area column, just after the count. */
+/** Where the ruling below the lines begins: the first area column, just after the count. */
 const TAIL_FROM = 7;
 
 /**
@@ -164,9 +169,11 @@ export function headRows(quote: Quote): SheetRow[] {
       2: head("ACTUAL SIZE", { colSpan: 2 }),
       4: head("CHARGEABLE", { colSpan: 2 }),
       6: head("QTY", { rowSpan: 2 }),
+      // The measured area, then the chargeable one the amount is worked out on.
       7: head(quote.printUnit, { rowSpan: 2 }),
-      8: head("RATE", { rowSpan: 2 }),
-      9: head("AMOUNT", { rowSpan: 2 }),
+      8: head(`C${quote.printUnit}`, { rowSpan: 2 }),
+      9: head("RATE", { rowSpan: 2 }),
+      10: head("AMOUNT", { rowSpan: 2 }),
     }),
     row({
       0: SKIP,
@@ -179,6 +186,7 @@ export function headRows(quote: Quote): SheetRow[] {
       7: SKIP,
       8: SKIP,
       9: SKIP,
+      10: SKIP,
     }),
   ];
 }
@@ -195,9 +203,10 @@ export function lineRows(computed: ComputedSection, quote: Quote): SheetRow[] {
       4: fig(size(l.chargeableH.value.toNumber()), `line.${i}.chargeableH`, l.chargeableH.value),
       5: fig(size(l.chargeableW.value.toNumber()), `line.${i}.chargeableW`, l.chargeableW.value),
       6: fig(formatSheet(l.line.qty), `line.${i}.qty`, l.line.qty),
-      7: fig(formatArea(l.area.value), `line.${i}.area`, l.area.value),
-      8: fig(formatSheet(l.line.rate), `line.${i}.rate`, l.line.rate),
-      9: fig(formatSheet(l.amount.value), `line.${i}.amount`, l.amount.value),
+      7: fig(formatArea(l.actualArea), `line.${i}.actualArea`, l.actualArea),
+      8: fig(formatArea(l.area.value), `line.${i}.area`, l.area.value),
+      9: fig(formatSheet(l.line.rate), `line.${i}.rate`, l.line.rate),
+      10: fig(formatSheet(l.amount.value), `line.${i}.amount`, l.amount.value),
     }),
   );
 }
@@ -212,10 +221,13 @@ export function lineRows(computed: ComputedSection, quote: Quote): SheetRow[] {
  * sheet prints: see the section total at the bottom.
  */
 function sectionTotals(computed: ComputedSection, quote: Quote, alone = false): SheetRow[] {
+  // A label below the lines runs from the first area column to the one before
+  // the figure it belongs to — as far as the count where there is a count, and
+  // across the rate column where there is not.
   const label = (text: string, withQty: boolean): Cell => ({
     text,
     align: "left",
-    colSpan: withQty ? 1 : 2,
+    colSpan: withQty ? 2 : 3,
   });
 
   const rows: SheetRow[] = [];
@@ -225,13 +237,16 @@ function sectionTotals(computed: ComputedSection, quote: Quote, alone = false): 
     rows.push(
       row({
         6: fig(formatSheet(computed.totalQty), "total.qty", computed.totalQty),
-        7: fig(formatArea(computed.totalArea), "total.area", computed.totalArea),
-        9: fig(formatSheet(computed.subtotal), "subtotal", computed.subtotal),
+        7: fig(formatArea(computed.totalActualArea), "total.actualArea", computed.totalActualArea),
+        8: fig(formatArea(computed.totalArea), "total.area", computed.totalArea),
+        10: fig(formatSheet(computed.subtotal), "subtotal", computed.subtotal),
       }),
     );
   }
 
-  rows.push(row({ 9: fig(formatSheet(computed.rounded.value), "rounded", computed.rounded.value) }));
+  rows.push(
+    row({ 10: fig(formatSheet(computed.rounded.value), "rounded", computed.rounded.value) }),
+  );
 
   // A counted charge prints its count — `HOLES 6 180`. One that was not counted
   // prints the amount alone, the way a document charge always has.
@@ -241,9 +256,9 @@ function sectionTotals(computed: ComputedSection, quote: Quote, alone = false): 
       row({
         7: label(a.adjustment.label, counted),
         ...(counted
-          ? { 8: fig(formatSheet(a.adjustment.qty), `adj.${i}.qty`, a.adjustment.qty) }
+          ? { 9: fig(formatSheet(a.adjustment.qty), `adj.${i}.qty`, a.adjustment.qty) }
           : {}),
-        9: fig(formatSheet(a.amount.value), `adj.${i}.amount`, a.amount.value),
+        10: fig(formatSheet(a.amount.value), `adj.${i}.amount`, a.amount.value),
       }),
     );
   }
@@ -251,7 +266,7 @@ function sectionTotals(computed: ComputedSection, quote: Quote, alone = false): 
   // The taxable base only earns a line of its own where there is tax to work out
   // on it; without GST the charges simply run into the total.
   if (quote.gstApplicable && computed.adjustments.length > 0) {
-    rows.push(row({ 9: fig(formatSheet(computed.taxableBase), "taxable", computed.taxableBase) }));
+    rows.push(row({ 10: fig(formatSheet(computed.taxableBase), "taxable", computed.taxableBase) }));
   }
 
   if (quote.gstApplicable) {
@@ -265,8 +280,8 @@ function sectionTotals(computed: ComputedSection, quote: Quote, alone = false): 
           7: label(name, true),
           // A rate, not a figure: the workbook writes it as a fraction shown as
           // a percentage, so the tax cell beside it can multiply by it.
-          8: fig(`${formatSheet(quote.gstPct)}%`, `${tax}.pct`, quote.gstPct / 100),
-          9: fig(formatSheet(value), tax, value),
+          9: fig(`${formatSheet(quote.gstPct)}%`, `${tax}.pct`, quote.gstPct / 100),
+          10: fig(formatSheet(value), tax, value),
         }),
       );
     }
@@ -278,7 +293,7 @@ function sectionTotals(computed: ComputedSection, quote: Quote, alone = false): 
     rows.push(
       row({
         7: { ...label(computed.section.shortCode, false), bold: true },
-        9: fig(formatSheet(computed.total), "total", computed.total, true),
+        10: fig(formatSheet(computed.total), "total", computed.total, true),
       }),
     );
   }
@@ -292,16 +307,19 @@ function quoteTotals(computed: ComputedQuote): SheetRow[] {
     computed.sections.length > 1
       ? computed.sections.map((s, i) =>
           row({
-            7: { text: s.section.shortCode, align: "left", colSpan: 2 },
-            9: fig(formatSheet(s.total), `section.${i}.total`, s.total),
+            7: { text: s.section.shortCode, align: "left", colSpan: 3 },
+            10: fig(formatSheet(s.total), `section.${i}.total`, s.total),
           }),
         )
       : [];
 
   rows.push(
     row({
-      7: { text: "TOTAL AMOUNT", align: "left", colSpan: 2, bold: true, highlight: true },
-      9: { ...fig(formatSheet(computed.grandTotal), "grandTotal", computed.grandTotal, true), highlight: true },
+      7: { text: "TOTAL AMOUNT", align: "left", colSpan: 3, bold: true, highlight: true },
+      10: {
+        ...fig(formatSheet(computed.grandTotal), "grandTotal", computed.grandTotal, true),
+        highlight: true,
+      },
     }),
   );
 

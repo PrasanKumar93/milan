@@ -607,7 +607,7 @@ h3 {
    .grid-wrap scrolls instead. */
 table.grid {
   width: 100%;
-  min-width: 1160px;
+  min-width: 1320px;
   table-layout: fixed;
   border-collapse: collapse;
   font-size: 13px;

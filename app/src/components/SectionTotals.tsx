@@ -25,7 +25,13 @@ export function SectionTotals({
     // Striped for the same reason the charges are: label at one end, figure at
     // the other, and nothing in between to follow.
     <div className="totals totals--zebra">
-      <Row label={`Area (${quote.printUnit})`} value={formatArea(c.totalArea)} />
+      <Row label={`Area (${quote.printUnit})`} value={formatArea(c.totalActualArea)} />
+      <Row label={`CArea (C${quote.printUnit})`} value={formatArea(c.totalArea)} />
+      {/* What the allowance added, in glass. It is the reason the shop floor
+          asked for the measured area beside the chargeable one at all. */}
+      {c.totalArea.gt(c.totalActualArea) && (
+        <Row label="Wastage" value={formatArea(c.totalArea.minus(c.totalActualArea))} muted />
+      )}
       <Row label="Total" value={formatMoney(c.subtotal)} />
 
       <div className="totals__row">

@@ -7,6 +7,7 @@ import { Button, DimensionField, Info, NumberField, OverrideDot, Select } from "
 import { useAddRow } from "../ui/useAddRow";
 import { LineColumns } from "./columns";
 import {
+  actualAreaHint,
   amountHint,
   areaHint,
   chargeableHint,
@@ -77,12 +78,18 @@ export function LineGrid({
               <th className="grid__group" colSpan={2}>
                 Chargeable size ({unit}) <Info hint={chargeableHint(computed, quote)} />
               </th>
-              {/* The count is read before the area because it is inside it. */}
+              {/* The count is read before the areas because it is inside both. */}
               <th rowSpan={2} className="num">
                 Qty
               </th>
+              {/* The glass as measured, then the glass as billed. Standing side
+                by side, the gap between them is the wastage, which is the
+                number the shop floor wanted to be able to see. */}
               <th rowSpan={2} className="num">
-                Area ({quote.printUnit}) <Info hint={areaHint(computed, quote)} />
+                Area ({quote.printUnit}) <Info hint={actualAreaHint(computed, quote)} />
+              </th>
+              <th rowSpan={2} className="num">
+                CArea (C{quote.printUnit}) <Info hint={areaHint(computed, quote)} />
               </th>
               <th rowSpan={2} className="num">
                 Rate
@@ -221,6 +228,18 @@ export function LineGrid({
                   </td>
 
                   <td className="num">
+                    <NumberField
+                      value={l.actualArea.toNumber()}
+                      width={92}
+                      decimals={6}
+                      disabled
+                      className="input--derived"
+                      title="Actual H x W x qty — the glass as measured"
+                      onChange={() => {}}
+                    />
+                  </td>
+
+                  <td className="num">
                     <div className="pair">
                       <NumberField
                         value={l.area.value.toNumber()}
@@ -228,7 +247,7 @@ export function LineGrid({
                         decimals={6}
                         disabled
                         className={l.area.overridden ? "input--overridden" : "input--derived"}
-                        title="Chargeable H x W x qty"
+                        title="Chargeable H x W x qty — the area the amount is worked out on"
                         onChange={() => {}}
                       />
                       {l.area.overridden && (

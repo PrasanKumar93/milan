@@ -93,16 +93,19 @@ export function toNextFoot(value: number, unit: InputUnit): number {
 /**
  * Printed area. Input unit and printed unit are independent, so all four
  * combinations below occur in real quotes (dev-plan §2.1).
+ *
+ * The sizes are whichever pair is being asked about: the chargeable ones give
+ * the area the line is billed on, the measured ones give the glass as cut.
  */
 export function areaOf(
   inputUnit: InputUnit,
   printUnit: PrintUnit,
-  chargeableH: number,
-  chargeableW: number,
+  height: number,
+  width: number,
   qty: number,
 ): Decimal {
-  const h = new Decimal(chargeableH);
-  const w = new Decimal(chargeableW);
+  const h = new Decimal(height);
+  const w = new Decimal(width);
   const q = new Decimal(qty);
 
   if (inputUnit === "mm") {

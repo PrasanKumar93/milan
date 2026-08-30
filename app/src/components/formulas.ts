@@ -144,21 +144,47 @@ export function areaSteps(l: ComputedSection["lines"][number], quote: Quote): st
   const show = size(quote);
   const shape = areaShape(quote);
 
-  return `Area = ${shape(show(l.chargeableH.value), show(l.chargeableW.value), String(l.line.qty))} = ${round(l.area.value, 6)}`;
+  return `CArea = ${shape(show(l.chargeableH.value), show(l.chargeableW.value), String(l.line.qty))} = ${round(l.area.value, 6)}`;
+}
+
+/** The same sum on the measured sizes: the glass as it is cut, not as it is billed. */
+export function actualAreaSteps(l: ComputedSection["lines"][number], quote: Quote): string {
+  const show = size(quote);
+  const shape = areaShape(quote);
+
+  return `Area = ${shape(show(l.line.actualH), show(l.line.actualW), String(l.line.qty))} = ${round(l.actualArea, 6)}`;
 }
 
 export function amountSteps(l: ComputedSection["lines"][number]): string {
-  return `Amount = area × rate = ${round(l.area.value, 6)} × ${l.line.rate} = ${round(l.amount.value, 2)}`;
+  return `Amount = CArea × rate = ${round(l.area.value, 6)} × ${l.line.rate} = ${round(l.amount.value, 2)}`;
 }
 
-/** The printed area, in whichever pair of units the quote is being typed and priced in. */
+/** The area the line is priced on, in whichever units the quote is typed and priced in. */
 export function areaHint(computed: ComputedSection, quote: Quote): string {
   const first = computed.lines[0];
 
   return lines(
-    `Area = ${areaShape(quote)("chargeable H", "chargeable W", "qty")}, so the count is already in it.`,
-    first && areaSteps(first, quote).replace("Area = ", ""),
+    `CArea is the chargeable area — the one the amount is worked out on.\n\nCArea = ${areaShape(quote)("chargeable H", "chargeable W", "qty")}, so the count is already in it.`,
+    first && areaSteps(first, quote).replace("CArea = ", ""),
   );
+}
+
+/**
+ * The glass as measured. It prices nothing; it is there so the row shows what
+ * was cut beside what is being charged, and the gap between the two columns is
+ * the wastage the allowance added.
+ */
+export function actualAreaHint(computed: ComputedSection, quote: Quote): string {
+  const first = computed.lines[0];
+  const waste =
+    computed.totalActualArea.gt(0) && computed.totalArea.gt(computed.totalActualArea)
+      ? `\n\nThis section: ${round(computed.totalActualArea, 4)} measured against ${round(computed.totalArea, 4)} charged — ${round(computed.totalArea.minus(computed.totalActualArea), 4)} ${quote.printUnit} of wastage.`
+      : "";
+
+  return `${lines(
+    `Area is the glass as measured, before any allowance. Nothing is priced on it: CArea beside it is what the amount uses, and the difference between them is the wastage.\n\nArea = ${areaShape(quote)("actual H", "actual W", "qty")}`,
+    first && actualAreaSteps(first, quote).replace("Area = ", ""),
+  )}${waste}`;
 }
 
 /**
@@ -211,7 +237,7 @@ export function amountHint(computed: ComputedSection): string {
   const first = computed.lines[0];
 
   return lines(
-    "Amount = area × rate. The rate is per unit of area, and the count is inside the area.",
-    first && amountSteps(first).replace("Amount = area × rate = ", ""),
+    "Amount = CArea × rate — the chargeable area, not the measured one. The rate is per unit of area, and the count is inside the area.",
+    first && amountSteps(first).replace("Amount = CArea × rate = ", ""),
   );
 }

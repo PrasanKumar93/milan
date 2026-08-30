@@ -1,7 +1,7 @@
 import type Decimal from "decimal.js";
 import type { Borders, Cell as XlsxCell, Fill, Workbook, Worksheet } from "exceljs";
 // The same working the screen shows under its `i` marks, written onto the cells.
-import { amountSteps, areaSteps, chargeableSteps } from "../components/formulas";
+import { actualAreaSteps, amountSteps, areaSteps, chargeableSteps } from "../components/formulas";
 import type { ComputedQuote, ComputedSection } from "../core/engine";
 import type { Quote, Section } from "../core/types";
 import { MM_PER_FOOT, SQFT_PER_SQM } from "../core/units";
@@ -35,7 +35,7 @@ import { type Marks, marks } from "./marks";
  * amount, subtotal and tax figure recalculates in Excel exactly as it does in the
  * app. Print it and the page that comes out is the proforma the customer knows,
  * because it is drawn from the same `layout.ts` rows as the preview and the PDF —
- * ten columns, the same spans, the same boxed figures, the same colours.
+ * the same columns, spans, boxed figures and colours.
  *
  * What the printed page has no column for lives in two hidden columns beside it:
  * the wastage allowance a chargeable size is built from, and the rate behind a
@@ -44,7 +44,7 @@ import { type Marks, marks } from "./marks";
  * revision never silently undoes a deliberate override.
  */
 
-/** A: SI NO … J: AMOUNT, as the sheet prints. Then the two working columns. */
+/** A: SI NO … K: AMOUNT, as the sheet prints. Then the two working columns. */
 const WASTAGE = COLUMNS + 1;
 const CHARGE_RATE = COLUMNS + 2;
 const LAST_PRINTED = String.fromCharCode(64 + COLUMNS);
@@ -216,8 +216,12 @@ function centre(pen: Pen, value: string, style: Parameters<typeof text>[3] = {})
   pen.row += 1;
 }
 
-/** A height or a width, which is the only kind of figure the page prints as a fraction. */
-const dimension = (cell: Cell) => /actual|chargeable/.test(cell.key ?? "");
+/**
+ * A height or a width, which is the only kind of figure the page prints as a
+ * fraction. An area is never one of them, however it is named: `35 1/4` is a
+ * size off a tape, and an area of 4.305 written that way reads as nonsense.
+ */
+const dimension = (cell: Cell) => /(actual|chargeable)[HW]$/.test(cell.key ?? "");
 
 /**
  * A figure belonging to the quote rather than to the section it is drawn under.
@@ -362,11 +366,22 @@ function liveSection(pen: Pen, index: number, computed: ComputedSection, quote: 
     const actualW = at(`line.${i}.actualW`);
     const chargeableH = at(`line.${i}.chargeableH`);
     const chargeableW = at(`line.${i}.chargeableW`);
+    const actualArea = at(`line.${i}.actualArea`);
     const area = at(`line.${i}.area`);
     const amount = at(`line.${i}.amount`);
     const qty = at(`line.${i}.qty`);
     const rate = at(`line.${i}.rate`);
-    if (!actualH || !actualW || !chargeableH || !chargeableW || !area || !amount || !qty || !rate) {
+    if (
+      !actualH ||
+      !actualW ||
+      !chargeableH ||
+      !chargeableW ||
+      !actualArea ||
+      !area ||
+      !amount ||
+      !qty ||
+      !rate
+    ) {
       continue;
     }
 
@@ -392,6 +407,15 @@ function liveSection(pen: Pen, index: number, computed: ComputedSection, quote: 
       chargeableFormula(section, quote, actualW, working),
       line.chargeableW.computed,
       chargeableSteps(line, section.wastageRule, quote, "Width"),
+    );
+    // The measured area prices nothing, so there is nothing to type over: it
+    // follows the sizes above it wherever they are edited.
+    live(
+      pen,
+      actualArea,
+      areaFormula(quote, actualH, actualW, qty),
+      line.actualArea,
+      actualAreaSteps(line, quote),
     );
     overridable(
       pen,
@@ -419,6 +443,7 @@ function liveSection(pen: Pen, index: number, computed: ComputedSection, quote: 
 
   for (const [key, sum, result] of [
     ["total.qty", column("qty"), computed.totalQty],
+    ["total.actualArea", column("actualArea"), computed.totalActualArea],
     ["total.area", column("area"), computed.totalArea],
     ["subtotal", column("amount"), computed.subtotal],
   ] as const) {

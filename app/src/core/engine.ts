@@ -48,6 +48,14 @@ export interface ComputedLine {
   /** What the chargeable size actually added per side. Under foot to foot these differ. */
   addedH: Decimal;
   addedW: Decimal;
+  /**
+   * The glass the piece is measured at, before any allowance — what the shop
+   * cuts to. It is never priced and never overridden: it stands beside the
+   * chargeable area so the difference between the two can be read off the row,
+   * and that difference is the wastage (dev-plan §2.1).
+   */
+  actualArea: Decimal;
+  /** The area the line is billed on: chargeable size by chargeable size, by the count. */
   area: Computed;
   amount: Computed;
 }
@@ -63,6 +71,8 @@ export interface ComputedSection {
   lines: ComputedLine[];
   adjustments: ComputedAdjustment[];
   totalQty: Decimal;
+  /** The glass as measured, added up — the same column the lines carry. */
+  totalActualArea: Decimal;
   totalArea: Decimal;
   /** Sum of line amounts, printed unrounded. */
   subtotal: Decimal;
@@ -132,6 +142,14 @@ export function computeLine(line: Line, quote: Quote, section: Section): Compute
     line.area,
   );
 
+  const actualArea = areaOf(
+    quote.inputUnit,
+    quote.printUnit,
+    line.actualH,
+    line.actualW,
+    line.qty,
+  );
+
   const amount = withOverride(area.value.times(line.rate), line.amount);
 
   return {
@@ -142,6 +160,7 @@ export function computeLine(line: Line, quote: Quote, section: Section): Compute
     chargeableW,
     addedH: chargeableH.value.minus(line.actualH),
     addedW: chargeableW.value.minus(line.actualW),
+    actualArea,
     area,
     amount,
   };
@@ -161,6 +180,7 @@ export function computeSection(section: Section, quote: Quote): ComputedSection 
 
   const zero = new Decimal(0);
   const totalQty = lines.reduce((sum, l) => sum.plus(l.line.qty), zero);
+  const totalActualArea = lines.reduce((sum, l) => sum.plus(l.actualArea), zero);
   const totalArea = lines.reduce((sum, l) => sum.plus(l.area.value), zero);
   const subtotal = lines.reduce((sum, l) => sum.plus(l.amount.value), zero);
 
@@ -181,6 +201,7 @@ export function computeSection(section: Section, quote: Quote): ComputedSection 
     lines,
     adjustments,
     totalQty,
+    totalActualArea,
     totalArea,
     subtotal,
     rounded,

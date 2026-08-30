@@ -11,7 +11,7 @@ import {
   thicknesses,
   wastageRuleFor,
 } from "../data/masters";
-import { newAdjustment, newQuote, newSection } from "../state/factory";
+import { newAdjustment, newLine, newQuote, newSection } from "../state/factory";
 import { polishRate, thicknessMm } from "./products";
 import { areaOf, formatInches, parseDimension, toNextFoot } from "./units";
 
@@ -83,6 +83,62 @@ describe("area formulas (dev-plan §2.1)", () => {
     expect(areaOf("inch", "SQMT", 144, 144, 1).toString()).toBe(
       new Decimal(144).div("10.764").toString(),
     );
+  });
+});
+
+/**
+ * Two areas on the row: the glass as measured and the glass as billed. Only the
+ * second prices anything — the first is there so the shop floor can read the
+ * wastage off the row, which is the whole reason it was asked for.
+ */
+describe("the measured area beside the chargeable one", () => {
+  const sized = (rule: "fixed" | "foot_to_foot", h: number, w: number, qty = 1) => {
+    const section = { ...newSection("mm", "10MM CLEAR TOUGHENED GLASS"), wastageRule: rule };
+    const quote = {
+      ...newQuote(),
+      sections: [
+        { ...section, lines: [{ ...newLine(section), actualH: h, actualW: w, qty, rate: 1000 }] },
+      ],
+    };
+
+    return computeQuote(quote).sections[0];
+  };
+
+  it("measures the glass on the sizes as taken, count included", () => {
+    const [line] = sized("fixed", 2000, 1000, 2).lines;
+
+    // 2 x 1 metres, twice, against 2.05 x 1.05 cut — the allowance costs 0.305.
+    expect(line.actualArea.toString()).toBe("4");
+    expect(line.area.value.toString()).toBe("4.305");
+  });
+
+  it("measures it the same way under foot to foot, where the allowance is the rule", () => {
+    const [line] = sized("foot_to_foot", 2290, 340).lines;
+
+    expect(line.actualArea.toString()).toBe("0.7786");
+    expect(line.area.value.toString()).toBe("1.4884");
+  });
+
+  // Typing over the chargeable area is how an operator settles a row; the
+  // measured area is not theirs to type, so it stays what the tape said.
+  it("is left alone by a typed-over chargeable area", () => {
+    const section = sized("fixed", 2000, 1000, 2);
+    const quote = newQuote();
+    const typed = {
+      ...quote,
+      sections: [{ ...section.section, lines: [{ ...section.section.lines[0], area: 9 }] }],
+    };
+    const [line] = computeQuote(typed).sections[0].lines;
+
+    expect(line.area.value.toString()).toBe("9");
+    expect(line.actualArea.toString()).toBe("4");
+  });
+
+  it("adds both up over the section, so the wastage is the difference", () => {
+    const section = sized("fixed", 2000, 1000, 2);
+
+    expect(section.totalActualArea.toString()).toBe("4");
+    expect(section.totalArea.minus(section.totalActualArea).toString()).toBe("0.305");
   });
 });
 

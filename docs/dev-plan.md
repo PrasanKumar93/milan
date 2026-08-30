@@ -32,7 +32,7 @@ Meta        DATE, PROFORMA NO, ORDER NO, NAME, ADDRESS, GSTIN
             PROJECT REMARK, REF PERSON, PARTY NO, DOC NO, DISPATCH TO
 Section×N   One block per glass type (e.g. "6MM CLEAR MIRROR", HSN 7007)
               Line items table
-              Subtotal row (total qty, total area, total amount)
+              Subtotal row (total qty, total area as measured and as charged, total amount)
               Rounded subtotal
               Extra charges (holes, cutouts, template, document, ...)
               CGST 9% / SGST 9%   (only on GST quotes)
@@ -146,7 +146,13 @@ A line carrying a wastage different from its section's is flagged with a dot, so
 
 **The count comes before the area, on screen and on paper.** The area is worked out from the count — chargeable height by width by count — and a figure that goes into another one is read before it, or the reader meets a total whose ingredients are still to come. This is also the order the office's own sheet has always used, so the printed document is untouched (§2.10) and an operator checking a page against the screen reads the columns in the same order on both.
 
-**The charges table leaves the area column empty.** It sits in the same card under the same column widths, and its count, rate and amount have to land under the glass's count, rate and amount — otherwise the money in a section is written in two places and added in a third. A charge has no area, so the column simply stands empty in those rows, which is the truth about a charge rather than a gap to be closed. The charge name takes the whole run to its left and stands at the right of it, against the count.
+**Two areas stand side by side: `AREA` as measured and `CAREA` as billed.** `AREA (SQMT)` is the actual height by the actual width by the count; `CAREA (CSQMT)` is the same sum on the chargeable sizes, and it is the only one that prices anything — the amount is `CAREA × rate`. Neither is typed. The difference between the two columns is the glass the allowance adds, which is the whole reason the customer asked for the pair: a cutter reading `0.2516708` against `0.371609` on a small one-way piece can see that measuring to the next foot has added half as much glass again, and the office can see it before quoting. Adding it up per section gives the wastage a line of its own under the totals.
+
+The measured area is the one derived figure with no override behind it. A row that has to be priced differently changes its wastage or its rate (§2.8); nothing about the price is decided by what the tape said, so there is nothing there to type over — it simply follows the sizes above it, in the workbook as well as on the screen.
+
+It prints, on the customer's copy as well as the office's, at the customer's asking. The office's own sheet has never carried the column, so this is the one place the printed document departs from the samples, and it is worth saying plainly: the buyer can now read the wastage off their own proforma. The rest of §2.10 stands.
+
+**The charges table leaves the area columns empty.** It sits in the same card under the same column widths, and its count, rate and amount have to land under the glass's count, rate and amount — otherwise the money in a section is written in two places and added in a third. A charge has no area, so the columns simply stand empty in those rows, which is the truth about a charge rather than a gap to be closed. The charge name takes the whole run to its left and stands at the right of it, against the count.
 
 **Kaccha (raw, untoughened) glass carries wastage too** — it is not a toughened-only rule, since the offcut is lost either way. The data agrees: all 27 kaccha lines use the standard +2 in. "Kaccha" is the raw sheet; toughened is the finished, processed product.
 
@@ -250,11 +256,11 @@ Both deviations point the same way: fluted stock comes in fixed-width planks cut
 
 | Typed                                                              | Worked out and greyed                        |
 | ------------------------------------------------------------------ | -------------------------------------------- |
-| actual height and width, wastage, count, rate                      | chargeable height and width, area, amount    |
+| actual height and width, wastage, count, rate                      | chargeable height and width, both areas, amount |
 | charge name, count and rate                                        | charge amount                                |
 | the rounded subtotal — the one figure the office genuinely decides | the subtotal, the taxable base, GST, totals  |
 
-Each of the locked cells keeps the tooltip that says where its number came from — "Actual + 50", "Chargeable H x W x qty", "Qty x rate" — so nothing becomes unexplained by being locked.
+Each of the locked cells keeps the tooltip that says where its number came from — "Actual + 50", "Actual H x W x qty", "Chargeable H x W x qty", "Qty x rate" — so nothing becomes unexplained by being locked.
 
 **Why this way round.** A derived cell that disagrees with the numbers beside it is how a wrong bill gets printed: SHYAM LAL 7154 has eleven typed-over area cells that overcharge by 6–15% (§9), and every one of them still shows the sizes it does not match. Locking them removes that failure entirely rather than reporting it after the fact. The generality is not lost either, because every one of those cells has a typed input behind it: a piece that must be cut differently changes its **wastage**, a price that must come out differently changes its **rate**, and a bill that must come out differently changes its **rounded subtotal**. Each of those is the number that was actually decided, which is also the number to look at when the customer queries the piece.
 
@@ -432,7 +438,10 @@ QuotationSection   quotation_id, product_id, rate, rounded, sort_order,
 QuotationLine      section_id, sl_no, shape, actual_h, actual_w,
                    wastage,                 (one value, both sides, not printed)
                    chargeable_h, chargeable_w,   (derived, shown not typed)
-                   qty, area, rate, amount
+                   qty, rate, amount,
+                   area                     (derived from the chargeable sizes;
+                                             the measured area beside it on the
+                                             sheet is worked out, never stored)
 Adjustment         section_id, sort_order, label, qty, rate, amount
                    (qty 0 means not counted — the rate is the charge, §2.9)
 ```
